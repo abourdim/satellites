@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gravity Well — Feel the Force</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--green:#6fcf97;--purple:#b794f4;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:#c8d0e0;overflow:hidden;width:100vw;height:100vh}
+canvas{position:fixed;inset:0;cursor:crosshair}
+.hud{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.hud-item{background:rgba(6,10,22,.85);border:1px solid rgba(110,140,255,.06);border-radius:8px;padding:6px 12px;text-align:center;backdrop-filter:blur(8px)}
+.hud-item .hv{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:500}
+.hud-item .hl{font-size:.36rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.controls{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.btn{font-family:'JetBrains Mono',monospace;font-size:.5rem;padding:6px 14px;border-radius:6px;border:1px solid rgba(92,224,214,.15);background:rgba(6,10,22,.85);color:var(--cyan);cursor:pointer;backdrop-filter:blur(8px)}
+.btn:hover{background:rgba(92,224,214,.06)}
+.hint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;font-family:'Playfair Display',serif;font-style:italic;font-size:.75rem;color:rgba(200,208,224,.15);pointer-events:none;animation:hf 5s ease forwards}
+@keyframes hf{0%,70%{opacity:1}100%{opacity:0}}
+.mass-ctrl{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.42rem;color:var(--dim)}
+.mass-ctrl input{-webkit-appearance:none;width:120px;height:3px;border-radius:2px;background:rgba(255,255,255,.06);outline:none}
+.mass-ctrl input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold);cursor:pointer}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="cv"></canvas>
+<div class="hint"><span data-en="Click and drag to launch satellites into orbit…" data-fr="Cliquez et glissez pour lancer des satellites en orbite…" data-ar="انقر واسحب لإطلاق أقمار في المدار…">Click and drag to launch satellites into orbit…</span></div>
+<div class="hud">
+  <div class="hud-item"><div class="hv" id="hBodies" style="color:var(--cyan)">0</div><div class="hl"><span data-en="Satellites" data-fr="Satellites" data-ar="أقمار صناعية">Satellites</span></div></div>
+  <div class="hud-item"><div class="hv" id="hOrbiting" style="color:var(--green)">0</div><div class="hl"><span data-en="Orbiting" data-fr="En orbite" data-ar="في المدار">Orbiting</span></div></div>
+  <div class="hud-item"><div class="hv" id="hEscaped" style="color:var(--orange)">0</div><div class="hl"><span data-en="Escaped" data-fr="Échappés" data-ar="هاربة">Escaped</span></div></div>
+  <div class="hud-item"><div class="hv" id="hCrashed" style="color:var(--purple)">0</div><div class="hl"><span data-en="Crashed" data-fr="Écrasés" data-ar="محطمة">Crashed</span></div></div>
+</div>
+<div class="mass-ctrl"><span><span data-en="Central Mass:" data-fr="Masse centrale :" data-ar="الكتلة المركزية:">Central Mass:</span></span><input type="range" id="massSlider" min="1" max="20" value="8"><span id="massVal">8×</span></div>
+<div class="controls">
+  <button class="btn" onclick="clearAll()"><span data-en="🗑️ Clear All" data-fr="🗑️ Tout effacer" data-ar="🗑️ مسح الكل">🗑️ Clear All</span></button>
+  <button class="btn" onclick="addCircular()"><span data-en="⭕ Circular Orbit" data-fr="⭕ Orbite Circulaire" data-ar="⭕ مدار دائري">⭕ Circular Orbit</span></button>
+  <button class="btn" onclick="addElliptical()"><span data-en="🔵 Elliptical" data-fr="🔵 Elliptique" data-ar="🔵 بيضاوي">🔵 Elliptical</span></button>
+  <button class="btn" onclick="addRetrograde()"><span data-en="🔄 Retrograde" data-fr="🔄 Rétrograde" data-ar="🔄 عكسي">🔄 Retrograde</span></button>
+  <button class="btn" onclick="addBurst()"><span data-en="💥 Burst (10)" data-fr="💥 Rafale (10)" data-ar="💥 انفجار (10)">💥 Burst (10)</span></button>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),P=Math.PI*2;
+let W,H,CX,CY;
+function rs(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0);CX=W/2;CY=H/2}
+rs();addEventListener('resize',rs);
+
+let GM=8,bodies=[],escaped=0,crashed=0;
+const planetR=20;
+
+document.getElementById('massSlider').addEventListener('input',e=>{GM=+e.target.value;document.getElementById('massVal').textContent=GM+'×'});
+
+class Body{
+  constructor(x,y,vx,vy){this.x=x;this.y=y;this.vx=vx;this.vy=vy;this.trail=[];this.alive=true;this.age=0}
+  update(){
+    const dx=CX-this.x,dy=CY-this.y;
+    const r2=dx*dx+dy*dy;
+    const r=Math.sqrt(r2);
+    if(r<planetR){this.alive=false;crashed++;return}
+    if(r>Math.max(W,H)*1.5){this.alive=false;escaped++;return}
+    const a=GM*500/r2;
+    this.vx+=a*dx/r;this.vy+=a*dy/r;
+    this.x+=this.vx;this.y+=this.vy;
+    this.trail.push({x:this.x,y:this.y});
+    if(this.trail.length>200)this.trail.shift();
+    this.age++;
+  }
+}
+
+// Drag to launch
+let dragging=false,dragSX=0,dragSY=0,dragEX=0,dragEY=0;
+cv.addEventListener('pointerdown',e=>{dragging=true;dragSX=dragEX=e.clientX;dragSY=dragEY=e.clientY});
+cv.addEventListener('pointermove',e=>{if(dragging){dragEX=e.clientX;dragEY=e.clientY}});
+cv.addEventListener('pointerup',e=>{
+  if(!dragging)return;dragging=false;
+  const vx=(dragSX-dragEX)*.02,vy=(dragSY-dragEY)*.02;
+  if(Math.abs(dragEX-dragSX)+Math.abs(dragEY-dragSY)>5){
+    bodies.push(new Body(dragSX,dragSY,vx,vy));
+  }
+});
+
+function addCircular(){
+  const angle=Math.random()*P;
+  const r=100+Math.random()*80;
+  const v=Math.sqrt(GM*500/r);
+  bodies.push(new Body(CX+r*Math.cos(angle),CY+r*Math.sin(angle),-v*Math.sin(angle),v*Math.cos(angle)));
+}
+function addElliptical(){
+  const angle=Math.random()*P;
+  const r=80+Math.random()*60;
+  const v=Math.sqrt(GM*500/r)*(.6+Math.random()*.5);
+  bodies.push(new Body(CX+r*Math.cos(angle),CY+r*Math.sin(angle),-v*Math.sin(angle),v*Math.cos(angle)));
+}
+function addRetrograde(){
+  const angle=Math.random()*P;
+  const r=100+Math.random()*80;
+  const v=Math.sqrt(GM*500/r);
+  bodies.push(new Body(CX+r*Math.cos(angle),CY+r*Math.sin(angle),v*Math.sin(angle),-v*Math.cos(angle)));
+}
+function addBurst(){for(let i=0;i<10;i++){const a=P*i/10,r=60;const v=Math.sqrt(GM*500/r)*(.8+Math.random()*.4);bodies.push(new Body(CX+r*Math.cos(a),CY+r*Math.sin(a),-v*Math.sin(a)*(Math.random()>.3?1:-1),v*Math.cos(a)*(Math.random()>.3?1:-1)))}}
+function clearAll(){bodies=[];escaped=0;crashed=0}
+
+// Stars
+const stars=[];for(let i=0;i<100;i++)stars.push({x:Math.random()*W,y:Math.random()*H,b:.03+Math.random()*.06});
+
+function render(){
+  cx.clearRect(0,0,W,H);cx.fillStyle='#030510';cx.fillRect(0,0,W,H);
+  
+  for(const s of stars){cx.beginPath();cx.arc(s.x,s.y,.4,0,P);cx.fillStyle=`rgba(200,210,230,${s.b})`;cx.fill()}
+  
+  // Gravity field lines
+  for(let r=40;r<400;r+=40){
+    cx.beginPath();cx.arc(CX,CY,r,0,P);
+    cx.strokeStyle=`rgba(92,224,214,${.01+.02*(400-r)/400})`;cx.lineWidth=.5;cx.stroke();
+  }
+  
+  // Central body
+  const glow=cx.createRadialGradient(CX,CY,0,CX,CY,planetR*3);
+  glow.addColorStop(0,'rgba(92,224,214,0.08)');glow.addColorStop(1,'transparent');
+  cx.fillStyle=glow;cx.beginPath();cx.arc(CX,CY,planetR*3,0,P);cx.fill();
+  
+  const pg=cx.createRadialGradient(CX-3,CY-3,0,CX,CY,planetR);
+  pg.addColorStop(0,'#1a5a8c');pg.addColorStop(1,'#0a2a4c');
+  cx.beginPath();cx.arc(CX,CY,planetR,0,P);cx.fillStyle=pg;cx.fill();
+  
+  // Bodies
+  let orbiting=0;
+  for(let i=bodies.length-1;i>=0;i--){
+    const b=bodies[i];
+    b.update();
+    if(!b.alive){bodies.splice(i,1);continue}
+    orbiting++;
+    
+    // Trail
+    if(b.trail.length>1){
+      cx.beginPath();
+      b.trail.forEach((p,j)=>{j===0?cx.moveTo(p.x,p.y):cx.lineTo(p.x,p.y)});
+      cx.strokeStyle=`rgba(246,173,85,${.15+Math.min(.2,b.age/500)})`;cx.lineWidth=.8;cx.stroke();
+    }
+    
+    // Body
+    cx.beginPath();cx.arc(b.x,b.y,2.5,0,P);
+    cx.fillStyle='rgba(246,173,85,0.8)';cx.fill();
+  }
+  
+  // Drag line
+  if(dragging){
+    cx.beginPath();cx.moveTo(dragSX,dragSY);cx.lineTo(dragEX,dragEY);
+    cx.strokeStyle='rgba(111,207,151,0.3)';cx.lineWidth=1;cx.setLineDash([4,4]);cx.stroke();cx.setLineDash([]);
+    // Arrow
+    cx.beginPath();cx.arc(dragSX,dragSY,3,0,P);cx.fillStyle='rgba(111,207,151,0.5)';cx.fill();
+  }
+  
+  // HUD
+  document.getElementById('hBodies').textContent=bodies.length;
+  document.getElementById('hOrbiting').textContent=orbiting;
+  document.getElementById('hEscaped').textContent=escaped;
+  document.getElementById('hCrashed').textContent=crashed;
+  
+  requestAnimationFrame(render);
+}
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Gravity Well',project:'Satellites in the Sky'},fr:{title:'Puits de Gravité',project:'Satellites dans le Ciel'},ar:{title:'بئر الجاذبية',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

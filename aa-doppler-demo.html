@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppler Effect — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 60px}
+
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(246,173,85,0.06);border:1px solid rgba(246,173,85,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--orange);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--orange)}
+header p{font-size:.82rem;color:var(--text-dim);max-width:500px;margin:0 auto;line-height:1.6}
+
+canvas#sim{max-width:700px;width:100%;height:300px;border-radius:12px;border:1px solid rgba(110,140,255,0.06);margin-bottom:16px}
+
+.hud{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.hud-item{text-align:center;background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:10px;padding:10px 16px;min-width:90px}
+.hud-item .hv{font-family:var(--mono);font-size:1.2rem;font-weight:500;line-height:1;transition:color .3s}
+.hud-item .hl{font-size:.42rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+
+.controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
+.ctrl-btn{font-family:var(--mono);font-size:.6rem;padding:8px 18px;border-radius:8px;border:1px solid rgba(246,173,85,0.2);background:rgba(246,173,85,0.06);color:var(--orange);cursor:pointer;transition:all .3s}
+.ctrl-btn:hover{background:rgba(246,173,85,0.12)}
+.ctrl-btn.active{background:rgba(246,173,85,0.15);border-color:var(--orange)}
+
+.cards{max-width:700px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:600px){.cards{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:12px;padding:14px 16px}
+.card h3{font-size:.82rem;font-weight:700;color:#fff;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.card p{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+.card strong{font-weight:600}
+.card code{font-family:var(--mono);background:rgba(110,140,255,0.06);padding:1px 4px;border-radius:3px;font-size:.68rem;color:var(--cyan)}
+
+.heritage{max-width:700px;width:100%;background:rgba(232,193,112,0.02);border:1px solid rgba(232,193,112,0.08);border-radius:12px;padding:14px 16px;margin-top:10px;text-align:center}
+.heritage h4{font-family:var(--mono);font-size:.42rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.heritage p{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+.heritage strong{color:var(--gold)}
+
+footer{margin-top:30px;text-align:center;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🔊 Audio + Visual" data-fr="🔊 Audio + Visuel" data-ar="🔊 صوت + مرئي">🔊 Audio + Visual</span></div>
+  <h1>The Doppler <span>Effect</span></h1>
+  <p>As a satellite approaches, its radio signal is compressed to a higher frequency. As it recedes, it stretches lower. Click play to hear and see this in real time.</p>
+</header>
+
+<canvas id="sim"></canvas>
+
+<div class="hud">
+  <div class="hud-item"><div class="hv" id="hFreq" style="color:var(--cyan)">440</div><div class="hl"><span data-en="Frequency (Hz)" data-fr="Fréquence (Hz)" data-ar="التردد (هرتز)">Frequency (Hz)</span></div></div>
+  <div class="hud-item"><div class="hv" id="hShift" style="color:var(--orange)">+0.0</div><div class="hl"><span data-en="Doppler Shift" data-fr="Effet Doppler" data-ar="تأثير دوبلر">Doppler Shift</span></div></div>
+  <div class="hud-item"><div class="hv" id="hDist" style="color:var(--green)">—</div><div class="hl"><span data-en="Distance (km)" data-fr="Distance (km)" data-ar="المسافة (كم)">Distance (km)</span></div></div>
+  <div class="hud-item"><div class="hv" id="hVrad" style="color:var(--purple)">0.0</div><div class="hl"><span data-en="Radial vel (km/s)" data-fr="Vitesse radiale (km/s)" data-ar="السرعة القطرية (كم/ث)">Radial vel (km/s)</span></div></div>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn active" id="playBtn" onclick="togglePlay()"><span data-en="▶ Play Sound" data-fr="▶ Jouer le son" data-ar="▶ تشغيل الصوت">▶ Play Sound</span></button>
+  <button class="ctrl-btn" onclick="setSpeed(7.66)">🏗️ ISS (7.66 km/s)</button>
+  <button class="ctrl-btn" onclick="setSpeed(3.87)">📡 GPS (3.87 km/s)</button>
+  <button class="ctrl-btn" onclick="setSpeed(27.0)">☄️ Meteor (27 km/s)</button>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <h3><span data-en="📐 The Math" data-fr="📐 Les Maths" data-ar="📐 الرياضيات">📐 The Math</span></h3>
+    <p><code>f_observed = f_source × (1 + v_radial/c)</code></p>
+    <p style="margin-top:4px">Where <code>v_radial</code> is the velocity component toward/away from you, and <code>c</code> = speed of light. The ISS on 145.8 MHz shifts by <strong>±3.5 kHz</strong> — easily heard on a ham radio.</p>
+  </div>
+  <div class="card">
+    <h3><span data-en="📻 Real-World Doppler" data-fr="📻 Doppler en pratique" data-ar="📻 دوبلر في الواقع">📻 Real-World Doppler</span></h3>
+    <p>Ground stations must <strong>constantly retune</strong> to track satellite signals. GPS receivers correct for Doppler to maintain lock. The shift tells you the satellite's velocity — used in navigation since the 1960s (Transit system).</p>
+  </div>
+  <div class="card">
+    <h3>🔭 Doppler in Astronomy</h3>
+    <p>The same effect reveals <strong>galaxy speeds, exoplanets, and the expanding universe</strong>. Blueshifted = approaching. Redshifted = receding. Hubble's discovery of the expanding universe relied on Doppler shift of starlight.</p>
+  </div>
+  <div class="card">
+    <h3>🛰️ Satellite Tracking</h3>
+    <p>During the Cold War, scientists tracked <strong>Sputnik by its Doppler shift</strong> on 20.005 MHz. This insight led to the <strong>Transit navigation system</strong> — GPS's ancestor. One signal, one pass, one position fix.</p>
+  </div>
+</div>
+
+<div class="heritage">
+  <h4>☽ Heritage</h4>
+  <p>Doppler shift is a wave phenomenon. <strong>Ibn al-Haytham</strong> (965 CE) established that light behaves as waves with measurable properties. His framework for understanding wave propagation — finite speed, straight-line travel, frequency-dependent behavior — is exactly what makes Doppler shift calculable.</p>
+</div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const cv=document.getElementById('sim'),cx=cv.getContext('2d');
+const T2=Math.PI*2;
+let W,H;
+function resize(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0)}
+resize();addEventListener('resize',resize);
+
+let satX=-100,satSpeed=7.66,baseFreq=440,playing=false;
+let audioCtx=null,osc=null,gain=null;
+const c=299792;// speed of light km/s
+const observerX_frac=0.5;// observer at center
+const altitude=408;// km (visual scale)
+
+function togglePlay(){
+  if(!playing){
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    osc=audioCtx.createOscillator();gain=audioCtx.createGain();
+    osc.type='sine';osc.frequency.value=baseFreq;gain.gain.value=0;
+    osc.connect(gain);gain.connect(audioCtx.destination);osc.start();
+    playing=true;satX=-150;
+    document.getElementById('playBtn').textContent='⏸ Pause';
+    document.getElementById('playBtn').classList.add('active');
+  } else {
+    osc?.stop();playing=false;
+    document.getElementById('playBtn').textContent='▶ Play Sound';
+  }
+}
+
+function setSpeed(s){satSpeed=s;satX=-150}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  
+  // Background
+  cx.fillStyle='#060a18';cx.fillRect(0,0,W,H);
+  
+  const observerX=W*observerX_frac;
+  const groundY=H*0.75;
+  const skyY=H*0.2;
+  
+  // Ground
+  cx.fillStyle='rgba(20,30,50,0.5)';cx.fillRect(0,groundY,W,H-groundY);
+  cx.beginPath();cx.moveTo(0,groundY);cx.lineTo(W,groundY);
+  cx.strokeStyle='rgba(110,140,255,0.08)';cx.lineWidth=1;cx.stroke();
+  
+  // Move satellite
+  if(playing){
+    satX+=satSpeed*0.15;// Scaled speed
+    if(satX>W+150)satX=-150;
+  }
+  
+  // Calculate Doppler
+  const dx=satX-observerX;
+  const dist=Math.sqrt(dx*dx+altitude*altitude*0.5);// Simplified distance
+  const vRadial=(dx/dist)*satSpeed;// Radial velocity component
+  const dopplerRatio=1+vRadial/c;
+  const observedFreq=baseFreq*dopplerRatio;
+  const shiftHz=observedFreq-baseFreq;
+  
+  // Update audio
+  if(playing&&osc){
+    osc.frequency.value=observedFreq;
+    const vol=Math.max(0,1-dist/(W*0.6));
+    gain.gain.value=vol*0.15;
+  }
+  
+  // Wavefronts
+  const nWaves=20;
+  const waveSpacing=25;
+  for(let i=0;i<nWaves;i++){
+    const age=i*waveSpacing;
+    const r=age+((Date.now()*.05)%waveSpacing);
+    if(r>W*.6)continue;
+    
+    // Wavefronts compressed in direction of travel, expanded behind
+    const compression=1-vRadial/c*0.3;
+    cx.beginPath();
+    cx.arc(satX,skyY,r,0,T2);
+    cx.strokeStyle=`rgba(246,173,85,${Math.max(0,.12-r/(W*.6)*.12)})`;
+    cx.lineWidth=.5;cx.stroke();
+  }
+  
+  // Satellite
+  const satCol=shiftHz>0?'rgba(100,150,255,':'rgba(255,150,100,';// Blue/redshift
+  cx.beginPath();cx.arc(satX,skyY,6,0,T2);
+  const sg=cx.createRadialGradient(satX,skyY,0,satX,skyY,15);
+  sg.addColorStop(0,satCol+'0.5)');sg.addColorStop(1,'transparent');
+  cx.fillStyle=sg;cx.fill();
+  cx.beginPath();cx.arc(satX,skyY,4,0,T2);
+  cx.fillStyle=satCol+'0.9)';cx.fill();
+  
+  // Satellite label
+  cx.font='500 7px "JetBrains Mono"';cx.textAlign='center';
+  cx.fillStyle=satCol+'0.5)';
+  cx.fillText('🛰️ '+satSpeed.toFixed(1)+' km/s',satX,skyY-14);
+  
+  // Signal line to observer
+  cx.beginPath();cx.moveTo(satX,skyY);cx.lineTo(observerX,groundY);
+  cx.strokeStyle='rgba(246,173,85,0.06)';cx.lineWidth=.5;cx.setLineDash([3,5]);cx.stroke();cx.setLineDash([]);
+  
+  // Observer
+  cx.font='18px sans-serif';cx.textAlign='center';
+  cx.fillText('📡',observerX,groundY+20);
+  cx.font='400 7px "JetBrains Mono"';cx.fillStyle='rgba(200,210,230,0.2)';
+  cx.fillText('OBSERVER',observerX,groundY+36);
+  
+  // Direction indicator
+  if(playing){
+    cx.font='italic 500 9px "Playfair Display"';
+    if(dx<-30){cx.fillStyle='rgba(100,150,255,0.4)';cx.fillText('← approaching (blueshift)',W/2,H-10)}
+    else if(dx>30){cx.fillStyle='rgba(255,150,100,0.4)';cx.fillText('receding (redshift) →',W/2,H-10)}
+    else{cx.fillStyle='rgba(111,207,151,0.4)';cx.fillText('overhead (no shift)',W/2,H-10)}
+  }
+  
+  // Frequency color bar
+  const barW=W-40,barX=20,barY=H-30;
+  const barGrad=cx.createLinearGradient(barX,0,barX+barW,0);
+  barGrad.addColorStop(0,'rgba(100,150,255,0.2)');barGrad.addColorStop(.5,'rgba(200,200,200,0.1)');barGrad.addColorStop(1,'rgba(255,150,100,0.2)');
+  cx.fillStyle=barGrad;cx.fillRect(barX,barY,barW,4);
+  // Marker
+  const markerPos=barX+barW*(.5+shiftHz/(baseFreq*.01));
+  cx.beginPath();cx.arc(Math.max(barX,Math.min(barX+barW,markerPos)),barY+2,4,0,T2);
+  cx.fillStyle='rgba(246,173,85,0.8)';cx.fill();
+  
+  // HUD
+  document.getElementById('hFreq').textContent=observedFreq.toFixed(1);
+  document.getElementById('hFreq').style.color=shiftHz>1?'var(--blue)':shiftHz<-1?'var(--red)':'var(--green)';
+  document.getElementById('hShift').textContent=(shiftHz>0?'+':'')+shiftHz.toFixed(1)+' Hz';
+  document.getElementById('hShift').style.color=shiftHz>1?'var(--blue)':shiftHz<-1?'var(--red)':'var(--green)';
+  document.getElementById('hDist').textContent=Math.round(dist);
+  document.getElementById('hVrad').textContent=vRadial.toFixed(2);
+  
+  requestAnimationFrame(render);
+}
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Doppler Effect',project:'Satellites in the Sky'},fr:{title:'Effet Doppler',project:'Satellites dans le Ciel'},ar:{title:'تأثير دوبلر',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

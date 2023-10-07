@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Satellites in the Sky — Orbital Science</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--magenta:#f687b3;--text:#c8d0e0;--text-dim:#5a6578;--text-muted:#3a4558;--card-bg:rgba(6,10,22,0.95);--card-border:rgba(110,140,255,0.1);--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--text);touch-action:none}
+canvas#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.top-bar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:linear-gradient(to bottom,rgba(3,5,16,0.9),transparent);pointer-events:none}.top-bar>*{pointer-events:auto}
+.logo{font-size:.78rem;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:7px}.logo-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue);animation:glow 3s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 8px var(--blue)}50%{box-shadow:0 0 16px var(--blue)}}
+.sat-counter{font-family:var(--mono);font-size:.65rem;color:var(--text-dim)}.sat-counter .count{color:var(--cyan);font-weight:500}
+.mode-toggle{position:fixed;top:11px;left:50%;transform:translateX(-50%);z-index:55;display:flex;background:rgba(6,10,22,0.85);border:1px solid var(--card-border);border-radius:18px;overflow:hidden;backdrop-filter:blur(12px)}
+.mode-btn{padding:5px 11px;font-family:var(--font);font-size:.6rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border:none;background:transparent;color:var(--text-muted);cursor:pointer;transition:all .3s}.mode-btn.active{background:rgba(110,140,255,0.15);color:var(--blue)}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;align-items:flex-end;justify-content:space-between;padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(3,5,16,0.92),transparent);pointer-events:none}.bottom-bar>*{pointer-events:auto}
+.compass{width:38px;height:38px;border-radius:50%;border:1px solid var(--card-border);background:rgba(6,10,22,0.7);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.55rem;backdrop-filter:blur(8px)}.compass .dir{color:var(--blue);font-weight:500}
+.binfo{text-align:right;font-family:var(--mono);font-size:.5rem;color:var(--text-dim)}
+.strip{position:fixed;top:46px;left:0;right:0;z-index:40;display:flex;justify-content:center;gap:10px;padding:5px 10px;font-family:var(--mono);font-size:.5rem;color:var(--text-dim);opacity:0;transition:opacity .4s;pointer-events:none;flex-wrap:wrap}.strip.vis{opacity:1}.strip .sv{color:var(--cyan)}
+.iss-banner{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:45;background:rgba(6,10,22,0.92);border:1px solid rgba(232,193,112,0.2);border-radius:10px;padding:7px 14px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(12px);font-size:.65rem;white-space:nowrap;opacity:0;transition:opacity .5s;pointer-events:none}.iss-banner.vis{opacity:1;pointer-events:auto}
+.iss-banner .idot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}.iss-banner .il{color:var(--gold);font-weight:600}.iss-banner .ii{color:var(--text-dim);font-size:.58rem}
+
+/* PANELS */
+.pnl{position:fixed;z-index:42;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;backdrop-filter:blur(16px);padding:8px 10px;opacity:0;pointer-events:none;transition:opacity .4s;overflow:hidden;font-size:.52rem}
+.pnl.vis{opacity:1;pointer-events:auto}
+.pnl .pt{font-family:var(--mono);font-size:.44rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.pnl .pt .pd{width:3px;height:3px;border-radius:50%}
+.pnl-scroll{max-height:45vh;overflow-y:auto}.pnl-scroll::-webkit-scrollbar{width:2px}.pnl-scroll::-webkit-scrollbar-thumb{background:var(--card-border)}
+
+/* Expert: TLE Decode */
+.tle-pnl{top:48px;right:8px;width:210px}
+.tle-raw{font-family:var(--mono);font-size:.44rem;color:var(--magenta);background:rgba(246,135,179,0.04);border:1px solid rgba(246,135,179,0.06);border-radius:3px;padding:5px;word-break:break-all;margin-bottom:5px;line-height:1.5}
+.tle-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-family:var(--mono);font-size:.48rem}
+.tle-row .tl{color:var(--text-muted)}.tle-row .tv{color:var(--magenta);font-weight:500}
+
+/* Expert: Perturbation Forces */
+.perturb-pnl{bottom:58px;right:8px;width:180px}
+.force-row{display:flex;align-items:center;gap:6px;padding:3px 0}
+.force-bar{height:5px;border-radius:3px;transition:width .4s}.force-lbl{font-family:var(--mono);font-size:.44rem;color:var(--text-dim);min-width:50px}.force-val{font-family:var(--mono);font-size:.44rem;color:var(--text-dim)}
+
+/* Expert: Doppler */
+.doppler-pnl{bottom:58px;left:8px;width:160px}
+.dop-value{font-family:var(--mono);font-size:1rem;color:var(--purple);font-weight:500;text-align:center;padding:4px 0}
+.dop-sub{font-family:var(--mono);font-size:.44rem;color:var(--text-dim);text-align:center}
+.dop-bar{height:20px;background:rgba(183,148,244,0.06);border-radius:4px;margin-top:4px;position:relative;overflow:hidden}
+.dop-fill{position:absolute;top:0;bottom:0;border-radius:4px;transition:all .3s}
+
+/* Expert: Atmosphere Layers */
+.atmo-pnl{top:48px;left:8px;width:140px}
+.atmo-layer{display:flex;align-items:center;gap:5px;padding:2px 0;font-family:var(--mono);font-size:.44rem}
+.atmo-layer .al-bar{width:3px;border-radius:2px}
+.atmo-layer .al-name{color:var(--text-dim)}.atmo-layer .al-range{color:var(--text-muted)}
+
+/* Expert: Kessler Sim */
+.kessler-pnl{top:50%;left:50%;transform:translate(-50%,-50%);width:320px;max-width:90vw;z-index:70}
+.kessler-pnl canvas{width:100%;height:160px;border-radius:6px;background:#020408}
+.kessler-controls{display:flex;gap:6px;margin-top:6px;align-items:center}
+.kessler-controls button{font-family:var(--mono);font-size:.5rem;padding:4px 10px;border-radius:4px;border:1px solid var(--card-border);background:rgba(252,129,129,0.06);color:var(--red);cursor:pointer;transition:all .3s}
+.kessler-controls button:hover{background:rgba(252,129,129,0.15)}
+.kessler-controls .k-close{margin-left:auto;background:none;color:var(--text-dim)}
+.k-stat{font-family:var(--mono);font-size:.5rem;color:var(--text-dim)}
+
+/* Export Button */
+.export-btn{position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:52;display:flex;gap:6px;opacity:0;transition:opacity .4s;pointer-events:none}
+.export-btn.vis{opacity:1;pointer-events:auto}
+.export-btn button{font-family:var(--mono);font-size:.52rem;padding:5px 12px;border-radius:6px;border:1px solid var(--card-border);background:rgba(6,10,22,0.8);color:var(--green);cursor:pointer;backdrop-filter:blur(8px);transition:all .3s}
+.export-btn button:hover{border-color:var(--green);background:rgba(111,207,151,0.08)}
+
+/* Heatmap overlay */
+.heatmap-toggle{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:43;opacity:0;transition:opacity .4s;pointer-events:none;display:flex;gap:4px}
+.heatmap-toggle.vis{opacity:1;pointer-events:auto}
+.hm-btn{font-family:var(--mono);font-size:.48rem;padding:3px 8px;border-radius:4px;border:1px solid var(--card-border);background:rgba(6,10,22,0.7);color:var(--text-dim);cursor:pointer;transition:all .3s}
+.hm-btn.active{border-color:var(--purple);color:var(--purple);background:rgba(183,148,244,0.08)}
+
+/* SAT CARD */
+.sat-card{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:60;background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;min-width:290px;max-width:360px;width:88vw;backdrop-filter:blur(20px);opacity:0;pointer-events:none;transition:opacity .3s;overflow:hidden;max-height:65vh;overflow-y:auto}
+.sat-card.vis{opacity:1;pointer-events:auto}
+.sat-card::-webkit-scrollbar{width:2px}.sat-card::-webkit-scrollbar-thumb{background:var(--card-border)}
+.ch{padding:14px 16px 6px;position:relative}.cc{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:3px}
+.cn{font-size:.95rem;font-weight:700;color:#fff;padding-right:22px}.cm{display:flex;gap:5px;align-items:center;margin-top:3px;flex-wrap:wrap}
+.cid{font-family:var(--mono);font-size:.55rem;color:var(--text-dim)}
+.cb{font-family:var(--mono);font-size:.48rem;padding:2px 6px;border-radius:3px;text-transform:uppercase;font-weight:500}
+.bc{background:rgba(92,224,214,0.1);color:var(--cyan)}.bs{background:rgba(183,148,244,0.1);color:var(--purple)}.bw{background:rgba(110,140,255,0.1);color:var(--blue)}.bn{background:rgba(111,207,151,0.1);color:var(--green)}.bi{background:rgba(246,173,85,0.1);color:var(--orange)}.bt{background:rgba(232,193,112,0.1);color:var(--gold)}.bd{background:rgba(252,129,129,0.1);color:var(--red)}.bm{background:rgba(255,255,255,0.04);color:var(--text-dim)}.bo{background:rgba(255,255,255,0.03);color:var(--text-muted)}
+.cs{padding:0 16px 10px}.cst{font-family:var(--mono);font-size:.48rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.03)}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.ci{display:flex;flex-direction:column}.ci .cl{font-size:.48rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}.ci .cv{font-family:var(--mono);font-size:.7rem;color:var(--text);font-weight:500}.ci .cv.hl{color:var(--cyan)}
+.ci.full{grid-column:span 2}.ci .cv.desc{font-family:var(--font);font-size:.68rem;color:var(--text-dim);line-height:1.4}
+.coe-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:3px}
+.coe{text-align:center;padding:3px;background:rgba(246,135,179,0.03);border-radius:3px;border:1px solid rgba(246,135,179,0.06)}
+.coe .cs2{font-family:var(--mono);font-size:.5rem;color:var(--magenta)}.coe .cv2{font-family:var(--mono);font-size:.6rem;color:var(--text);font-weight:500}.coe .cn2{font-size:.38rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+.freq-row{display:flex;justify-content:space-between;padding:2px 0;font-family:var(--mono);font-size:.46rem;border-bottom:1px solid rgba(255,255,255,0.02)}
+.freq-row .fl{color:var(--text-dim)}.freq-row .fv{color:var(--purple)}
+.card-globe{width:100%;height:90px}.card-globe canvas{width:100%;height:100%;border-radius:5px;background:rgba(0,0,0,0.3)}
+.ctry{display:flex;align-items:center;gap:6px;margin:5px 0;padding:5px 8px;background:rgba(255,255,255,0.02);border-radius:5px}.ctry-f{font-size:1.1rem}.ctry-n{font-size:.72rem;font-weight:600}.ctry-a{font-family:var(--mono);font-size:.52rem;color:var(--text-dim)}
+
+/* LOCATION */
+.loc-overlay{position:fixed;inset:0;z-index:200;background:rgba(3,5,16,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:30px;text-align:center;backdrop-filter:blur(10px)}
+.loc-overlay.hidden{display:none}
+.loc-overlay h2{font-size:1.2rem;font-weight:700;color:#fff}.loc-overlay p{font-size:.8rem;color:var(--text-dim);max-width:320px;line-height:1.5}
+.lbtn{padding:10px 28px;border-radius:9px;border:none;font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;background:var(--blue);color:#fff;transition:all .3s}
+.lbtn:hover{box-shadow:0 0 20px rgba(110,140,255,0.4)}
+.cg2{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:300px;width:100%}
+.cbtn{padding:8px 10px;background:rgba(6,10,22,0.7);border:1px solid var(--card-border);border-radius:6px;color:var(--text);font-family:var(--font);font-size:.72rem;cursor:pointer;transition:all .3s;text-align:left}
+.cbtn:hover{border-color:var(--blue)}.cbtn .cn3{font-weight:600;display:block}.cbtn .cc3{font-family:var(--mono);font-size:.52rem;color:var(--text-dim)}
+.loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;font-family:var(--mono);font-size:.68rem;color:var(--text-dim);display:flex;flex-direction:column;align-items:center;gap:10px}
+.loading.hidden{display:none}
+.lspin{width:20px;height:20px;border:2px solid var(--card-border);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.sat-card{min-width:auto;left:6px;right:6px;transform:none;max-width:none}.iss-banner{left:6px;right:6px;transform:none}.cg2{grid-template-columns:1fr}.tle-pnl{width:170px}.perturb-pnl{width:150px}.kessler-pnl{width:280px}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="sky"></canvas>
+<div class="top-bar"><div class="logo"><span class="logo-dot"></span> <span data-en="Satellites in the Sky" data-fr="Satellites dans le Ciel" data-ar="أقمار في السماء">Satellites in the Sky</span></div><div class="sat-counter"><span data-en="tracking" data-fr="suivi de" data-ar="تتبع">tracking</span> <span class="count" id="satCount">0</span></div></div>
+<div class="mode-toggle"><button class="mode-btn active" data-mode="sky" data-en="Sky" data-fr="Ciel" data-ar="السماء">Sky</button><button class="mode-btn" data-mode="explorer" data-en="Explorer" data-fr="Explorateur" data-ar="المستكشف">Explorer</button><button class="mode-btn" data-mode="pro" data-en="Pro" data-fr="Pro" data-ar="متقدم">Pro</button><button class="mode-btn" data-mode="expert" data-en="Expert" data-fr="Expert" data-ar="خبير">Expert</button></div>
+<div class="strip" id="strip"><div class="si"><span data-en="ISS:" data-fr="ISS :" data-ar="م.ف.د:">ISS:</span> <span class="sv" id="sIss">—</span></div><div class="si"><span data-en="Visible:" data-fr="Visibles :" data-ar="مرئي:">Visible:</span> <span class="sv" id="sVis">—</span></div><div class="si"><span data-en="LEO:" data-fr="LEO :" data-ar="مدار منخفض:">LEO:</span> <span class="sv" id="sLeo">—</span></div><div class="si"><span data-en="Debris:" data-fr="Débris :" data-ar="حطام:">Debris:</span> <span class="sv" id="sDeb">—</span></div></div>
+<div class="iss-banner" id="issBnr"><span class="idot"></span><span class="il">ISS</span><span class="ii" id="issInf">—</span></div>
+
+<!-- Expert panels -->
+<div class="pnl tle-pnl" id="tlePnl"><div class="pt"><span class="pd" style="background:var(--magenta)"></span><span data-en="TLE Decode" data-fr="Décodage TLE" data-ar="فك تشفير TLE">TLE Decode</span></div><div class="pnl-scroll" id="tleContent"><div style="font-family:var(--mono);font-size:.46rem;color:var(--text-muted)" data-en="Tap a satellite" data-fr="Touchez un satellite" data-ar="انقر على قمر صناعي">Tap a satellite</div></div></div>
+<div class="pnl perturb-pnl" id="perturbPnl"><div class="pt"><span class="pd" style="background:var(--orange)"></span><span data-en="Perturbation Forces" data-fr="Forces de Perturbation" data-ar="قوى الاضطراب">Perturbation Forces</span></div><div id="perturbContent"></div></div>
+<div class="pnl doppler-pnl" id="dopplerPnl"><div class="pt"><span class="pd" style="background:var(--purple)"></span><span data-en="Doppler Shift" data-fr="Effet Doppler" data-ar="تأثير دوبلر">Doppler Shift</span></div><div id="dopplerContent"><div class="dop-sub" data-en="Tap a satellite" data-fr="Touchez un satellite" data-ar="انقر على قمر صناعي">Tap a satellite</div></div></div>
+<div class="pnl atmo-pnl" id="atmoPnl"><div class="pt"><span class="pd" style="background:var(--cyan)"></span><span data-en="Atmosphere" data-fr="Atmosphère" data-ar="الغلاف الجوي">Atmosphere</span></div><div id="atmoContent"></div></div>
+<div class="pnl kessler-pnl" id="kesslerPnl" style="display:none"><div class="pt"><span class="pd" style="background:var(--red)"></span><span data-en="Kessler Syndrome Simulation" data-fr="Simulation du syndrome de Kessler" data-ar="محاكاة متلازمة كسلر">Kessler Syndrome Simulation</span></div><canvas id="kesslerCanvas"></canvas><div class="kessler-controls"><button id="kRunBtn" data-en="▶ Run Simulation" data-fr="▶ Lancer la simulation" data-ar="▶ تشغيل المحاكاة">▶ Run Simulation</button><span class="k-stat" id="kStat">0 objects</span><button class="k-close" id="kCloseBtn">✕</button></div></div>
+
+<div class="heatmap-toggle" id="hmToggle"><button class="hm-btn" data-hm="none" data-en="Normal" data-fr="Normal" data-ar="عادي">Normal</button><button class="hm-btn" data-hm="density" data-en="Density" data-fr="Densité" data-ar="الكثافة">Density</button><button class="hm-btn" data-hm="altitude" data-en="Altitude" data-fr="Altitude" data-ar="الارتفاع">Altitude</button><button class="hm-btn" data-hm="kessler" data-en="Kessler Sim" data-fr="Sim. Kessler" data-ar="محاكاة كسلر">Kessler Sim</button></div>
+
+<div class="export-btn" id="exportBtns"><button id="csvBtn" data-en="📊 Export CSV" data-fr="📊 Exporter CSV" data-ar="📊 تصدير CSV">📊 Export CSV</button><button id="jsonBtn" data-en="📋 Export JSON" data-fr="📋 Exporter JSON" data-ar="📋 تصدير JSON">📋 Export JSON</button></div>
+
+<div class="sat-card" id="satCard">
+  <div class="ch"><button class="cc" id="cardClose">✕</button><div class="cn" id="cardName">—</div><div class="cm"><span class="cid" id="cardId">—</span><span class="cb" id="cardBadge">—</span></div></div>
+  <div class="cs" id="ctryS" style="display:none"><div class="ctry"><span class="ctry-f" id="cFlag"></span><div><span class="ctry-n" id="cName"></span><span class="ctry-a" id="cAgency"></span></div></div></div>
+  <div class="cs"><div class="cst" data-en="Position & Orbit" data-fr="Position et Orbite" data-ar="الموقع والمدار">Position & Orbit</div><div class="cg" id="cgOrbit"></div></div>
+  <div class="cs" id="oeS" style="display:none"><div class="cst" data-en="Keplerian Elements" data-fr="Éléments Képlériens" data-ar="عناصر كبلر">Keplerian Elements</div><div class="coe-grid" id="coeGrid"></div></div>
+  <div class="cs" id="freqS" style="display:none"><div class="cst" data-en="Frequency Bands" data-fr="Bandes de fréquences" data-ar="نطاقات التردد">Frequency Bands</div><div id="freqContent"></div></div>
+  <div class="cs" id="decayS" style="display:none"><div class="cst" data-en="Orbital Decay" data-fr="Décroissance orbitale" data-ar="تحلل المدار">Orbital Decay</div><div class="cg" id="decayGrid"></div></div>
+  <div class="cs" id="missS" style="display:none"><div class="cst" data-en="Mission" data-fr="Mission" data-ar="المهمة">Mission</div><div class="ci full"><span class="cv desc" id="missDesc"></span></div></div>
+  <div class="cs"><div class="cst" data-en="Ground Position" data-fr="Position au sol" data-ar="الموقع الأرضي">Ground Position</div><div class="card-globe"><canvas id="globeCanvas"></canvas></div></div>
+</div>
+
+<div class="bottom-bar"><div class="compass" id="compass"><span class="dir">N</span></div><div class="binfo"><div id="locLbl">—</div><div id="timeLbl">—</div></div></div>
+
+<div class="loc-overlay" id="locOver"><div style="font-size:2rem">🛰️</div><h2 data-en="Where Are You?" data-fr="Où êtes-vous ?" data-ar="أين أنت؟">Where Are You?</h2><p data-en="We need your location to show the satellites overhead." data-fr="Nous avons besoin de votre position pour montrer les satellites au-dessus de vous." data-ar="نحتاج إلى موقعك لنعرض لك الأقمار الصناعية فوقك.">We need your location to show the satellites overhead.</p><button class="lbtn" id="gpsBtn" data-en="📍 Use My Location" data-fr="📍 Utiliser ma position" data-ar="📍 استخدم موقعي">📍 Use My Location</button><p style="font-size:.65rem;color:var(--text-dim);margin:-6px 0" data-en="or pick a city" data-fr="ou choisissez une ville" data-ar="أو اختر مدينة">or pick a city</p><div class="cg2" id="cityGrid"></div></div>
+<div class="loading hidden" id="loadMsg"><div class="lspin"></div><span data-en="Fetching satellites…" data-fr="Récupération des satellites…" data-ar="جاري جلب الأقمار الصناعية…">Fetching satellites…</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
+<script>
+const D=Math.PI/180,R=180/Math.PI,T2=Math.PI*2,MU=398600.4418;
+
+const SAT_DB={patterns:[
+{match:/ISS.*ZARYA/i,type:'station',mission:'Crew of 6-7 · Inhabited since 2000 · 109m wide · ~92 min orbit',country:'INT',flag:'🌐',agency:'NASA/Roscosmos/ESA/JAXA',size:109,freq:['S-band 2.0-2.3 GHz','Ku-band 13.7 GHz','Ka-band 25.5 GHz']},
+{match:/TIANGONG/i,type:'station',mission:'China space station · Crew of 3',country:'CN',flag:'🇨🇳',agency:'CNSA',size:20,freq:['S-band','Ka-band']},
+{match:/STARLINK/i,type:'comms',mission:'SpaceX LEO broadband internet · 12,000+ planned',country:'US',flag:'🇺🇸',agency:'SpaceX',size:3.5,constellation:'Starlink',freq:['Ku-band 10.7-12.7 GHz','Ka-band 37.5-42.0 GHz']},
+{match:/ONEWEB/i,type:'comms',mission:'LEO broadband constellation',country:'GB',flag:'🇬🇧',agency:'OneWeb',size:1.5,constellation:'OneWeb',freq:['Ku-band 10.7-12.7 GHz']},
+{match:/IRIDIUM/i,type:'comms',mission:'Global voice & data · 66 sats · Famous flares',country:'US',flag:'🇺🇸',agency:'Iridium',size:4,constellation:'Iridium',freq:['L-band 1616-1626 MHz']},
+{match:/GPS|NAVSTAR/i,type:'nav',mission:'Global Positioning System · 31 MEO satellites',country:'US',flag:'🇺🇸',agency:'US Space Force',size:6,constellation:'GPS',freq:['L1 1575.42 MHz','L2 1227.60 MHz','L5 1176.45 MHz']},
+{match:/GALILEO/i,type:'nav',mission:'European navigation · 30 satellites',country:'EU',flag:'🇪🇺',agency:'ESA',size:3,constellation:'Galileo',freq:['E1 1575.42 MHz','E5 1176.45 MHz','E6 1278.75 MHz']},
+{match:/GLONASS/i,type:'nav',mission:'Russian navigation · 24 satellites',country:'RU',flag:'🇷🇺',agency:'Roscosmos',size:3,constellation:'GLONASS',freq:['L1 1602 MHz','L2 1246 MHz']},
+{match:/NOAA|GOES|JPSS/i,type:'weather',mission:'Weather observation & storm tracking',country:'US',flag:'🇺🇸',agency:'NOAA',size:5,freq:['L-band 1694-1710 MHz']},
+{match:/HUBBLE|HST/i,type:'science',mission:'Space telescope · Deepest universe images',country:'US',flag:'🇺🇸',agency:'NASA/ESA',size:13,freq:['S-band 2.255 GHz','Ku-band 15.0 GHz']},
+{match:/TERRA|AQUA|LANDSAT/i,type:'imaging',mission:'Earth observation · Climate monitoring',country:'US',flag:'🇺🇸',agency:'NASA',size:7,freq:['X-band 8.160 GHz']},
+{match:/SENTINEL/i,type:'imaging',mission:'Copernicus Earth observation',country:'EU',flag:'🇪🇺',agency:'ESA',size:4,constellation:'Sentinel',freq:['X-band 8.090 GHz']},
+{match:/COSMOS|KOSMOS/i,type:'military',mission:'Russian military/civil series',country:'RU',flag:'🇷🇺',agency:'Roscosmos',size:3},
+{match:/ARABSAT/i,type:'comms',mission:'Arab League communications',country:'SA',flag:'🇸🇦',agency:'Arabsat',size:5,freq:['C-band','Ku-band','Ka-band']},
+{match:/TURKSAT/i,type:'comms',mission:'Turkish communications',country:'TR',flag:'🇹🇷',agency:'Türksat',size:4,freq:['Ku-band','C-band']},
+{match:/CZ-|FALCON|R\/B|ROCKET/i,type:'debris',mission:'Rocket body / spent stage',country:null,flag:'🚀',agency:'Debris',size:null},
+{match:/DEB|DEBRIS/i,type:'debris',mission:'Space debris fragment',country:null,flag:'⚠️',agency:'Debris',size:null},
+],getInfo(n){for(const p of this.patterns)if(p.match.test(n))return{...p};return{type:'other',mission:null,country:null,flag:'🛰️',agency:null,size:null}},
+bc(t){return{comms:'bc',science:'bs',weather:'bw',nav:'bn',imaging:'bi',station:'bt',debris:'bd',military:'bm'}[t]||'bo'},
+tl(t){return{comms:'Comms',science:'Science',weather:'Weather',nav:'Navigation',imaging:'Imaging',station:'Station',debris:'Debris',military:'Military'}[t]||'Satellite'}};
+
+const STARS=[{ra:101.29,dec:-16.72,mag:-1.46,name:'Sirius'},{ra:279.23,dec:38.78,mag:0.03,name:'Vega'},{ra:78.63,dec:-8.2,mag:0.13,name:'Rigel'},{ra:88.79,dec:7.41,mag:0.42,name:'Betelgeuse'},{ra:297.7,dec:8.87,mag:0.76,name:'Altair'},{ra:68.98,dec:16.51,mag:0.85,name:'Aldebaran'},{ra:310.36,dec:45.28,mag:1.25,name:'Deneb'},{ra:247.35,dec:-26.43,mag:0.96,name:'Antares'},{ra:37.95,dec:89.26,mag:1.98,name:'Polaris'},{ra:152.09,dec:11.97,mag:1.35,name:'Regulus'},{ra:213.92,dec:19.18,mag:-0.05,name:'Arcturus'},{ra:95.99,dec:-52.7,mag:-0.74,name:'Canopus'},{ra:201.3,dec:-11.16,mag:0.97,name:'Spica'},{ra:344.41,dec:-29.62,mag:1.16,name:'Fomalhaut'}];
+const BG=[];for(let i=0;i<500;i++)BG.push({ra:Math.random()*360,dec:Math.asin(Math.random()*2-1)*R,mag:3+Math.random()*3,name:null});
+const CITIES=[{n:'London',la:51.51,lo:-.13},{n:'Paris',la:48.86,lo:2.35},{n:'New York',la:40.71,lo:-74.01},{n:'Tokyo',la:35.68,lo:139.69},{n:'Dubai',la:25.2,lo:55.27},{n:'Makkah',la:21.39,lo:39.86},{n:'Cairo',la:30.04,lo:31.24},{n:'Istanbul',la:41.01,lo:28.98},{n:'KL',la:3.14,lo:101.69},{n:'Sydney',la:-33.87,lo:151.21}];
+
+const S={obs:null,sats:[],pos:[],mode:'sky',vAz:0,vEl:Math.PI/2,fov:120*D,sel:null,gyro:false,gAz:0,gEl:Math.PI/2,t:new Date(),trails:{},loaded:false,heatmap:'none',kesslerRunning:false,kesslerObjects:[]};
+const cv=document.getElementById('sky'),cx=cv.getContext('2d');let W,H,CX,CY;
+function resize(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0);CX=W/2;CY=H/2}
+addEventListener('resize',resize);resize();
+
+function gm(d){const jd=367*d.getUTCFullYear()-Math.floor(7*(d.getUTCFullYear()+Math.floor((d.getUTCMonth()+10)/12))/4)+Math.floor(275*(d.getUTCMonth()+1)/9)+d.getUTCDate()+1721013.5+(d.getUTCHours()+d.getUTCMinutes()/60+d.getUTCSeconds()/3600)/24;const T=(jd-2451545)/36525;let g=280.46061837+360.98564736629*(jd-2451545)+.000387933*T*T-T*T*T/38710000;return((g%360+360)%360)*D}
+function rdToAA(ra,dec,lat,lon,d){const lst=gm(d)+lon*D,ha=lst-ra*D,lr=lat*D,dr=dec*D;const sa=Math.sin(dr)*Math.sin(lr)+Math.cos(dr)*Math.cos(lr)*Math.cos(ha);const alt=Math.asin(Math.max(-1,Math.min(1,sa)));const ca=(Math.sin(dr)-Math.sin(alt)*Math.sin(lr))/(Math.cos(alt)*Math.cos(lr));let az=Math.acos(Math.max(-1,Math.min(1,ca)));if(Math.sin(ha)>0)az=T2-az;return{alt,az}}
+function proj(az,el){const vA=S.gyro?S.gAz:S.vAz,vE=S.gyro?S.gEl:S.vEl;const a=Math.cos(el)*Math.sin(az),b=Math.sin(el),c=Math.cos(el)*Math.cos(az),va=Math.cos(vE)*Math.sin(vA),vb=Math.sin(vE),vc=Math.cos(vE)*Math.cos(vA);const dot=a*va+b*vb+c*vc;if(dot<-.1)return null;const rx=Math.cos(vA),rz=-Math.sin(vA),ux=-Math.sin(vE)*Math.sin(vA),uy=Math.cos(vE),uz=-Math.sin(vE)*Math.cos(vA);const dx=a-va,dy=b-vb,dz=c-vc;const px=dx*rx+dz*rz,py=dx*ux+dy*uy+dz*uz;const s=Math.min(W,H)/(2*Math.tan(S.fov/2));const sx=CX+px*s,sy=CY-py*s;if(sx<-150||sx>W+150||sy<-150||sy>H+150)return null;return{x:sx,y:sy,ad:Math.acos(Math.max(-1,Math.min(1,dot)))}}
+
+async function fetchTLEs(){document.getElementById('loadMsg').classList.remove('hidden');const urls=['https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle','https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle'];const all=[],seen=new Set();for(const u of urls){try{const r=await fetch(u);const t=await r.text();const L=t.trim().split('\n').map(l=>l.trim());for(let i=0;i<L.length-2;i+=3){const nm=L[i],t1=L[i+1],t2=L[i+2];if(!t1.startsWith('1 ')||!t2.startsWith('2 '))continue;const nid=t1.substring(2,7).trim();if(seen.has(nid))continue;seen.add(nid);try{const sr=satellite.twoline2satrec(t1,t2);all.push({name:nm.replace(/^\d+\s*/,'').trim()||nm.trim(),sr,nid,intl:t1.substring(9,17).trim(),iss:nm.includes('ISS')&&nm.includes('ZARYA'),t1,t2,incl:parseFloat(t2.substring(8,16)),raan:parseFloat(t2.substring(17,25)),ecc:parseFloat('.'+t2.substring(26,33)),argP:parseFloat(t2.substring(34,42)),ma:parseFloat(t2.substring(43,51)),mm:parseFloat(t2.substring(52,63)),bstar:parseFloat(t1.substring(53,61).replace(/(.)([-+])(\d+)/,'$1e$2$3')||0),ndot:parseFloat(t1.substring(33,43))})}catch(e){}}}catch(e){}}S.sats=all;S.loaded=true;document.getElementById('loadMsg').classList.add('hidden');document.getElementById('satCount').textContent=all.length}
+
+function updatePos(){
+  const now=S.t,obs=S.obs;if(!obs)return;const gmv=satellite.gstime(now);const oGd={longitude:obs.lo*D,latitude:obs.la*D,height:0};
+  const pos=[];let lC=0,vC=0,dC=0;
+  for(const s of S.sats){try{const pv=satellite.propagate(s.sr,now);if(!pv.position)continue;const geo=satellite.eciToGeodetic(pv.position,gmv);const lk=satellite.ecfToLookAngles(oGd,satellite.eciToEcf(pv.position,gmv));const alt=geo.height,az=lk.azimuth,el=lk.elevation,dist=lk.rangeSat;const spd=pv.velocity?Math.sqrt(pv.velocity.x**2+pv.velocity.y**2+pv.velocity.z**2):0;const ab=el>0;if(ab)vC++;if(alt<2000)lC++;const inf=SAT_DB.getInfo(s.name);if(inf.type==='debris')dC++;const sc=proj(az,el);
+  // Radial velocity for Doppler
+  let vr=0;if(pv.velocity&&ab){const ecf=satellite.eciToEcf(pv.position,gmv);const vEcf=satellite.eciToEcf(pv.velocity,gmv);const dx=ecf.x-oGd.longitude/D*6371,dy=ecf.y,dz=ecf.z-oGd.latitude/D*6371;const dm=Math.sqrt(dx*dx+dy*dy+dz*dz);if(dm>0)vr=(vEcf.x*dx+vEcf.y*dy+vEcf.z*dz)/dm}
+  // Semi-major axis
+  const sma=s.mm>0?Math.pow(MU/Math.pow(s.mm*T2/86400,2),1/3):0;
+  // Orbital period
+  const period=s.mm>0?1440/s.mm:0;
+  pos.push({name:s.name,nid:s.nid,intl:s.intl,iss:s.iss,az,el,alt,dist,spd,lat:geo.latitude*R,lon:geo.longitude*R,x:sc?sc.x:null,y:sc?sc.y:null,ad:sc?sc.ad:null,vis:ab,on:!!sc,incl:s.incl,raan:s.raan,ecc:s.ecc,argP:s.argP,mm:s.mm,ma:s.ma,bstar:s.bstar,ndot:s.ndot,sma,period,vr,t1:s.t1,t2:s.t2});
+  if(sc&&ab){if(!S.trails[s.nid])S.trails[s.nid]=[];const tr=S.trails[s.nid];tr.push({x:sc.x,y:sc.y,t:Date.now()});while(tr.length>50)tr.shift()}
+  }catch(e){}}
+  S.pos=pos;
+  const iss=pos.find(p=>p.iss);if(iss){document.getElementById('sIss').textContent=Math.round(iss.alt)+' km';const b=document.getElementById('issBnr'),i=document.getElementById('issInf');if(iss.vis&&!document.getElementById('satCard').classList.contains('vis')){i.textContent=`${Math.round(iss.alt)}km · El ${Math.round(iss.el*R)}°`;b.classList.add('vis')}else b.classList.remove('vis')}
+  document.getElementById('sVis').textContent=vC;document.getElementById('sLeo').textContent=lC;document.getElementById('sDeb').textContent=dC;
+  if(S.mode==='expert'&&S.sel)updateExpertPanels(S.sel);
+}
+
+// ===== EXPERT PANEL UPDATES =====
+function updateExpertPanels(sat){
+  // TLE decode
+  const tc=document.getElementById('tleContent');
+  tc.innerHTML=`<div class="tle-raw">${sat.t1}\n${sat.t2}</div>`;
+  const decoded=[
+    ['NORAD ID',sat.nid],['Intl Desig',sat.intl],['Inclination',sat.incl.toFixed(4)+'°'],
+    ['RAAN (Ω)',sat.raan.toFixed(4)+'°'],['Eccentricity',sat.ecc.toFixed(7)],['Arg Perigee (ω)',sat.argP.toFixed(4)+'°'],
+    ['Mean Anomaly',sat.ma.toFixed(4)+'°'],['Mean Motion',sat.mm.toFixed(8)+' rev/day'],
+    ['B* Drag',sat.bstar?sat.bstar.toExponential(4):'0'],['Ṁ (ndot)',sat.ndot?sat.ndot.toExponential(3)+' rev/day²':'0'],
+    ['SMA',sat.sma?Math.round(sat.sma)+' km':'—'],['Period',sat.period?sat.period.toFixed(1)+' min':'—'],
+    ['Apogee',sat.sma?Math.round(sat.sma*(1+sat.ecc)-6371)+' km':'—'],
+    ['Perigee',sat.sma?Math.round(sat.sma*(1-sat.ecc)-6371)+' km':'—'],
+  ];
+  decoded.forEach(([l,v])=>tc.innerHTML+=`<div class="tle-row"><span class="tl">${l}</span><span class="tv">${v}</span></div>`);
+
+  // Perturbation forces
+  const pc=document.getElementById('perturbContent');pc.innerHTML='';
+  const altKm=sat.alt||400;
+  const dragForce=altKm<1000?Math.max(0,(1000-altKm)/1000):0;
+  const j2Force=0.7;
+  const solarForce=altKm>1000?0.15:0.05;
+  const lunarForce=0.03;
+  const forces=[
+    {name:'Atm. Drag',name_fr:'Traînée atm.',name_ar:'سحب الغلاف',val:dragForce,color:'var(--red)',desc:dragForce>0.3?'Significant':'Minimal'},
+    {name:'J2 (Earth oblateness)',name_fr:'J2 (aplatissement terrestre)',name_ar:'J2 (تسطح الأرض)',val:j2Force,color:'var(--orange)',desc:'Always present'},
+    {name:'Solar Pressure',val:solarForce,color:'var(--gold)',desc:altKm>1000?'Notable at altitude':'Minor'},
+    {name:'Lunar Gravity',name_fr:'Gravité lunaire',name_ar:'جاذبية القمر',val:lunarForce,color:'var(--purple)',desc:'Very small'}
+  ];
+  forces.forEach(f=>{pc.innerHTML+=`<div class="force-row"><span class="force-lbl">${f.name}</span><div class="force-bar" style="width:${Math.round(f.val*80)}px;background:${f.color}"></div><span class="force-val">${f.desc}</span></div>`});
+
+  // Doppler
+  const dc=document.getElementById('dopplerContent');
+  const freq=1575.42; // GPS L1 as reference
+  const dopplerShift=sat.vr?(sat.vr/299792.458)*freq*1e6:0; // Hz shift
+  const approaching=dopplerShift>0;
+  dc.innerHTML=`<div class="dop-value">${dopplerShift>0?'+':''}${dopplerShift.toFixed(0)} Hz</div>
+    <div class="dop-sub">${approaching?'↗ Approaching — blueshift':'↘ Receding — redshift'}</div>
+    <div class="dop-sub">at ${freq} MHz reference</div>
+    <div class="dop-bar"><div class="dop-fill" style="left:${approaching?'50':'0'}%;width:${Math.min(50,Math.abs(dopplerShift)/100)}%;background:${approaching?'var(--blue)':'var(--red)'}"></div></div>
+    <div class="dop-sub" style="margin-top:4px">Radial velocity: ${(sat.vr||0).toFixed(2)} km/s</div>`;
+}
+
+function updateAtmosphere(){
+  const ac=document.getElementById('atmoContent');ac.innerHTML='';
+  const layers=[
+    {name:'Troposphere',range:'0–12 km',h:12,color:'var(--cyan)'},
+    {name:'Stratosphere',range:'12–50 km',h:16,color:'var(--blue)'},
+    {name:'Mesosphere',range:'50–80 km',h:12,color:'var(--purple)'},
+    {name:'Thermosphere',range:'80–700 km',h:24,color:'var(--orange)'},
+    {name:'Exosphere',range:'700–10,000 km',h:18,color:'var(--red)'},
+  ];
+  layers.forEach(l=>{ac.innerHTML+=`<div class="atmo-layer"><div class="al-bar" style="height:${l.h}px;background:${l.color}"></div><span class="al-name">${l.name}</span><span class="al-range">${l.range}</span></div>`});
+}
+
+// ===== KESSLER SIMULATION =====
+let kesslerAnim=null;
+function initKessler(){
+  const pnl=document.getElementById('kesslerPnl');pnl.style.display='block';pnl.classList.add('vis');
+  S.kesslerObjects=[];
+  // Seed with real-ish distribution
+  for(let i=0;i<200;i++){const a=Math.random()*T2,r=200+Math.random()*1200,s=0.02+Math.random()*0.03;
+    S.kesslerObjects.push({a,r,s,alive:true,age:0,debris:false})}
+  document.getElementById('kStat').textContent=S.kesslerObjects.length+' objects';
+}
+
+function runKessler(){
+  S.kesslerRunning=true;
+  const kc=document.getElementById('kesslerCanvas');const w=kc.parentElement.clientWidth,h=160;
+  const dp=devicePixelRatio||1;kc.width=w*dp;kc.height=h*dp;kc.style.width=w+'px';kc.style.height=h+'px';
+  const g=kc.getContext('2d');g.setTransform(dp,0,0,dp,0,0);
+  const kcx=w/2,kcy=h/2,kr=Math.min(kcx,kcy)-10;
+
+  let step=0;
+  function tick(){
+    if(!S.kesslerRunning)return;
+    g.fillStyle='rgba(2,4,8,0.15)';g.fillRect(0,0,w,h);
+    // Earth
+    g.beginPath();g.arc(kcx,kcy,15,0,T2);g.fillStyle='#0a1428';g.fill();g.strokeStyle='rgba(110,140,255,0.2)';g.lineWidth=.5;g.stroke();
+
+    // Collision chance every ~30 frames
+    if(step%30===0&&S.kesslerObjects.length<2000){
+      const alive=S.kesslerObjects.filter(o=>o.alive);
+      for(let i=0;i<alive.length;i++){for(let j=i+1;j<alive.length;j++){
+        const d=Math.abs(alive[i].r-alive[j].r);const angD=Math.abs(alive[i].a-alive[j].a);
+        if(d<30&&angD<0.1&&Math.random()<0.02){
+          // Collision! Create debris
+          alive[i].alive=false;alive[j].alive=false;
+          const numDeb=3+Math.floor(Math.random()*5);
+          for(let k=0;k<numDeb;k++){S.kesslerObjects.push({a:alive[i].a+Math.random()*.4-.2,r:alive[i].r+Math.random()*60-30,s:(Math.random()-.5)*.06,alive:true,age:0,debris:true})}
+        }
+      }}
+    }
+
+    S.kesslerObjects.forEach(o=>{
+      if(!o.alive)return;
+      o.a+=o.s;o.age++;
+      const x=kcx+Math.cos(o.a)*(15+o.r/1400*kr);
+      const y=kcy+Math.sin(o.a)*(15+o.r/1400*kr)*.6;
+      g.beginPath();g.arc(x,y,o.debris?0.8:1.2,0,T2);
+      g.fillStyle=o.debris?'rgba(252,129,129,0.7)':'rgba(110,140,255,0.6)';g.fill();
+    });
+
+    const aliveCount=S.kesslerObjects.filter(o=>o.alive).length;
+    document.getElementById('kStat').textContent=aliveCount+' objects ('+S.kesslerObjects.filter(o=>o.debris&&o.alive).length+' debris)';
+    step++;
+    kesslerAnim=requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+document.getElementById('kRunBtn').addEventListener('click',()=>{if(!S.kesslerRunning){initKessler();runKessler()}});
+document.getElementById('kCloseBtn').addEventListener('click',()=>{S.kesslerRunning=false;if(kesslerAnim)cancelAnimationFrame(kesslerAnim);document.getElementById('kesslerPnl').classList.remove('vis');setTimeout(()=>document.getElementById('kesslerPnl').style.display='none',400)});
+
+// ===== DATA EXPORT =====
+document.getElementById('csvBtn').addEventListener('click',()=>{
+  if(!S.pos.length)return;
+  let csv='Name,NORAD_ID,Altitude_km,Latitude,Longitude,Speed_kms,Elevation,Azimuth,Inclination,Eccentricity,Period_min,Type\n';
+  S.pos.filter(p=>p.vis).forEach(p=>{const i=SAT_DB.getInfo(p.name);csv+=`"${p.name}",${p.nid},${p.alt.toFixed(1)},${p.lat.toFixed(3)},${p.lon.toFixed(3)},${p.spd.toFixed(3)},${(p.el*R).toFixed(1)},${(p.az*R).toFixed(1)},${p.incl.toFixed(2)},${p.ecc.toFixed(6)},${p.period.toFixed(1)},${i.type}\n`});
+  download('satellites_data.csv',csv,'text/csv');
+});
+document.getElementById('jsonBtn').addEventListener('click',()=>{
+  const data=S.pos.filter(p=>p.vis).map(p=>{const i=SAT_DB.getInfo(p.name);return{name:p.name,noradId:p.nid,altitude_km:+p.alt.toFixed(1),lat:+p.lat.toFixed(3),lon:+p.lon.toFixed(3),speed_kms:+p.spd.toFixed(3),elevation:+(p.el*R).toFixed(1),azimuth:+(p.az*R).toFixed(1),inclination:p.incl,eccentricity:p.ecc,period_min:+p.period.toFixed(1),type:i.type}});
+  download('satellites_data.json',JSON.stringify(data,null,2),'application/json');
+});
+function download(name,content,type){const b=new Blob([content],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
+
+// ===== RENDER =====
+function render(){
+  const now=Date.now();S.t=new Date();cx.clearRect(0,0,W,H);
+  const isE=S.mode==='expert',isP=S.mode==='pro';
+
+  // Background
+  if(isP||isE){cx.fillStyle=isE?'#010308':'#020408';cx.fillRect(0,0,W,H);
+    cx.strokeStyle=isE?'rgba(246,135,179,0.03)':'rgba(246,173,85,0.04)';cx.lineWidth=.5;
+    for(let r=1;r<=4;r++){cx.beginPath();cx.arc(CX,CY,Math.min(W,H)*r/8,0,T2);cx.stroke()}
+  }else{const sg=cx.createRadialGradient(CX,CY,0,CX,CY,Math.max(W,H)*.7);sg.addColorStop(0,'#080c1e');sg.addColorStop(1,'#030510');cx.fillStyle=sg;cx.fillRect(0,0,W,H)}
+
+  if(!S.obs){requestAnimationFrame(render);return}
+
+  // Stars
+  if(!isP&&!isE){const all=[...STARS,...BG];for(const s of all){const{alt,az}=rdToAA(s.ra,s.dec,S.obs.la,S.obs.lo,S.t);if(alt<-5*D)continue;const sc=proj(az,alt);if(!sc)continue;const bf=Math.max(0,1-s.mag/6),sz=s.mag<1?2:s.mag<2?1.3:s.mag<3?.9:.5;const tw=.7+.3*Math.sin(now/1000*(1+(s.ra*7%3))+s.dec);cx.globalAlpha=bf*.85*tw;cx.beginPath();cx.arc(sc.x,sc.y,sz,0,T2);cx.fillStyle=s.mag<0?'#dde8ff':s.mag<2?'#c8d4f0':'#8090b0';cx.fill();if(S.mode==='explorer'&&s.name&&s.mag<1.5){cx.globalAlpha=.35;cx.font='500 7.5px "JetBrains Mono"';cx.fillStyle='#4a5568';cx.fillText(s.name,sc.x+sz+3,sc.y+2)}cx.globalAlpha=1}}
+
+  // Heatmap overlay
+  if(isE&&S.heatmap==='density'){
+    const grid=20;for(let gx=0;gx<W;gx+=grid){for(let gy=0;gy<H;gy+=grid){let c=0;for(const p of S.pos){if(p.on&&p.vis){const dx=p.x-(gx+grid/2),dy=p.y-(gy+grid/2);if(dx*dx+dy*dy<(grid*4)**2)c++}}if(c>0){cx.fillStyle=`rgba(183,148,244,${Math.min(.3,c*.03)})`;cx.fillRect(gx,gy,grid,grid)}}}
+  } else if(isE&&S.heatmap==='altitude'){
+    for(const p of S.pos){if(!p.on||!p.vis)continue;const norm=Math.min(1,p.alt/40000);const r=8+norm*15;const col=norm<.1?'rgba(92,224,214,0.1)':norm<.3?'rgba(110,140,255,0.08)':norm<.8?'rgba(246,173,85,0.06)':'rgba(252,129,129,0.05)';cx.beginPath();cx.arc(p.x,p.y,r,0,T2);cx.fillStyle=col;cx.fill()}
+  }
+
+  // Satellites
+  if(S.loaded){updatePos();
+    for(const p of S.pos){if(!p.on||!p.vis)continue;const isSel=S.sel&&S.sel.nid===p.nid;const inf=SAT_DB.getInfo(p.name);const isD=inf.type==='debris';
+      const tr=S.trails[p.nid];if(tr&&tr.length>1){cx.beginPath();cx.moveTo(tr[0].x,tr[0].y);for(let i=1;i<tr.length;i++)cx.lineTo(tr[i].x,tr[i].y);cx.strokeStyle=p.iss?'rgba(232,193,112,0.2)':isE?'rgba(246,135,179,0.06)':'rgba(110,140,255,0.08)';cx.lineWidth=p.iss?1.2:.5;cx.stroke()}
+      const bsz=p.iss?4.5:isE?(isD?1:2):(isP?(isD?.8:2):(isD?1:2.2));const psz=p.iss?bsz+Math.sin(now/400)*1.2:bsz;
+      if(p.iss||isSel){const gc=p.iss?'rgba(232,193,112,0.25)':'rgba(92,224,214,0.25)';const gr=psz*4.5;const gg=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,gr);gg.addColorStop(0,gc);gg.addColorStop(1,'transparent');cx.fillStyle=gg;cx.beginPath();cx.arc(p.x,p.y,gr,0,T2);cx.fill()}
+      cx.beginPath();cx.arc(p.x,p.y,psz,0,T2);
+      const col=p.iss?'#e8c170':isSel?'#5ce0d6':isE?(isD?'rgba(252,129,129,0.3)':'rgba(246,135,179,0.6)'):(isP?(isD?'rgba(252,129,129,0.3)':inf.type==='nav'?'#6fcf97':'rgba(246,173,85,0.7)'):(isD?'rgba(252,129,129,0.25)':inf.type==='nav'?'#6fcf97':'#6e8cff'));
+      cx.fillStyle=col;cx.fill();
+      // Labels
+      if((S.mode!=='sky'||p.iss||isSel)&&!isD){
+        const lbl=p.iss?'ISS':p.name.length>14?p.name.substring(0,12)+'…':p.name;
+        cx.font=p.iss?'600 10px Outfit':'400 6.5px "JetBrains Mono"';
+        cx.fillStyle=p.iss?'#e8c170':isSel?'#5ce0d6':isE?'rgba(246,135,179,0.4)':isP?'rgba(246,173,85,0.4)':'rgba(110,140,255,0.4)';
+        cx.fillText(lbl,p.x+psz+4,p.y+2);
+        if(S.mode==='explorer'||isP||isE){cx.font='400 5.5px "JetBrains Mono"';cx.fillStyle='rgba(90,101,120,0.5)';cx.fillText(`${Math.round(p.alt)}km`,p.x+psz+4,p.y+10)}
+      }
+    }
+  }
+
+  const vAzD=((S.gyro?S.gAz:S.vAz)*R+360)%360;const dirs=['N','NE','E','SE','S','SW','W','NW'];
+  document.getElementById('compass').innerHTML=`<span class="dir">${dirs[Math.round(vAzD/45)%8]}</span>`;
+  document.getElementById('timeLbl').textContent=S.t.toLocaleTimeString();
+  requestAnimationFrame(render);
+}
+
+// ===== SAT CARD =====
+function showCard(sat){
+  const card=document.getElementById('satCard'),inf=SAT_DB.getInfo(sat.name);
+  document.getElementById('cardName').textContent=sat.iss?'🛰️ ISS':sat.name;
+  document.getElementById('cardId').textContent=`NORAD ${sat.nid}`;
+  const b=document.getElementById('cardBadge');b.textContent=SAT_DB.tl(inf.type);b.className='cb '+SAT_DB.bc(inf.type);
+  const cs=document.getElementById('ctryS');if(inf.country){cs.style.display='block';document.getElementById('cFlag').textContent=inf.flag;document.getElementById('cName').textContent=inf.country;document.getElementById('cAgency').textContent=inf.agency||''}else cs.style.display='none';
+  const og=document.getElementById('cgOrbit');og.innerHTML='';
+  [{l:'Altitude',v:Math.round(sat.alt)+' km',h:1},{l:'Distance',v:Math.round(sat.dist)+' km'},{l:'Speed',v:(sat.spd*3.6).toFixed(0)+' km/h'},{l:'Elevation',v:Math.round(sat.el*R)+'°'},{l:'Azimuth',v:Math.round(sat.az*R)+'°'},{l:'Position',v:`${sat.lat.toFixed(1)}°, ${sat.lon.toFixed(1)}°`}].forEach(i=>{const d=document.createElement('div');d.className='ci';d.innerHTML=`<span class="cl">${i.l}</span><span class="cv${i.h?' hl':''}">${i.v}</span>`;og.appendChild(d)});
+
+  // OE
+  const oeS=document.getElementById('oeS'),oeG=document.getElementById('coeGrid');
+  if(S.mode==='pro'||S.mode==='expert'){oeS.style.display='block';const per=sat.mm>0?(1440/sat.mm).toFixed(1):'—';
+    oeG.innerHTML=[['i',sat.incl.toFixed(2)+'°','Incl'],['e',sat.ecc.toFixed(5),'Ecc'],['T',per+' min','Period'],['Ω',sat.raan.toFixed(1)+'°','RAAN'],['ω',sat.argP.toFixed(1)+'°','ArgP'],['M',sat.ma.toFixed(1)+'°','MeanAn']].map(([s,v,n])=>`<div class="coe"><div class="cs2">${s}</div><div class="cv2">${v}</div><div class="cn2">${n}</div></div>`).join('')}
+  else oeS.style.display='none';
+
+  // Frequency bands
+  const fs=document.getElementById('freqS'),fc=document.getElementById('freqContent');
+  if(S.mode==='expert'&&inf.freq){fs.style.display='block';fc.innerHTML='';inf.freq.forEach(f=>fc.innerHTML+=`<div class="freq-row"><span class="fl">📡</span><span class="fv">${f}</span></div>`)}else fs.style.display='none';
+
+  // Orbital decay estimate
+  const ds=document.getElementById('decayS'),dg=document.getElementById('decayGrid');
+  if(S.mode==='expert'){ds.style.display='block';const drag=sat.bstar||0;const altKm=sat.alt;const decayRate=sat.ndot?Math.abs(sat.ndot)*1440:0;
+    const yearsLeft=altKm>1000?'>100':altKm>600?'~10-50':altKm>400?'~2-10':'<2';
+    dg.innerHTML=`<div class="ci"><span class="cl">B* Drag</span><span class="cv">${drag?drag.toExponential(3):'0'}</span></div>
+      <div class="ci"><span class="cl">Decay Rate</span><span class="cv">${decayRate.toExponential(2)} rev/day²</span></div>
+      <div class="ci"><span class="cl">Est. Lifetime</span><span class="cv hl">${yearsLeft} years</span></div>
+      <div class="ci"><span class="cl">Current Alt</span><span class="cv">${Math.round(altKm)} km</span></div>`}
+  else ds.style.display='none';
+
+  const ms=document.getElementById('missS');if(inf.mission){ms.style.display='block';document.getElementById('missDesc').textContent=inf.mission}else ms.style.display='none';
+  drawGlobe(sat);card.classList.add('vis');document.getElementById('issBnr').classList.remove('vis');S.sel=sat;
+  if(S.mode==='expert')updateExpertPanels(sat);
+}
+
+function drawGlobe(sat){const gc=document.getElementById('globeCanvas');const w=gc.parentElement.clientWidth,h=90,dp=devicePixelRatio||1;gc.width=w*dp;gc.height=h*dp;gc.style.width=w+'px';gc.style.height=h+'px';const g=gc.getContext('2d');g.setTransform(dp,0,0,dp,0,0);const ccx=w/2,ccy=h/2,r=Math.min(ccx,ccy)-5;const bg=g.createRadialGradient(ccx-r*.3,ccy-r*.3,0,ccx,ccy,r);bg.addColorStop(0,'#0d1530');bg.addColorStop(1,'#060a18');g.beginPath();g.arc(ccx,ccy,r,0,T2);g.fillStyle=bg;g.fill();g.strokeStyle='rgba(110,140,255,0.1)';g.lineWidth=.5;g.stroke();const rl=(sat.lon||0)*D;g.strokeStyle='rgba(110,140,255,0.04)';for(let la=-60;la<=60;la+=30){g.beginPath();let f=1;for(let lo=-180;lo<=180;lo+=5){const p=ort(la*D,lo*D-rl,ccx,ccy,r);if(p){if(f){g.moveTo(p.x,p.y);f=0}else g.lineTo(p.x,p.y)}else f=1}g.stroke()}const sp=ort(sat.lat*D,sat.lon*D-rl,ccx,ccy,r);if(sp){g.beginPath();g.arc(sp.x,sp.y,2.5,0,T2);g.fillStyle=sat.iss?'#e8c170':'#5ce0d6';g.fill()}if(S.obs){const op=ort(S.obs.la*D,S.obs.lo*D-rl,ccx,ccy,r);if(op){g.beginPath();g.arc(op.x,op.y,1.5,0,T2);g.fillStyle='#6e8cff';g.fill()}}}
+function ort(lat,lon,cx,cy,r){const x=Math.cos(lat)*Math.sin(lon),y=Math.sin(lat),z=Math.cos(lat)*Math.cos(lon);if(z<0)return null;return{x:cx+x*r,y:cy-y*r}}
+
+// ===== INTERACTION =====
+document.getElementById('cardClose').addEventListener('click',()=>{document.getElementById('satCard').classList.remove('vis');S.sel=null});
+function handleTap(x,y){if(!S.loaded)return;const c=document.getElementById('satCard');if(c.classList.contains('vis')){c.classList.remove('vis');S.sel=null}let nr=null,nd=35;for(const p of S.pos){if(!p.on||!p.vis)continue;const d=Math.sqrt((p.x-x)**2+(p.y-y)**2);if(d<nd){nd=d;nr=p}}if(nr)showCard(nr)}
+
+let pD=false,lx=0,ly=0,tx=0,ty=0;
+cv.addEventListener('pointerdown',e=>{pD=true;lx=tx=e.clientX;ly=ty=e.clientY});
+cv.addEventListener('pointermove',e=>{if(!pD||S.gyro)return;S.vAz-=(e.clientX-lx)*.003;S.vEl=Math.max(5*D,Math.min(Math.PI/2,S.vEl+(e.clientY-ly)*.003));lx=e.clientX;ly=e.clientY});
+cv.addEventListener('pointerup',()=>pD=false);
+cv.addEventListener('click',e=>{if(Math.abs(e.clientX-tx)<8&&Math.abs(e.clientY-ty)<8)handleTap(e.clientX,e.clientY)});
+
+if(window.DeviceOrientationEvent){function ho(e){if(e.alpha===null)return;S.gyro=true;S.gEl=Math.max(0,Math.min(Math.PI/2,(e.beta||0)*D));S.gAz=(T2-(e.alpha||0)*D)%T2}if(typeof DeviceOrientationEvent.requestPermission==='function')document.addEventListener('click',()=>{DeviceOrientationEvent.requestPermission().then(p=>{if(p==='granted')addEventListener('deviceorientation',ho)}).catch(console.warn)},{once:true});else addEventListener('deviceorientation',ho)}
+
+// Mode toggle
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.mode=b.dataset.mode;
+  const isEx=S.mode==='explorer',isP=S.mode==='pro',isE=S.mode==='expert';
+  document.getElementById('strip').classList.toggle('vis',isEx||isP||isE);
+  ['tlePnl','perturbPnl','dopplerPnl','atmoPnl'].forEach(id=>document.getElementById(id).classList.toggle('vis',isE));
+  document.getElementById('hmToggle').classList.toggle('vis',isE);
+  document.getElementById('exportBtns').classList.toggle('vis',isE);
+  if(isE)updateAtmosphere();
+}));
+
+// Heatmap toggle
+document.querySelectorAll('.hm-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.hm-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  S.heatmap=b.dataset.hm;
+  if(b.dataset.hm==='kessler'){initKessler();runKessler()}
+}));
+
+function setLoc(la,lo){S.obs={la,lo,alt:0};document.getElementById('locOver').classList.add('hidden');document.getElementById('locLbl').textContent=`${la.toFixed(2)}°, ${lo.toFixed(2)}°`;fetchTLEs().then(()=>render())}
+document.getElementById('gpsBtn').addEventListener('click',()=>{if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLoc(p.coords.latitude,p.coords.longitude),()=>alert('GPS failed.'),{enableHighAccuracy:true,timeout:10000});else alert('No geolocation.')});
+const cg=document.getElementById('cityGrid');for(const c of CITIES){const b=document.createElement('button');b.className='cbtn';b.innerHTML=`<span class="cn3">${c.n}</span><span class="cc3">${c.la.toFixed(1)}° ${c.la>0?'N':'S'}, ${Math.abs(c.lo).toFixed(1)}° ${c.lo>0?'E':'W'}</span>`;b.addEventListener('click',()=>setLoc(c.la,c.lo));cg.appendChild(b)}
+
+setInterval(()=>{if(S.obs)fetchTLEs()},30*60*1000);
+setInterval(()=>{const c=Date.now()-12000;for(const id in S.trails){S.trails[id]=S.trails[id].filter(p=>p.t>c);if(!S.trails[id].length)delete S.trails[id]}},5000);
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Orbital Science',project:'Satellites in the Sky'},fr:{title:'Science Orbitale',project:'Satellites dans le Ciel'},ar:{title:'علوم المدارات',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

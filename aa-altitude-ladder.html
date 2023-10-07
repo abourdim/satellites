@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altitude Ladder — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--magenta:#f687b3;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden}
+
+/* Fixed altitude indicator */
+.alt-indicator{position:fixed;top:20px;right:20px;z-index:100;background:rgba(6,10,22,0.9);border:1px solid rgba(110,140,255,0.15);border-radius:12px;padding:14px 20px;backdrop-filter:blur(16px);text-align:right;min-width:140px}
+.alt-indicator .ai-val{font-family:var(--mono);font-size:1.6rem;font-weight:500;color:var(--cyan);line-height:1}
+.alt-indicator .ai-unit{font-family:var(--mono);font-size:.65rem;color:var(--text-muted);margin-top:2px}
+.alt-indicator .ai-label{font-size:.6rem;color:var(--text-dim);margin-top:4px}
+
+/* Fixed scale bar */
+.scale-bar{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:100;width:3px;height:60vh;background:rgba(255,255,255,0.03);border-radius:2px;overflow:visible}
+.scale-fill{position:absolute;bottom:0;left:0;width:100%;border-radius:2px;transition:height .3s,background .3s}
+.scale-marks{position:absolute;left:12px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between}
+.scale-mark{font-family:var(--mono);font-size:.45rem;color:var(--text-muted);white-space:nowrap;opacity:.5}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 30px;position:relative}
+.hero::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:2px;height:30vh;background:linear-gradient(to bottom,transparent,var(--blue))}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(110,140,255,0.08);border:1px solid rgba(110,140,255,0.15);border-radius:50px;padding:8px 20px;font-size:.72rem;font-weight:500;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:28px}
+.hero h1{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4.2rem);font-weight:700;line-height:1.1;margin-bottom:20px}
+.hero h1 span{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:1rem;color:var(--text-dim);max-width:520px;line-height:1.7;margin-bottom:32px}
+.scroll-cue{font-family:var(--mono);font-size:.65rem;color:var(--text-muted);display:flex;flex-direction:column;align-items:center;gap:8px;animation:bob 2s infinite}
+.scroll-cue .arrow{width:1px;height:30px;background:linear-gradient(to bottom,var(--text-muted),transparent)}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* Ladder spine */
+.ladder{position:relative;max-width:700px;margin:0 auto;padding:0 30px 100px}
+.ladder::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--blue),var(--cyan),var(--green),var(--gold),var(--orange),var(--red),var(--purple),var(--magenta));transform:translateX(-50%)}
+
+/* Rungs */
+.rung{position:relative;padding:80px 0;display:flex;align-items:center;opacity:0;transform:translateY(40px);transition:opacity .8s,transform .8s}
+.rung.vis{opacity:1;transform:translateY(0)}
+.rung:nth-child(odd){flex-direction:row}
+.rung:nth-child(even){flex-direction:row-reverse}
+.rung-content{width:45%;padding:0 24px}
+.rung-spacer{width:10%;display:flex;justify-content:center;position:relative}
+.rung-dot{width:16px;height:16px;border-radius:50%;border:2px solid;background:var(--bg);z-index:2;transition:transform .3s,box-shadow .3s}
+.rung.vis .rung-dot{transform:scale(1.1)}
+
+.rung-alt{font-family:var(--mono);font-size:2rem;font-weight:500;line-height:1;margin-bottom:4px}
+.rung-unit{font-family:var(--mono);font-size:.7rem;color:var(--text-muted);margin-bottom:12px}
+.rung-title{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:8px}
+.rung-desc{font-size:.85rem;color:var(--text-dim);line-height:1.65}
+.rung-desc strong{font-weight:600}
+
+.rung-visual{width:45%;display:flex;justify-content:center;align-items:center}
+.rv-icon{font-size:3rem;filter:drop-shadow(0 0 20px rgba(110,140,255,0.2))}
+.rv-bar{display:flex;flex-direction:column;align-items:center;gap:4px}
+.rv-bar-fill{width:24px;border-radius:4px;transition:height .6s}
+.rv-bar-label{font-family:var(--mono);font-size:.5rem;color:var(--text-muted)}
+
+/* Scale comparison */
+.scale-compare{background:rgba(6,10,22,0.7);border:1px solid rgba(110,140,255,0.08);border-radius:10px;padding:12px 16px;margin-top:12px}
+.sc-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-family:var(--mono);font-size:.6rem}
+.sc-row .sc-bar{height:4px;border-radius:2px;transition:width .6s}.sc-row .sc-lbl{color:var(--text-dim);min-width:60px}
+
+/* Fact callouts */
+.fact{background:rgba(110,140,255,0.04);border-left:2px solid;padding:8px 14px;margin-top:10px;border-radius:0 6px 6px 0;font-size:.75rem;color:var(--text-dim);line-height:1.5;font-style:italic}
+
+/* Heritage callout */
+.heritage-note{background:rgba(232,193,112,0.04);border:1px solid rgba(232,193,112,0.1);border-radius:8px;padding:10px 14px;margin-top:10px}
+.heritage-note .hn-title{font-family:var(--mono);font-size:.5rem;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.heritage-note .hn-text{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+.heritage-note .hn-text strong{color:var(--gold)}
+
+/* Perspective */
+.perspective{max-width:700px;margin:60px auto;padding:40px 30px;text-align:center}
+.perspective h2{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2rem);font-weight:700;margin-bottom:16px}
+.perspective p{color:var(--text-dim);font-size:.9rem;line-height:1.7;max-width:520px;margin:0 auto 20px}
+.perspective .pq{font-family:var(--serif);font-size:1.1rem;font-style:italic;color:var(--gold);margin-top:24px}
+
+/* Footer */
+footer{text-align:center;padding:60px 30px;font-size:.7rem;color:var(--text-muted)}
+footer .tagline{font-family:var(--serif);font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:8px}
+
+@media(max-width:600px){
+  .rung{flex-direction:column!important;text-align:center;padding:50px 0}
+  .rung-content,.rung-visual{width:100%}
+  .rung-spacer{width:100%;padding:12px 0}
+  .ladder::before{display:none}
+  .alt-indicator{top:auto;bottom:10px;right:10px;padding:8px 12px;min-width:auto}
+  .alt-indicator .ai-val{font-size:1.1rem}
+  .scale-bar{display:none}
+}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<div class="alt-indicator" id="altInd">
+  <div class="ai-val" id="altVal">0</div>
+  <div class="ai-unit" id="altUnit">meters</div>
+  <div class="ai-label" id="altLabel" data-en="Sea level" data-fr="Niveau de la mer" data-ar="مستوى سطح البحر">Sea level</div>
+</div>
+
+<div class="scale-bar" id="scaleBar">
+  <div class="scale-fill" id="scaleFill" style="height:0%;background:var(--blue)"></div>
+</div>
+
+<div class="hero">
+  <div class="hero-badge"><span data-en="🪜 Interactive Scale Visualization" data-fr="🪜 Visualisation d'échelle interactive" data-ar="🪜 تصور مقياسي تفاعلي">🪜 Interactive Scale Visualization</span></div>
+  <h1>The Altitude <span><span data-en="Ladder" data-fr="Échelle" data-ar="السلم">Ladder</span></span></h1>
+  <p>From the ground beneath your feet to the Moon — everything to scale. Scroll to climb through the atmosphere and into orbit. Feel how thin the air is, how close the satellites are, and how vast space really is.</p>
+  <div class="scroll-cue" data-en="Scroll to climb" data-fr="Défiler pour monter" data-ar="مرر للصعود">Scroll to climb<div class="arrow"></div></div>
+</div>
+
+<div class="ladder" id="ladder">
+
+  <!-- 0: Ground -->
+  <div class="rung" data-alt="0" data-color="var(--green)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--green)">0</div>
+      <div class="rung-unit">meters — Sea Level</div>
+      <div class="rung-title" data-en="You Are Here" data-fr="Vous êtes ici" data-ar="أنت هنا">You Are Here</div>
+      <div class="rung-desc">Standing on the surface of a planet 4.5 billion years old, 12,742 km across, spinning at 1,670 km/h. You don't feel it.</div>
+      <div class="heritage-note"><div class="hn-title">☽ Heritage</div><div class="hn-text"><strong>Al-Biruni</strong> (973 CE) calculated this planet's radius using a mountain and trigonometry — accurate to within 16 km.</div></div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--green);box-shadow:0 0 12px rgba(111,207,151,0.4)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🧍</div></div>
+  </div>
+
+  <!-- 1: Birds -->
+  <div class="rung" data-alt="300" data-color="var(--green)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--green)">300</div>
+      <div class="rung-unit">meters — Urban Skyline</div>
+      <div class="rung-title">Birds & Skyscrapers</div>
+      <div class="rung-desc">The Eiffel Tower (330m). Most birds fly here. Pigeons, crows, sparrows. The air is thick, warm, and full of life. <strong>99.99%</strong> of the atmosphere is still above you.</div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--green);box-shadow:0 0 12px rgba(111,207,151,0.3)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🐦</div></div>
+  </div>
+
+  <!-- 2: Clouds -->
+  <div class="rung" data-alt="2000" data-color="var(--cyan)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--cyan)">2,000</div>
+      <div class="rung-unit">meters — Low Clouds</div>
+      <div class="rung-title">Cumulus Clouds</div>
+      <div class="rung-desc">The puffy white clouds you see on a summer day. Temperature has dropped ~13°C since sea level. Small planes fly here. You can still breathe normally.</div>
+      <div class="fact" style="border-color:var(--cyan)">A single cumulus cloud weighs approximately 500,000 kg — the weight of 100 elephants, suspended in air.</div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--cyan);box-shadow:0 0 12px rgba(92,224,214,0.3)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">☁️</div></div>
+  </div>
+
+  <!-- 3: Mountains -->
+  <div class="rung" data-alt="8849" data-color="var(--cyan)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--cyan)">8,849</div>
+      <div class="rung-unit">meters — Everest Summit</div>
+      <div class="rung-title">Roof of the World</div>
+      <div class="rung-desc">The highest point humans can stand. Air pressure is <strong>one-third</strong> of sea level. Without supplemental oxygen, you'd lose consciousness in minutes. The jet stream screams past at 200 km/h.</div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--cyan);box-shadow:0 0 12px rgba(92,224,214,0.3)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🏔️</div></div>
+  </div>
+
+  <!-- 4: Commercial Flights -->
+  <div class="rung" data-alt="11000" data-color="var(--blue)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--blue)">11,000</div>
+      <div class="rung-unit">meters — Cruising Altitude</div>
+      <div class="rung-title">Commercial Aircraft</div>
+      <div class="rung-desc">FL350-FL390. Temperature outside: <strong>-56°C</strong>. Air pressure: 25% of sea level. Every passenger jet window is the only thing between you and instant death. The sky above starts turning dark blue.</div>
+      <div class="scale-compare">
+        <div class="sc-row"><span class="sc-lbl">You</span><div class="sc-bar" style="width:1px;background:var(--green)"></div></div>
+        <div class="sc-row"><span class="sc-lbl">Everest</span><div class="sc-bar" style="width:40px;background:var(--cyan)"></div></div>
+        <div class="sc-row"><span class="sc-lbl">Aircraft</span><div class="sc-bar" style="width:50px;background:var(--blue)"></div></div>
+      </div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--blue);box-shadow:0 0 12px rgba(110,140,255,0.3)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">✈️</div></div>
+  </div>
+
+  <!-- 5: Stratosphere -->
+  <div class="rung" data-alt="30000" data-color="var(--blue)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--blue)">30,000</div>
+      <div class="rung-unit">meters — Weather Balloons</div>
+      <div class="rung-title">Upper Stratosphere</div>
+      <div class="rung-desc">The ozone layer protects everything below. Weather balloons reach here, taking measurements that feed the forecasts on your phone. The sky is nearly black. You can see Earth's curvature.</div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--blue);box-shadow:0 0 12px rgba(110,140,255,0.3)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🎈</div></div>
+  </div>
+
+  <!-- 6: Kármán Line -->
+  <div class="rung" data-alt="100000" data-color="var(--purple)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--purple)">100</div>
+      <div class="rung-unit">km — The Kármán Line</div>
+      <div class="rung-title">The Edge of Space</div>
+      <div class="rung-desc">The internationally recognized boundary of space. Air is <strong>0.00003%</strong> of sea level pressure. Above this line, aerodynamic flight is impossible — only orbital mechanics work. You are officially an astronaut.</div>
+      <div class="fact" style="border-color:var(--purple)">If Earth were a basketball, the entire atmosphere would be thinner than a sheet of paper wrapped around it.</div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--purple);box-shadow:0 0 16px rgba(183,148,244,0.4)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🌌</div></div>
+  </div>
+
+  <!-- 7: Starlink -->
+  <div class="rung" data-alt="550000" data-color="var(--cyan)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--cyan)">550</div>
+      <div class="rung-unit">km — Low Earth Orbit</div>
+      <div class="rung-title">Starlink Satellites</div>
+      <div class="rung-desc">Over <strong>5,000 Starlink satellites</strong> orbit here, forming the largest constellation in history. Each weighs 260 kg and moves at 27,000 km/h. They deliver internet to remote corners of the planet.</div>
+      <div class="heritage-note"><div class="hn-title">☽ Heritage</div><div class="hn-text">The <strong>algorithms</strong> predicting where each satellite will be — the word itself comes from <strong>al-Khwarizmi</strong> (780 CE), father of algebra.</div></div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--cyan);box-shadow:0 0 12px rgba(92,224,214,0.4)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🛰️</div></div>
+  </div>
+
+  <!-- 8: ISS -->
+  <div class="rung" data-alt="408000" data-color="var(--gold)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--gold)">408</div>
+      <div class="rung-unit">km — International Space Station</div>
+      <div class="rung-title">🛰️ The ISS</div>
+      <div class="rung-desc">Six humans live here right now. 109 meters wide — the size of a football pitch. Orbits every <strong>92 minutes</strong>, seeing 16 sunrises per day. Moving at <strong>28,000 km/h</strong> — fast enough to travel from London to New York in 12 minutes.</div>
+      <div class="scale-compare">
+        <div class="sc-row"><span class="sc-lbl"><span data-en="Atmosphere" data-fr="Atmosphère" data-ar="الغلاف الجوي">Atmosphere</span></span><div class="sc-bar" style="width:10px;background:var(--blue)"></div></div>
+        <div class="sc-row"><span class="sc-lbl">ISS orbit</span><div class="sc-bar" style="width:40px;background:var(--gold)"></div></div>
+        <div class="sc-row"><span class="sc-lbl">Earth diameter</span><div class="sc-bar" style="width:120px;background:var(--green)"></div></div>
+      </div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--gold);box-shadow:0 0 16px rgba(232,193,112,0.4)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🌍</div></div>
+  </div>
+
+  <!-- 9: Hubble -->
+  <div class="rung" data-alt="547000" data-color="var(--purple)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--purple)">547</div>
+      <div class="rung-unit">km — Hubble Space Telescope</div>
+      <div class="rung-title">The Eye Above the Atmosphere</div>
+      <div class="rung-desc">Above the blurring atmosphere, Hubble has photographed galaxies <strong>13.4 billion light-years</strong> away — looking back to when the universe was just 400 million years old.</div>
+      <div class="heritage-note"><div class="hn-title">☽ Heritage</div><div class="hn-text"><strong>Ibn al-Haytham</strong> (965 CE) wrote the Book of Optics, proving how light works. Every lens in Hubble descends from his understanding.</div></div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--purple);box-shadow:0 0 12px rgba(183,148,244,0.3)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🔭</div></div>
+  </div>
+
+  <!-- 10: GPS -->
+  <div class="rung" data-alt="20200000" data-color="var(--green)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--green)">20,200</div>
+      <div class="rung-unit">km — Medium Earth Orbit</div>
+      <div class="rung-title">GPS Satellites</div>
+      <div class="rung-desc"><strong>31 satellites</strong> orbiting at 14,000 km/h. Each carries an atomic clock accurate to 1 nanosecond. Your phone triangulates signals from 4+ of them to find your location within 3 meters. Orbital period: 12 hours.</div>
+      <div class="heritage-note"><div class="hn-title">☽ Heritage</div><div class="hn-text"><strong>Al-Biruni</strong> calculated Earth's radius. <strong>Al-Battani</strong> refined trigonometry. GPS depends on both — measuring distance from a planet whose size they first determined.</div></div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--green);box-shadow:0 0 12px rgba(111,207,151,0.4)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">📡</div></div>
+  </div>
+
+  <!-- 11: GEO -->
+  <div class="rung" data-alt="35786000" data-color="var(--orange)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--orange)">35,786</div>
+      <div class="rung-unit">km — Geostationary Orbit</div>
+      <div class="rung-title">The Stationary Ring</div>
+      <div class="rung-desc">At exactly this altitude, a satellite orbits at the same speed Earth rotates — appearing to hover motionless over one spot. TV broadcasts, weather satellites, and communications relays live here. <strong>Arabsat</strong>, <strong>Türksat</strong>, <strong>Nilesat</strong> — all at this altitude.</div>
+      <div class="fact" style="border-color:var(--orange)">Arthur C. Clarke predicted this orbit in 1945. It's sometimes called the "Clarke Belt" — but the mathematics go back to Kepler and the Islamic astronomers who influenced him.</div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--orange);box-shadow:0 0 16px rgba(246,173,85,0.4)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">📺</div></div>
+  </div>
+
+  <!-- 12: Moon -->
+  <div class="rung" data-alt="384400000" data-color="var(--magenta)">
+    <div class="rung-content">
+      <div class="rung-alt" style="color:var(--magenta)">384,400</div>
+      <div class="rung-unit">km — The Moon</div>
+      <div class="rung-title">Our Nearest Neighbor</div>
+      <div class="rung-desc">Light takes <strong>1.3 seconds</strong> to reach the Moon. 12 humans have walked on it. It's drifting away at 3.8 cm per year. From here, Earth is a pale blue dot — and every satellite, every plane, every person is invisible.</div>
+      <div class="scale-compare">
+        <div class="sc-row"><span class="sc-lbl">ISS (408 km)</span><div class="sc-bar" style="width:1px;background:var(--gold)"></div></div>
+        <div class="sc-row"><span class="sc-lbl">GPS (20,200 km)</span><div class="sc-bar" style="width:5px;background:var(--green)"></div></div>
+        <div class="sc-row"><span class="sc-lbl">GEO (35,786 km)</span><div class="sc-bar" style="width:9px;background:var(--orange)"></div></div>
+        <div class="sc-row"><span class="sc-lbl">Moon (384,400 km)</span><div class="sc-bar" style="width:100px;background:var(--magenta)"></div></div>
+      </div>
+      <div class="heritage-note"><div class="hn-title">☽ Heritage</div><div class="hn-text"><strong>Al-Sufi</strong> (964 CE) mapped the stars the Moon travels past. <strong>Abbas ibn Firnas</strong> built a planetarium to simulate the heavens. A thousand years later, we walk on them.</div></div>
+    </div>
+    <div class="rung-spacer"><div class="rung-dot" style="border-color:var(--magenta);box-shadow:0 0 20px rgba(246,135,179,0.4)"></div></div>
+    <div class="rung-visual"><div class="rv-icon">🌙</div></div>
+  </div>
+
+</div>
+
+<div class="perspective">
+  <h2>One Last Thought</h2>
+  <p>You just scrolled from 0 to 384,400 km. In reality, if this page were truly to scale, the Moon would be <strong>27 kilometers</strong> of scrolling away from the ISS section. The atmosphere section would be invisible — a single pixel.</p>
+  <p>Space is incomprehensibly vast. The thin blue line of our atmosphere is all that separates us from infinity. And within that sliver, everything we've ever known — every person, every city, every forest — exists.</p>
+  <p class="pq">"Every plane, every satellite, every star name carries centuries of human knowledge."</p>
+</div>
+
+<footer>
+  <div class="tagline"><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></div>
+  <div>The Altitude Ladder — From Your Feet to the Moon</div>
+</footer>
+
+<script>
+const rungs=document.querySelectorAll('.rung');
+const altVal=document.getElementById('altVal');
+const altUnit=document.getElementById('altUnit');
+const altLabel=document.getElementById('altLabel');
+const scaleFill=document.getElementById('scaleFill');
+
+const altData=[
+  {alt:0,label:'Sea Level',l_fr:'Niveau de la mer',l_ar:'مستوى سطح البحر',label_fr:'Niveau de la mer',label_ar:'مستوى سطح البحر',unit:'meters'},{alt:300,label:'Birds & Skyline',unit:'meters'},
+  {alt:2000,label:'Low Clouds',l_fr:'Nuages bas',l_ar:'سحب منخفضة',label_fr:'Nuages bas',label_ar:'سحب منخفضة',unit:'meters'},{alt:8849,label:'Mt Everest',unit:'meters'},
+  {alt:11000,label:'Aircraft',unit:'meters'},{alt:30000,label:'Stratosphere',unit:'meters'},
+  {alt:100000,label:'Edge of Space',unit:'km'},{alt:550000,label:'Starlink / LEO',unit:'km'},
+  {alt:408000,label:'ISS',unit:'km'},{alt:547000,label:'Hubble',unit:'km'},
+  {alt:20200000,label:'GPS / MEO',unit:'km'},{alt:35786000,label:'Geostationary',unit:'km'},
+  {alt:384400000,label:'The Moon',l_fr:'La Lune',l_ar:'القمر',label_fr:'La Lune',label_ar:'القمر',unit:'km'}
+];
+
+const obs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')})
+},{threshold:.15,rootMargin:'0px 0px -40px 0px'});
+rungs.forEach(r=>obs.observe(r));
+
+function updateAlt(){
+  const scrollY=window.scrollY;
+  const docH=document.documentElement.scrollHeight-window.innerHeight;
+  const pct=Math.min(1,scrollY/docH);
+  
+  // Find current rung
+  let currentAlt=0,currentLabel='Sea Level',currentUnit='meters';
+  const rungArr=Array.from(rungs);
+  for(let i=rungArr.length-1;i>=0;i--){
+    const rect=rungArr[i].getBoundingClientRect();
+    if(rect.top<window.innerHeight*.6){
+      const d=altData[i];
+      currentAlt=d.alt;currentLabel=d.label;currentUnit=d.unit;break;
+    }
+  }
+  
+  // Format
+  if(currentUnit==='km'&&currentAlt>=1000){
+    altVal.textContent=currentAlt>=1000000?(currentAlt/1000000).toFixed(currentAlt>100000000?0:1)+'M':(currentAlt/1000).toLocaleString();
+    altUnit.textContent='km';
+  } else if(currentUnit==='km'){
+    altVal.textContent=(currentAlt/1000).toLocaleString();
+    altUnit.textContent='km';
+  } else {
+    altVal.textContent=currentAlt.toLocaleString();
+    altUnit.textContent='meters';
+  }
+  altLabel.textContent=currentLabel;
+  
+  // Scale bar
+  const colors=['var(--green)','var(--cyan)','var(--blue)','var(--purple)','var(--gold)','var(--orange)','var(--magenta)'];
+  const ci=Math.min(colors.length-1,Math.floor(pct*colors.length));
+  scaleFill.style.height=pct*100+'%';
+  scaleFill.style.background=colors[ci];
+}
+
+window.addEventListener('scroll',updateAlt,{passive:true});
+updateAlt();
+
+// Stagger animations
+rungArr=Array.from(rungs);
+rungArr.forEach((r,i)=>{r.style.transitionDelay=`${i*.05}s`});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Altitude Ladder',project:'Satellites in the Sky'},fr:{title:'Altitude Ladder',project:'Satellites dans le Ciel'},ar:{title:'Altitude Ladder',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){};if(typeof render==='function')try{render()}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

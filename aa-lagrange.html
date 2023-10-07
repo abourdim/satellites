@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lagrange Points — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;width:100vw;height:100vh}
+canvas{position:fixed;inset:0;cursor:pointer}
+.info-panel{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(10,16,32,.92);border:1px solid rgba(110,140,255,.1);border-radius:12px;padding:14px 18px;max-width:480px;width:calc(100% - 30px);text-align:center;transition:all .3s}
+.ip-name{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:4px}
+.ip-desc{font-size:.72rem;color:var(--dim);line-height:1.5;margin-bottom:4px}
+.ip-sat{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--cyan);display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ip-sat span{background:rgba(92,224,214,.06);padding:2px 8px;border-radius:4px}
+.legend{position:fixed;top:14px;left:14px;z-index:10;background:rgba(10,16,32,.85);border:1px solid rgba(110,140,255,.06);border-radius:10px;padding:10px 14px}
+.legend h4{font-family:'JetBrains Mono',monospace;font-size:.4rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.lg-item{font-size:.62rem;color:var(--dim);padding:2px 0;cursor:pointer;display:flex;align-items:center;gap:6px}
+.lg-item:hover{color:#fff}
+.lg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.title{position:fixed;top:14px;right:14px;z-index:10;text-align:right}
+.title h1{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:rgba(255,255,255,.3)}
+.title p{font-size:.5rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="cv"></canvas>
+<div class="legend">
+  <h4><span data-en="Lagrange Points" data-fr="Points de Lagrange" data-ar="نقاط لاغرانج">Lagrange Points</span></h4>
+  <div class="lg-item" onclick="selectPt(0)"><div class="lg-dot" style="background:#fc8181"></div data-en="L1 — Between bodies" data-fr="L1 — Entre les corps" data-ar="L1 — بين الأجرام">L1 — Between bodies</div>
+  <div class="lg-item" onclick="selectPt(1)"><div class="lg-dot" style="background:#6e8cff"></div data-en="L2 — Beyond Earth" data-fr="L2 — Au-delà de la Terre" data-ar="L2 — ما وراء الأرض">L2 — Beyond Earth</div>
+  <div class="lg-item" onclick="selectPt(2)"><div class="lg-dot" style="background:#e8c170"></div data-en="L3 — Opposite side" data-fr="L3 — Côté opposé" data-ar="L3 — الجانب المقابل">L3 — Opposite side</div>
+  <div class="lg-item" onclick="selectPt(3)"><div class="lg-dot" style="background:#6fcf97"></div data-en="L4 — Leading triangle" data-fr="L4 — Triangle avant" data-ar="L4 — المثلث المتقدم">L4 — Leading triangle</div>
+  <div class="lg-item" onclick="selectPt(4)"><div class="lg-dot" style="background:#b794f4"></div data-en="L5 — Trailing triangle" data-fr="L5 — Triangle arrière" data-ar="L5 — المثلث المتأخر">L5 — Trailing triangle</div>
+</div>
+<div class="title"><h1><span data-en="Lagrange Points" data-fr="Points de Lagrange" data-ar="نقاط لاغرانج">Lagrange Points</span></h1><p data-en="Click any point to learn more" data-fr="Cliquez sur un point pour en savoir plus" data-ar="انقر على أي نقطة لمعرفة المزيد">Click any point to learn more</p></div>
+<div class="info-panel">
+  <div class="ip-name" id="ipName" data-en="L1 — The Lookout" data-fr="L1 — Le poste de guet" data-ar="L1 — نقطة المراقبة">L1 — The Lookout</div>
+  <div class="ip-desc" id="ipDesc">1.5 million km sunward of Earth. Gravity from Sun and Earth balance here, so a satellite can "hover" between them. Perfect for watching the Sun.</div>
+  <div class="ip-sat" id="ipSat"><span>SOHO</span><span>DSCOVR</span><span>ACE</span></div>
+</div>
+<script>
+const cv=document.getElementById('cv'),c=cv.getContext('2d'),P=Math.PI*2;
+let W,H;function rs(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0)}
+rs();addEventListener('resize',rs);
+
+const PTS=[
+  {name:'L1 — The Lookout',name_fr:'L1 — Le poste de guet',name_ar:'L1 — نقطة المراقبة',col:'#fc8181',desc:'1.5 million km sunward of Earth. Gravity from Sun and Earth balance here, letting a satellite "hover" between them. Perfect for watching the Sun and solar wind.',desc_fr:'1,5 million km vers le Soleil. La gravité s\'équilibre ici, permettant à un satellite de « planer ». Parfait pour observer le Soleil et le vent solaire.',desc_ar:'١٫٥ مليون كم باتجاه الشمس. الجاذبية تتوازن هنا، ما يسمح لقمر صناعي بـ«التحليق». مثالي لمراقبة الشمس والرياح الشمسية.',sats:['SOHO','DSCOVR','ACE','LISA Pathfinder'],stable:false},
+  {name:'L2 — The Deep Space Eye',name_fr:'L2 — L\'œil de l\'espace profond',name_ar:'L2 — عين الفضاء العميق',col:'#6e8cff',desc:'1.5 million km beyond Earth, away from the Sun. Earth and Sun are always behind — ideal for deep space telescopes that need to look outward without glare.',desc_fr:'1,5 million km au-delà de la Terre. Le Soleil et la Terre sont toujours derrière — idéal pour les télescopes qui observent l\'espace profond sans éblouissement.',desc_ar:'١٫٥ مليون كم ما وراء الأرض. الشمس والأرض دائماً خلفك — مثالي للتلسكوبات التي تراقب الفضاء العميق بلا وهج.',sats:['JWST','Gaia','Planck','Euclid'],stable:false},
+  {name:'L3 — The Hidden Point',name_fr:'L3 — Le point caché',name_ar:'L3 — النقطة المخفية',col:'#e8c170',desc:'On the far side of the Sun, opposite Earth. No spacecraft currently use L3 — it\'s unstable and hard to communicate with (Sun blocks the signal). Science fiction loves this spot for a "Counter-Earth."',desc_fr:'De l\'autre côté du Soleil, à l\'opposé de la Terre. Aucun vaisseau n\'utilise L3 — instable et communication bloquée par le Soleil. La science-fiction adore ce point.',desc_ar:'على الجانب البعيد من الشمس، مقابل الأرض. لا مركبة تستخدم L3 — غير مستقرة والشمس تحجب الإشارة. الخيال العلمي يحب هذه النقطة.',sats:['None currently'],stable:false},
+  {name:'L4 — Leading Triangle',name_fr:'L4 — Triangle avant',name_ar:'L4 — المثلث المتقدم',col:'#6fcf97',desc:'60° ahead of Earth in its orbit, forming an equilateral triangle with Sun and Earth. Gravitationally stable — objects naturally collect here. Jupiter\'s L4 hosts thousands of Trojan asteroids.',desc_fr:'60° devant la Terre, formant un triangle équilatéral avec le Soleil et la Terre. Gravitationnellement stable — les objets s\'y accumulent. Le L4 de Jupiter abrite des milliers d\'astéroïdes troyens.',desc_ar:'٦٠° أمام الأرض في مدارها، تشكل مثلثاً متساوي الأضلاع. مستقرة جاذبياً — الأجسام تتجمع هنا طبيعياً. L4 المشتري يستضيف آلاف الكويكبات الطروادية.',sats:['2010 TK₇ (Earth Trojan)'],stable:true},
+  {name:'L5 — Trailing Triangle',name_fr:'L5 — Triangle arrière',name_ar:'L5 — المثلث المتأخر',col:'#b794f4',desc:'60° behind Earth in its orbit. Also stable. The L4 and L5 points are the only truly stable Lagrange points — objects placed here tend to stay without needing fuel.',desc_fr:'60° derrière la Terre. Également stable. L4 et L5 sont les seuls points de Lagrange vraiment stables — les objets y restent sans carburant.',desc_ar:'٦٠° خلف الأرض. مستقرة أيضاً. L4 وL5 هما نقطتا لاغرانج المستقرتان حقاً — الأجسام تبقى هنا بلا وقود.',sats:['None yet (proposed for colonies)'],stable:true},
+];
+
+let selected=0,t=0;
+const stars=[];for(let i=0;i<100;i++)stars.push({x:Math.random(),y:Math.random(),b:.02+Math.random()*.04,s:.2+Math.random()*.3});
+
+function selectPt(i){
+  selected=i;
+  document.getElementById('ipName').textContent=PTS[i].name;
+  document.getElementById('ipDesc').textContent=PTS[i].desc;
+  document.getElementById('ipSat').innerHTML=PTS[i].sats.map(s=>`<span>${s}</span>`).join('');
+}
+
+// Click detection
+cv.addEventListener('click',e=>{
+  const cx=W/2,cy=H/2,orb=Math.min(W,H)*.32;
+  const sunX=cx-orb*.5,earthX=cx+orb*.5;
+  const pts=[
+    {x:cx-orb*.1,y:cy},// L1
+    {x:earthX+orb*.12,y:cy},// L2
+    {x:sunX-orb*.5,y:cy},// L3
+    {x:cx+orb*.25*Math.cos(-P/6),y:cy-orb*.43},// L4
+    {x:cx+orb*.25*Math.cos(P/6),y:cy+orb*.43},// L5
+  ];
+  let closest=-1,minD=50;
+  pts.forEach((p,i)=>{const d=Math.hypot(e.clientX-p.x,e.clientY-p.y);if(d<minD){minD=d;closest=i}});
+  if(closest>=0)selectPt(closest);
+});
+
+function draw(){
+  t+=.003;
+  c.clearRect(0,0,W,H);c.fillStyle='#030510';c.fillRect(0,0,W,H);
+  for(const s of stars){c.beginPath();c.arc(s.x*W,s.y*H,s.s,0,P);c.fillStyle=`rgba(200,210,230,${s.b})`;c.fill()}
+
+  const cx=W/2,cy=H/2,orb=Math.min(W,H)*.32;
+  const sunX=cx-orb*.5,earthX=cx+orb*.5;
+
+  // Orbit path
+  c.beginPath();c.ellipse(cx,cy,orb*.55,orb*.15,0,0,P);c.strokeStyle='rgba(110,140,255,.04)';c.lineWidth=1;c.stroke();
+
+  // Gravity potential visualization (subtle contours)
+  for(let ring=1;ring<=4;ring++){
+    c.beginPath();c.arc(sunX,cy,30+ring*25,0,P);c.strokeStyle=`rgba(232,193,112,${.015/ring})`;c.lineWidth=.5;c.stroke();
+    c.beginPath();c.arc(earthX,cy,15+ring*18,0,P);c.strokeStyle=`rgba(92,224,214,${.02/ring})`;c.lineWidth=.5;c.stroke();
+  }
+
+  // Sun
+  c.beginPath();c.arc(sunX,cy,18,0,P);
+  const sg=c.createRadialGradient(sunX,cy,0,sunX,cy,18);
+  sg.addColorStop(0,'#fff4d6');sg.addColorStop(.5,'#e8c170');sg.addColorStop(1,'#c9922a');c.fillStyle=sg;c.fill();
+  c.beginPath();c.arc(sunX,cy,30,0,P);
+  const sgg=c.createRadialGradient(sunX,cy,14,sunX,cy,30);
+  sgg.addColorStop(0,'rgba(232,193,112,.12)');sgg.addColorStop(1,'transparent');c.fillStyle=sgg;c.fill();
+  c.font='400 7px "JetBrains Mono"';c.textAlign='center';c.fillStyle='rgba(232,193,112,.3)';c.fillText('Sun',sunX,cy+28);
+
+  // Earth
+  c.beginPath();c.arc(earthX,cy,8,0,P);
+  const eg=c.createRadialGradient(earthX-2,cy-2,0,earthX,cy,8);
+  eg.addColorStop(0,'#2a6a9c');eg.addColorStop(1,'#0d2a4c');c.fillStyle=eg;c.fill();
+  c.fillStyle='rgba(92,224,214,.3)';c.fillText('Earth',earthX,cy+18);
+
+  // L points
+  const lpos=[
+    {x:cx-orb*.1,y:cy},
+    {x:earthX+orb*.12,y:cy},
+    {x:sunX-orb*.5,y:cy},
+    {x:cx+orb*.25*Math.cos(-P/6),y:cy-orb*.43},
+    {x:cx+orb*.25*Math.cos(P/6),y:cy+orb*.43},
+  ];
+
+  lpos.forEach((p,i)=>{
+    const pt=PTS[i],isSel=i===selected;
+    const pulse=isSel?3+Math.sin(t*4)*2:0;
+    
+    // Glow
+    if(isSel){
+      c.beginPath();c.arc(p.x,p.y,18+pulse,0,P);
+      const gg=c.createRadialGradient(p.x,p.y,0,p.x,p.y,18+pulse);
+      gg.addColorStop(0,pt.col+'30');gg.addColorStop(1,'transparent');c.fillStyle=gg;c.fill();
+    }
+
+    // Stability indicator (L4, L5 have solid rings)
+    if(pt.stable){
+      c.beginPath();c.arc(p.x,p.y,10,0,P);c.strokeStyle=pt.col+'40';c.lineWidth=1;c.stroke();
+    }
+
+    // Dot
+    c.beginPath();c.arc(p.x,p.y,isSel?5:3.5,0,P);c.fillStyle=pt.col;c.fill();
+
+    // Label
+    c.font=`${isSel?'600':'400'} ${isSel?9:7}px "JetBrains Mono"`;c.textAlign='center';
+    c.fillStyle=isSel?pt.col:pt.col+'80';
+    c.fillText('L'+(i+1),p.x,p.y-12);
+
+    // Halo orbit for L1, L2 (if selected)
+    if(isSel&&(i===0||i===1)){
+      c.beginPath();c.ellipse(p.x,p.y,12,5,0,0,P);c.strokeStyle=pt.col+'30';c.lineWidth=.5;c.setLineDash([2,3]);c.stroke();c.setLineDash([]);
+      // Mini satellite
+      const sa=t*2;
+      const sx=p.x+12*Math.cos(sa),sy=p.y+5*Math.sin(sa);
+      c.beginPath();c.arc(sx,sy,1.5,0,P);c.fillStyle=pt.col;c.fill();
+    }
+
+    // Dashed lines to Sun/Earth for L4/L5
+    if(i>=3&&isSel){
+      c.beginPath();c.moveTo(p.x,p.y);c.lineTo(sunX,cy);c.strokeStyle=pt.col+'15';c.lineWidth=.5;c.setLineDash([4,6]);c.stroke();
+      c.beginPath();c.moveTo(p.x,p.y);c.lineTo(earthX,cy);c.stroke();c.setLineDash([]);
+      c.font='italic 6px "Outfit"';c.fillStyle=pt.col+'30';c.fillText('60°',cx,i===3?cy-orb*.15:cy+orb*.15);
+    }
+  });
+
+  requestAnimationFrame(draw);
+}
+selectPt(0);draw();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Lagrange Points',project:'Satellites in the Sky'},fr:{title:'Points de Lagrange',project:'Satellites dans le Ciel'},ar:{title:'نقاط لاغرانج',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){};if(typeof render==='function')try{render()}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

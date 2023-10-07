@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Arabic Star Map — Names Written in Light</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020410;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;width:100vw;height:100vh}
+canvas#sky{position:fixed;inset:0;cursor:crosshair}
+
+.hud{position:fixed;z-index:10;pointer-events:none}.hud>*{pointer-events:auto}
+.top-bar{top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:linear-gradient(to bottom,rgba(2,4,16,0.9),transparent)}
+.logo{font-family:var(--serif);font-size:.82rem;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:6px}
+.logo .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.search-wrap{position:relative}
+.search-wrap input{font-family:var(--mono);font-size:.6rem;padding:6px 12px 6px 26px;border-radius:6px;border:1px solid rgba(232,193,112,0.12);background:rgba(6,10,22,0.8);color:var(--gold);outline:none;width:160px;transition:all .3s}
+.search-wrap input:focus{border-color:rgba(232,193,112,0.3);width:200px}
+.search-wrap::before{content:'🔍';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:.55rem}
+.stat-badge{font-family:var(--mono);font-size:.5rem;padding:5px 10px;border-radius:5px;background:rgba(232,193,112,0.06);border:1px solid rgba(232,193,112,0.1);color:var(--gold)}
+
+/* Star detail panel */
+.detail{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;max-width:440px;width:calc(100% - 32px);background:rgba(6,10,22,0.94);border:1px solid rgba(232,193,112,0.1);border-radius:14px;padding:18px 22px;backdrop-filter:blur(14px);opacity:0;transition:all .4s;pointer-events:none}
+.detail.show{opacity:1;pointer-events:auto}
+.det-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.det-name{font-family:var(--serif);font-size:1.2rem;font-weight:700;color:var(--gold)}
+.det-western{font-size:.72rem;color:var(--text-dim)}
+.det-mag{font-family:var(--mono);font-size:.65rem;padding:3px 8px;border-radius:4px;background:rgba(232,193,112,0.08);color:var(--gold)}
+.det-arabic{font-size:1.1rem;color:var(--gold);opacity:.6;font-family:serif;direction:rtl;margin-bottom:8px}
+.det-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.det-cell{background:rgba(255,255,255,0.02);border-radius:5px;padding:5px 8px;text-align:center}
+.det-cell .dcl{font-family:var(--mono);font-size:.36rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.det-cell .dcv{font-family:var(--mono);font-size:.6rem;color:var(--cyan);font-weight:500;margin-top:1px}
+.det-etym{font-size:.74rem;color:var(--text-dim);line-height:1.5;padding-top:8px;border-top:1px solid rgba(255,255,255,0.03)}
+.det-etym strong{color:var(--gold);font-weight:600}
+
+/* Legend */
+.legend{position:fixed;top:50px;right:14px;z-index:10;background:rgba(6,10,22,0.88);border:1px solid rgba(232,193,112,0.06);border-radius:8px;padding:8px 12px;backdrop-filter:blur(10px);pointer-events:none}
+.leg-row{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:.5rem;color:var(--text-dim)}
+.leg-dot{width:6px;height:6px;border-radius:50%}
+.leg-title{font-family:var(--mono);font-size:.4rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+
+.ctrl-hint{position:fixed;top:50px;left:14px;z-index:10;font-family:var(--mono);font-size:.44rem;color:var(--text-muted);background:rgba(6,10,22,0.7);padding:6px 10px;border-radius:6px;pointer-events:none}
+
+@media(max-width:600px){.legend{display:none}.search-wrap input{width:120px}.detail{padding:14px 16px}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="sky"></canvas>
+
+<div class="hud top-bar">
+  <div class="logo"><span class="dot"></span> Arabic Star Map</div>
+  <div class="search-wrap"><input type="text" id="searchInput" placeholder="Search stars…"></div>
+  <div class="stat-badge" id="countBadge">0 Arabic stars</div>
+</div>
+
+<div class="ctrl-hint">Drag to rotate · Click a star · Scroll to zoom</div>
+
+<div class="legend">
+  <div class="leg-title"><span data-en="Brightness" data-fr="Luminosité" data-ar="السطوع">Brightness</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--gold);width:8px;height:8px"></div> Mag -1 to 1 (brilliant)</div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--gold);width:6px;height:6px;opacity:.7"></div> Mag 1 to 2 (bright)</div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--gold);width:4px;height:4px;opacity:.4"></div> Mag 2 to 3 (moderate)</div>
+  <div class="leg-row"><div class="leg-dot" style="background:rgba(200,200,220,.3);width:3px;height:3px"></div> Non-Arabic name</div>
+</div>
+
+<div class="detail" id="detail">
+  <div class="det-head">
+    <div><div class="det-name" id="dName">—</div><div class="det-western" id="dWestern">—</div></div>
+    <div class="det-mag" id="dMag">—</div>
+  </div>
+  <div class="det-arabic" id="dArabic"></div>
+  <div class="det-grid">
+    <div class="det-cell"><div class="dcl"><span data-en="Meaning" data-fr="Signification" data-ar="المعنى">Meaning</span></div><div class="dcv" id="dMeaning">—</div></div>
+    <div class="det-cell"><div class="dcl"><span data-en="Constellation" data-fr="Constellation" data-ar="كوكبة">Constellation</span></div><div class="dcv" id="dConst">—</div></div>
+    <div class="det-cell"><div class="dcl"><span data-en="Magnitude" data-fr="Magnitude" data-ar="القدر">Magnitude</span></div><div class="dcv" id="dMagV">—</div></div>
+  </div>
+  <div class="det-etym" id="dEtym"></div>
+</div>
+
+<script>
+const cv=document.getElementById('sky'),cx=cv.getContext('2d');
+const T2=Math.PI*2,D=Math.PI/180;
+let W,H,CX,CY;
+function resize(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0);CX=W/2;CY=H/2}
+resize();addEventListener('resize',resize);
+
+// Arabic-origin star names with RA (hours), Dec (degrees), magnitude
+const STARS=[
+{name:'Aldebaran',name_fr:'Aldébaran',name_ar:'الدبران',arabic:'الدبران',meaning:'The Follower',western:'α Tauri',con:'Taurus',mag:0.85,ra:4.60,dec:16.51,etym:'From <strong>al-Dabarān</strong> — it "follows" the Pleiades across the sky. Named by <strong>al-Sufi</strong> in his Book of Fixed Stars (964 CE).'},
+{name:'Altair',name_fr:'Altaïr',name_ar:'الطائر',arabic:'الطائر',meaning:'The Flying Eagle',western:'α Aquilae',con:'Aquila',mag:0.76,ra:19.85,dec:8.87,etym:'From <strong>al-Nasr al-Ṭāʾir</strong> (the flying eagle). One of the Summer Triangle stars. The name preserves the Arabic vision of an eagle in flight.'},
+{name:'Betelgeuse',name_fr:'Bételgeuse',name_ar:'يد الجوزاء',arabic:'يد الجوزاء',meaning:'Hand of the Central One',western:'α Orionis',con:'Orion',mag:0.42,ra:5.92,dec:7.41,etym:'From <strong>Yad al-Jawzāʾ</strong> (hand of the central one). Corrupted through medieval Latin translations. A red supergiant 700× the Sun\'s diameter.'},
+{name:'Rigel',name_fr:'Rigel',name_ar:'رجل الجوزاء',arabic:'رجل',meaning:'The Foot',western:'β Orionis',con:'Orion',mag:0.13,ra:5.24,dec:-8.20,etym:'From <strong>Rijl al-Jawzāʾ</strong> (foot of the central one). The 7th brightest star. A blue supergiant 120,000× the Sun\'s luminosity.'},
+{name:'Vega',name_fr:'Véga',name_ar:'النسر الواقع',arabic:'الواقع',meaning:'The Falling Eagle',western:'α Lyrae',con:'Lyra',mag:0.03,ra:18.62,dec:38.78,etym:'From <strong>al-Nasr al-Wāqiʿ</strong> (the falling/landing eagle). Was the North Star ~12,000 years ago and will be again in ~13,700 years.'},
+{name:'Deneb',name_fr:'Déneb',name_ar:'ذنب الدجاجة',arabic:'ذنب',meaning:'The Tail',western:'α Cygni',con:'Cygnus',mag:1.25,ra:20.69,dec:45.28,etym:'From <strong>Dhanab al-Dajāja</strong> (tail of the hen/swan). One of the most luminous stars visible — 196,000× the Sun\'s luminosity.'},
+{name:'Fomalhaut',name_fr:'Fomalhaut',name_ar:'فم الحوت',arabic:'فم الحوت',meaning:'Mouth of the Fish',western:'α PsA',con:'Piscis Austrinus',mag:1.16,ra:22.96,dec:-29.62,etym:'From <strong>Fam al-Ḥūt</strong> (mouth of the fish). One of the four Royal Stars of ancient Persia. Has a confirmed exoplanet.'},
+{name:'Achernar',name_fr:'Achernar',name_ar:'آخر النهر',arabic:'آخر النهر',meaning:'End of the River',western:'α Eridani',con:'Eridanus',mag:0.46,ra:1.63,dec:-57.24,etym:'From <strong>Ākhir al-Nahr</strong> (end of the river). The flattest star known — spins so fast it\'s 56% wider at the equator.'},
+{name:'Algol',name_fr:'Algol',name_ar:'رأس الغول',arabic:'الغول',meaning:'The Ghoul',western:'β Persei',con:'Perseus',mag:2.12,ra:3.14,dec:40.96,etym:'From <strong>Raʾs al-Ghūl</strong> (head of the ghoul/demon). Ancient Arabs noticed it dims every 2.87 days — the first known eclipsing binary.'},
+{name:'Thuban',name_fr:'Thuban',name_ar:'الثعبان',arabic:'الثعبان',meaning:'The Serpent',western:'α Draconis',con:'Draco',mag:3.65,ra:14.07,dec:64.38,etym:'From <strong>al-Thuʿbān</strong> (the serpent). Was the North Star when the pyramids were built (~2700 BCE). The Egyptians aligned shafts to it.'},
+{name:'Mizar',name_fr:'Mizar',name_ar:'المئزر',arabic:'المئزر',meaning:'The Girdle',western:'ζ UMa',con:'Ursa Major',mag:2.27,ra:13.40,dec:54.93,etym:'From <strong>al-Miʾzar</strong> (the girdle/loincloth). Famous double star — Arab astronomers used its companion <strong>Alcor</strong> as an eye test.'},
+{name:'Alcor',name_fr:'Alcor',name_ar:'السها',arabic:'الخوار',meaning:'The Faint One',western:'80 UMa',con:'Ursa Major',mag:3.99,ra:13.42,dec:54.99,etym:'From <strong>al-Khawwār</strong> (the faint one). Paired with Mizar. Arab soldiers who could split them with naked eye were considered fit for archery.'},
+{name:'Denebola',name_fr:'Dénébola',name_ar:'ذنب الأسد',arabic:'ذنب الأسد',meaning:'Tail of the Lion',western:'β Leonis',con:'Leo',mag:2.14,ra:11.82,dec:14.57,etym:'From <strong>Dhanab al-Asad</strong> (tail of the lion). Young star with a debris disk — potentially forming planets right now.'},
+{name:'Zubenelgenubi',name_fr:'Zubenelgenubi',name_ar:'الزبانى الجنوبي',arabic:'الزبانى الجنوبي',meaning:'Southern Claw',western:'α Librae',con:'Libra',mag:2.75,ra:14.85,dec:-16.04,etym:'From <strong>al-Zubanā al-Janūbī</strong>. Libra\'s stars were originally the claws of Scorpius in Arabic tradition.'},
+{name:'Rasalhague',name_fr:'Rasalhague',name_ar:'رأس الحواء',arabic:'رأس الحواء',meaning:'Head of the Serpent-Bearer',western:'α Ophiuchi',con:'Ophiuchus',mag:2.07,ra:17.58,dec:12.56,etym:'From <strong>Raʾs al-Ḥawwāʾ</strong>. Ophiuchus is the 13th zodiac constellation — the one astrologers ignore.'},
+{name:'Saiph',arabic:'سيف',meaning:'The Sword',western:'κ Orionis',con:'Orion',mag:2.09,ra:5.80,dec:-9.67,etym:'From <strong>Sayf al-Jabbār</strong> (sword of the giant). Actually marks Orion\'s knee, not his sword — a medieval mistranslation.'},
+{name:'Mintaka',name_fr:'Mintaka',name_ar:'المنطقة',arabic:'منطقة',meaning:'The Belt',western:'δ Orionis',con:'Orion',mag:2.23,ra:5.53,dec:-0.30,etym:'From <strong>Manṭaqa</strong> (belt). Part of Orion\'s Belt — three stars in a perfect line used for navigation for millennia.'},
+{name:'Alnilam',arabic:'النظام',meaning:'String of Pearls',western:'ε Orionis',con:'Orion',mag:1.69,ra:5.60,dec:-1.20,etym:'From <strong>al-Niẓām</strong> (the string/arrangement). The center star of Orion\'s Belt. 275,000× the Sun\'s luminosity.'},
+{name:'Alnitak',arabic:'النطاق',meaning:'The Girdle',western:'ζ Orionis',con:'Orion',mag:1.77,ra:5.68,dec:-1.94,etym:'From <strong>al-Niṭāq</strong>. Near the Horsehead Nebula — one of the most photographed objects in the sky.'},
+{name:'Dubhe',arabic:'الدب',meaning:'The Bear',western:'α UMa',con:'Ursa Major',mag:1.79,ra:11.06,dec:61.75,etym:'From <strong>Ẓahr al-Dubb al-Akbar</strong> (back of the great bear). A pointer star to Polaris — critical for navigation.'},
+{name:'Merak',arabic:'المراق',meaning:'The Loins',western:'β UMa',con:'Ursa Major',mag:2.37,ra:11.03,dec:56.38,etym:'From <strong>al-Marāqq</strong> (the loins of the bear). With Dubhe, forms the "Pointer Stars" to find Polaris.'},
+{name:'Alkaid',arabic:'القائد',meaning:'The Leader',western:'η UMa',con:'Ursa Major',mag:1.86,ra:13.79,dec:49.31,etym:'From <strong>al-Qāʾid</strong> (the leader of the mourners). In Arabic tradition, the Big Dipper\'s bowl is a coffin, the handle stars are mourners.'},
+{name:'Scheat',arabic:'الساق',meaning:'The Shin',western:'β Pegasi',con:'Pegasus',mag:2.42,ra:23.06,dec:28.08,etym:'From <strong>al-Sāq</strong> (the shin/leg). A red giant that varies in brightness. Part of the Great Square of Pegasus.'},
+{name:'Markab',name_fr:'Markab',name_ar:'المركب',arabic:'المركب',meaning:'The Saddle',western:'α Pegasi',con:'Pegasus',mag:2.49,ra:23.08,dec:15.21,etym:'From <strong>al-Markab</strong> (the saddle of the horse). Corner of the Great Square. Sailors used it for celestial navigation.'},
+{name:'Naos',name_fr:'Naos',name_ar:'النعوس',arabic:'نعش',meaning:'The Ship',western:'ζ Puppis',con:'Puppis',mag:2.25,ra:8.06,dec:-40.00,etym:'Originally from Arabic navigational tradition. One of the hottest and most luminous stars visible — surface temperature 42,000 K.'},
+];
+
+// Add background stars (non-Arabic names)
+const BG_STARS=[];
+for(let i=0;i<400;i++){
+  BG_STARS.push({ra:Math.random()*24,dec:(Math.random()-.5)*180,mag:2+Math.random()*4});
+}
+
+let rotX=0,rotY=0,zoom=1;
+let dragging=false,dragX=0,dragY=0;
+let selected=null;
+let searchTerm='';
+
+document.getElementById('countBadge').textContent=STARS.length+' Arabic stars';
+
+function project(ra,dec){
+  const a=(ra/24)*T2+rotX;
+  const d=dec*D;
+  const r=Math.min(W,H)*.42*zoom;
+  // Simple stereographic
+  const x=CX+r*Math.cos(d)*Math.sin(a);
+  const y=CY-r*Math.sin(d)+r*Math.cos(d)*Math.cos(a)*rotY*.3;
+  const front=Math.cos(a)*Math.cos(d)>-0.1;
+  return{x,y,front};
+}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  
+  // Background
+  cx.fillStyle='#020410';cx.fillRect(0,0,W,H);
+  
+  // Grid circles
+  for(let d=-60;d<=60;d+=30){
+    cx.beginPath();
+    for(let ra=0;ra<=24;ra+=.1){
+      const p=project(ra,d);
+      if(ra===0)cx.moveTo(p.x,p.y);else cx.lineTo(p.x,p.y);
+    }
+    cx.strokeStyle='rgba(110,140,255,0.02)';cx.lineWidth=.5;cx.stroke();
+  }
+  
+  // Background stars
+  for(const s of BG_STARS){
+    const p=project(s.ra,s.dec);
+    if(!p.front)continue;
+    const sz=Math.max(.3,(4-s.mag)*.3);
+    cx.beginPath();cx.arc(p.x,p.y,sz,0,T2);
+    cx.fillStyle=`rgba(180,190,210,${Math.max(.05,(4-s.mag)*.06)})`;cx.fill();
+  }
+  
+  // Arabic stars
+  for(const s of STARS){
+    const p=project(s.ra,s.dec);
+    if(!p.front)continue;
+    s._px=p.x;s._py=p.y;s._vis=true;
+    
+    const bright=Math.max(.3,(3-s.mag)*.4);
+    const sz=Math.max(1.5,(3-s.mag)*1.8)*zoom;
+    const isSelected=selected===s;
+    const matchSearch=searchTerm&&s.name.toLowerCase().includes(searchTerm);
+    const dimmed=searchTerm&&!matchSearch;
+    
+    // Glow
+    const glowR=sz*4;
+    cx.beginPath();cx.arc(p.x,p.y,glowR,0,T2);
+    const gl=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,glowR);
+    gl.addColorStop(0,`rgba(232,193,112,${dimmed?.01:bright*.15})`);gl.addColorStop(1,'transparent');
+    cx.fillStyle=gl;cx.fill();
+    
+    // Core
+    cx.beginPath();cx.arc(p.x,p.y,sz,0,T2);
+    cx.fillStyle=`rgba(232,193,112,${dimmed?.08:bright})`;cx.fill();
+    
+    // Selection ring
+    if(isSelected){
+      cx.beginPath();cx.arc(p.x,p.y,sz+6,0,T2);
+      cx.strokeStyle='rgba(232,193,112,0.3)';cx.lineWidth=1;cx.setLineDash([2,3]);cx.stroke();cx.setLineDash([]);
+    }
+    
+    // Label
+    if((s.mag<2.5||isSelected||matchSearch)&&!dimmed){
+      cx.font=isSelected?'italic 700 10px "Playfair Display"':'400 7px "JetBrains Mono"';
+      cx.fillStyle=`rgba(232,193,112,${isSelected?.7:matchSearch?.6:.25})`;
+      cx.textAlign='center';
+      cx.fillText(s.name,p.x,p.y-sz-5);
+    }
+  }
+  
+  requestAnimationFrame(render);
+}
+
+// Interaction
+cv.addEventListener('pointerdown',e=>{
+  // Check star click
+  let closest=null,closestD=20;
+  for(const s of STARS){
+    if(!s._vis)continue;
+    const d=Math.hypot(s._px-e.clientX,s._py-e.clientY);
+    if(d<closestD){closestD=d;closest=s}
+  }
+  if(closest){
+    selected=closest;
+    const det=document.getElementById('detail');
+    det.classList.add('show');
+    document.getElementById('dName').textContent=closest.name;
+    document.getElementById('dWestern').textContent=closest.western+' · '+closest.con;
+    document.getElementById('dMag').textContent='mag '+closest.mag.toFixed(2);
+    document.getElementById('dArabic').textContent=closest.arabic;
+    document.getElementById('dMeaning').textContent=closest.meaning;
+    document.getElementById('dConst').textContent=closest.con;
+    document.getElementById('dMagV').textContent=closest.mag.toFixed(2);
+    document.getElementById('dEtym').innerHTML=closest.etym;
+    return;
+  }
+  selected=null;document.getElementById('detail').classList.remove('show');
+  dragging=true;dragX=e.clientX;dragY=e.clientY;
+});
+
+cv.addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  rotX+=(e.clientX-dragX)*.003;
+  rotY+=(e.clientY-dragY)*.002;
+  rotY=Math.max(-.8,Math.min(.8,rotY));
+  dragX=e.clientX;dragY=e.clientY;
+});
+
+cv.addEventListener('pointerup',()=>dragging=false);
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();
+  zoom=Math.max(.5,Math.min(3,zoom-e.deltaY*.001));
+},{passive:false});
+
+document.getElementById('searchInput').addEventListener('input',e=>{
+  searchTerm=e.target.value.toLowerCase();
+  if(searchTerm){
+    const match=STARS.find(s=>s.name.toLowerCase().startsWith(searchTerm));
+    if(match){
+      selected=match;
+      const det=document.getElementById('detail');det.classList.add('show');
+      document.getElementById('dName').textContent=match.name;
+      document.getElementById('dWestern').textContent=match.western+' · '+match.con;
+      document.getElementById('dMag').textContent='mag '+match.mag.toFixed(2);
+      document.getElementById('dArabic').textContent=match.arabic;
+      document.getElementById('dMeaning').textContent=match.meaning;
+      document.getElementById('dConst').textContent=match.con;
+      document.getElementById('dMagV').textContent=match.mag.toFixed(2);
+      document.getElementById('dEtym').innerHTML=match.etym;
+    }
+  }
+});
+
+// Auto-rotate
+let autoRot=true;
+function autoRotate(){if(autoRot&&!dragging)rotX+=.0003;requestAnimationFrame(autoRotate)}
+autoRotate();
+cv.addEventListener('pointerdown',()=>autoRot=false);
+
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Arabic Star Map',project:'Satellites in the Sky'},fr:{title:'Carte des Étoiles Arabes',project:'Satellites dans le Ciel'},ar:{title:'خريطة النجوم العربية',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

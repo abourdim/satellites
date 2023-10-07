@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Timeline — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(232,193,112,.06);border:1px solid rgba(232,193,112,.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--gold)}
+header p{font-size:.82rem;color:var(--dim);max-width:480px;margin:0 auto;line-height:1.6}
+.counter{text-align:center;margin-bottom:20px}
+.counter .cv{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--cyan)}
+.counter .cl{font-size:.6rem;color:var(--muted)}
+.tl{max-width:650px;margin:0 auto;position:relative;padding-left:36px}
+.tl::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--gold),var(--cyan),var(--blue),var(--purple))}
+.ev{position:relative;margin-bottom:14px}
+.ev-dot{position:absolute;left:-30px;top:4px;width:8px;height:8px;border-radius:50%;border:2px solid var(--gold);background:var(--bg)}
+.ev-yr{font-family:'JetBrains Mono',monospace;font-size:.5rem;margin-bottom:2px}
+.ev-card{background:var(--card);border:1px solid rgba(110,140,255,.06);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .3s}
+.ev-card:hover{border-color:rgba(110,140,255,.12)}
+.ev-card.open{border-color:rgba(110,140,255,.15)}
+.ev-h{display:flex;align-items:center;gap:6px}
+.ev-icon{font-size:1.1rem}
+.ev-name{font-size:.82rem;font-weight:700;color:#fff}
+.ev-flag{font-family:'JetBrains Mono',monospace;font-size:.36rem;padding:2px 6px;border-radius:3px;margin-left:auto}
+.ev-body{display:none;margin-top:8px;font-size:.72rem;color:var(--dim);line-height:1.55;border-top:1px solid rgba(255,255,255,.03);padding-top:8px}
+.ev-card.open .ev-body{display:block}
+.ev-body strong{font-weight:600;color:var(--text)}
+.ev-stat{display:inline-flex;align-items:center;gap:3px;font-family:'JetBrains Mono',monospace;font-size:.55rem;padding:2px 6px;border-radius:3px;margin-top:4px}
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted);max-width:650px;margin:0 auto}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge"><span data-en="📅 History" data-fr="📅 Histoire" data-ar="📅 التاريخ">📅 History</span></div>
+  <h1>Satellite <span><span data-en="Timeline" data-fr="Chronologie" data-ar="الجدول الزمني">Timeline</span></span></h1>
+  <p>From a beeping sphere to 10,000+ active satellites — the history of humanity reaching orbit.</p>
+</header>
+<div class="counter"><div class="cv" id="count">10,000+</div><div class="cl">Active satellites in orbit today</div></div>
+<div class="tl" id="tl"></div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+const E=[
+  {y:1957,i:'📡',n:'Sputnik 1',n_fr:'Spoutnik 1',n_ar:'سبوتنيك ١',f:'USSR',fc:'var(--red)',fb:'rgba(252,129,129,.08)',
+    b:'The first artificial satellite. A <strong>58 cm polished sphere</strong> with 4 antennas, broadcasting "beep-beep" on 20/40 MHz. Orbited for 3 months. The Space Age began with a radio signal anyone with a shortwave receiver could hear. Its Doppler shift was tracked worldwide — including by amateur radio operators — proving satellites were real.',
+    s:'83.6 kg · 96 min orbit · 215-939 km'},
+  {y:1960,i:'📺',n:'TIROS-1',n_fr:'TIROS-1',n_ar:'تايروس-١',f:'USA',fc:'var(--blue)',fb:'rgba(110,140,255,.08)',
+    b:'First successful <strong>weather satellite</strong>. Carried two TV cameras. In 78 days, it took 22,952 photos of Earth\'s cloud patterns. Meteorologists could see weather systems for the first time from above. Revolutionized storm tracking and forecasting.',
+    s:'120 kg · First weather photos from space'},
+  {y:1962,i:'📞',n:'Telstar 1',n_fr:'Telstar 1',n_ar:'تلستار ١',f:'USA/EU',fc:'var(--cyan)',fb:'rgba(92,224,214,.08)',
+    b:'First active communications satellite. Relayed the first <strong>live TV between USA and Europe</strong>. Only worked for ~20 minutes per orbit when visible to both sides of the Atlantic. Paved the way for global telecommunications. Also the inspiration for the Adidas football!',
+    s:'77 kg · First live transatlantic TV'},
+  {y:1964,i:'🛰️',n:'Syncom 3',n_fr:'Syncom 3',n_ar:'سينكوم ٣',f:'USA',fc:'var(--blue)',fb:'rgba(110,140,255,.08)',
+    b:'First <strong>geostationary satellite</strong> — hovering motionless over one spot on Earth. Broadcast the 1964 Tokyo Olympics live to America. Proved Arthur C. Clarke\'s 1945 concept of geostationary communications was viable.',
+    s:'39 kg · First GEO satellite'},
+  {y:1967,i:'📜',n:'Outer Space Treaty',n_fr:'Traité de l\'espace',n_ar:'معاهدة الفضاء الخارجي',f:'UN',fc:'var(--gold)',fb:'rgba(232,193,112,.08)',
+    b:'The <strong>"constitution of space"</strong> enters force. No nation can claim sovereignty. No nuclear weapons in orbit. Astronauts are envoys of mankind. Signed by 114 nations. Still the foundation of all space law.',
+    s:'114 ratifications · Still in force'},
+  {y:1978,i:'🗺️',n:'GPS Block I',n_fr:'GPS Block I',n_ar:'GPS بلوك I',f:'USA',fc:'var(--green)',fb:'rgba(111,207,151,.08)',
+    b:'First GPS satellite launched. The <strong>Global Positioning System</strong> would take until 1993 to become fully operational with 24 satellites. Originally military-only; civilian access opened 1983, precision unlocked 2000. Now used by 4 billion people daily.',
+    s:'24 satellites · 20,200 km · 12-hour orbits'},
+  {y:1990,i:'🔭',n:'Hubble Space Telescope',n_fr:'Télescope Spatial Hubble',n_ar:'تلسكوب هابل الفضائي',f:'USA/EU',fc:'var(--purple)',fb:'rgba(183,148,244,.08)',
+    b:'Launched with a <strong>flawed mirror</strong> (2.2 micron error). Fixed by astronauts in 1993. Has since made 1.5+ million observations, helped determine the universe\'s age (13.8 billion years), discovered dark energy acceleration, and photographed galaxies 13.4 billion light-years away. Still operational.',
+    s:'11,110 kg · 547 km · 95 min orbit'},
+  {y:1998,i:'🏗️',n:'ISS Construction Begins',n_fr:'Début de construction de l\'ISS',n_ar:'بدء بناء محطة الفضاء',f:'International',fc:'var(--cyan)',fb:'rgba(92,224,214,.08)',
+    b:'The <strong>International Space Station</strong> — largest structure ever built in space. 16 nations collaborating. 420,000 kg, size of a football field. Continuously inhabited since November 2000. Has hosted 270+ astronauts from 21 countries. Visible from Earth as the brightest "star" in the sky.',
+    s:'420,000 kg · 408 km · 92 min orbit'},
+  {y:2009,i:'💥',n:'Iridium-Cosmos Collision',n_fr:'Collision Iridium-Cosmos',n_ar:'تصادم إيريديوم-كوسموس',f:'—',fc:'var(--red)',fb:'rgba(252,129,129,.08)',
+    b:'First accidental <strong>hypervelocity collision</strong> between two satellites. Iridium 33 and Cosmos 2251 hit at 11.7 km/s over Siberia. Created <strong>2,000+ trackable debris pieces</strong> — many still in orbit. A warning of Kessler Syndrome.',
+    s:'11.7 km/s · 2,000+ debris pieces'},
+  {y:2019,i:'📶',n:'Starlink Begins',n_fr:'Début de Starlink',n_ar:'بداية ستارلينك',f:'SpaceX',fc:'var(--orange)',fb:'rgba(246,173,85,.08)',
+    b:'SpaceX launches first 60 Starlink satellites. The <strong>mega-constellation</strong> era begins. By 2024: 6,000+ in orbit, serving 3+ million customers in 70+ countries. Controversy: astronomers worry about light pollution. Radically lowered the cost of space internet.',
+    s:'6,000+ satellites · 550 km · $120B program'},
+  {y:2021,i:'🔭',n:'James Webb Space Telescope',n_fr:'Télescope James Webb',n_ar:'تلسكوب جيمس ويب',f:'USA/EU/Canada',fc:'var(--gold)',fb:'rgba(232,193,112,.08)',
+    b:'Launched Christmas Day. <strong>Largest, most powerful space telescope ever built.</strong> 6.5m gold-plated mirror. Orbits the L2 Lagrange point 1.5M km from Earth. Looking back to the first galaxies, 200 million years after the Big Bang. Discovering atmospheres of exoplanets.',
+    s:'6,500 kg · L2 orbit · $10 billion · 20-year mission'},
+  {y:2025,i:'🌐',n:'10,000+ Active Satellites',n_fr:'10 000+ satellites actifs',n_ar:'١٠,٠٠٠+ قمر نشط',f:'Global',fc:'var(--cyan)',fb:'rgba(92,224,214,.08)',
+    b:'Humanity crosses <strong>10,000 active satellites</strong> in orbit. 60% are Starlink. Mega-constellations from OneWeb, Amazon Kuiper, and others are growing. Over 36,500 tracked objects total (including debris). The orbital environment is busier and more contested than ever.',
+    s:'36,500+ tracked objects · 130+ nations'},
+];
+const tl=document.getElementById('tl');
+E.forEach(e=>{
+  tl.innerHTML+=`<div class="ev"><div class="ev-dot" style="border-color:${e.fc}"></div><div class="ev-yr" style="color:${e.fc}">${e.y}</div>
+    <div class="ev-card" onclick="this.classList.toggle('open')">
+      <div class="ev-h"><span class="ev-icon">${e.i}</span><span class="ev-name">${e.n}</span>
+        <span class="ev-flag" style="background:${e.fb};color:${e.fc}">${e.f}</span></div>
+      <div class="ev-body">${e.b}<div class="ev-stat" style="background:${e.fb};color:${e.fc}">${e.s}</div></div>
+    </div></div>`;
+});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Satellite Timeline',project:'Satellites in the Sky'},fr:{title:'Chronologie des Satellites',project:'Satellites dans le Ciel'},ar:{title:'الجدول الزمني للأقمار',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

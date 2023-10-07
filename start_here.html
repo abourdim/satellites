@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Satellites in the Sky — Workshop DIY v1.0</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192x192.png">
+<link rel="icon" href="icon-96x96.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:wght@700;800&display=swap');
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--text:#c8d0e0;--text-dim:#6a7a8e;--font:'Outfit',system-ui,sans-serif;--serif:'Playfair Display',Georgia,serif}
+html{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-x:hidden;padding:2rem}
+
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite alternate}
+@keyframes twinkle{0%{opacity:.15}100%{opacity:var(--b,.8)}}
+
+.container{position:relative;z-index:1;text-align:center;max-width:640px;width:100%}
+
+.logo{margin:0 auto 1.5rem;width:120px;height:120px;border-radius:24px;overflow:hidden;box-shadow:0 0 40px rgba(110,140,255,.2)}
+.logo img{width:100%;height:100%;object-fit:cover}
+
+.bismillah{font-family:var(--serif);font-size:1.1rem;color:var(--gold);margin-bottom:2rem;opacity:.85;direction:rtl}
+
+h1{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.15;margin-bottom:.5rem;background:linear-gradient(135deg,var(--blue),var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.subtitle{font-size:1.05rem;color:var(--text-dim);margin-bottom:.5rem}
+.version{display:inline-block;font-size:.75rem;background:rgba(110,140,255,.12);color:var(--blue);padding:3px 12px;border-radius:20px;margin-bottom:2.5rem;letter-spacing:.05em}
+
+.enter-btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--font);font-size:1.15rem;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--blue),var(--purple));padding:16px 48px;border:none;border-radius:16px;cursor:pointer;text-decoration:none;transition:all .3s;box-shadow:0 4px 24px rgba(110,140,255,.3)}
+.enter-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(110,140,255,.45)}
+.enter-btn .arrow{font-size:1.4rem;transition:transform .3s}
+.enter-btn:hover .arrow{transform:translateX(4px)}
+
+.stats{display:flex;gap:2rem;justify-content:center;margin:2.5rem 0 2rem;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-n{font-size:1.8rem;font-weight:800;color:var(--cyan)}
+.stat-l{font-size:.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:1.5rem 0 2rem;text-align:left}
+.feat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 16px;font-size:.82rem;color:var(--text-dim)}
+.feat strong{color:var(--text);display:block;margin-bottom:3px;font-size:.88rem}
+
+.links{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.links a{font-size:.8rem;color:var(--text-dim);text-decoration:none;transition:color .2s}
+.links a:hover{color:var(--blue)}
+
+footer{margin-top:3rem;font-size:.7rem;color:var(--text-dim);opacity:.5}
+</style>
+</head>
+<body>
+
+<!-- Stars background -->
+<div class="stars" id="stars"></div>
+
+<div class="container">
+
+<div class="bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+
+<div class="logo"><img src="logo_icon.png" alt="Workshop DIY Logo"></div>
+
+<h1>Satellites in the Sky</h1>
+<p class="subtitle">Workshop DIY — Educational Space Science</p>
+<span class="version">v1.0</span>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n">58</div><div class="stat-l">Experiences</div></div>
+  <div class="stat"><div class="stat-n">3</div><div class="stat-l">Languages</div></div>
+  <div class="stat"><div class="stat-n">0</div><div class="stat-l">Dependencies</div></div>
+  <div class="stat"><div class="stat-n">∞</div><div class="stat-l">Offline</div></div>
+</div>
+
+<a href="aa-portal.html" class="enter-btn">
+  Enter the Sky <span class="arrow">→</span>
+</a>
+
+<div class="features">
+  <div class="feat"><strong>🛰️ 5 Core Phases</strong>Night Sky → Explorer → Mission Control → Orbital Science → Islamic Heritage</div>
+  <div class="feat"><strong>🌍 48 Experiences</strong>Simulations, games, data visualizations, maker guides, and more</div>
+  <div class="feat"><strong>🌐 EN · FR · عربي</strong>Full trilingual UI with RTL Arabic support and deep data translations</div>
+  <div class="feat"><strong>📱 PWA Ready</strong>Install as app. Works fully offline after first visit. Zero backend.</div>
+</div>
+
+<div class="links">
+  <a href="aa-portal.html">Portal</a>
+  <a href="aa-showcase-gallery.html">Showcase</a>
+  <a href="aa-satellites-ultimate.html">Ultimate</a>
+  <a href="aa-help.html">Help</a>
+  <a href="aa-faq.html">FAQ</a>
+  <a href="README.md">README</a>
+  <a href="CHANGELOG.md">Changelog</a>
+  <a href="HOW-TO-RUN.md">How to Run</a>
+</div>
+
+<footer>Workshop DIY · Satellites in the Sky · v1.0 · Zero dependencies · Pure HTML/CSS/JS</footer>
+
+</div>
+
+<script>
+// Generate star field
+const c=document.getElementById('stars');
+for(let i=0;i<80;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  s.style.left=Math.random()*100+'%';
+  s.style.top=Math.random()*100+'%';
+  s.style.setProperty('--d',(2+Math.random()*4)+'s');
+  s.style.setProperty('--b',.2+Math.random()*.7);
+  s.style.width=s.style.height=(1+Math.random()*2)+'px';
+  c.appendChild(s);
+}
+
+// Register service worker
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>

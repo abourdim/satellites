@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbital Math Lab — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px}
+
+header{text-align:center;margin-bottom:30px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(110,140,255,0.06);border:1px solid rgba(110,140,255,0.1);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:8px}
+header h1 span{color:var(--cyan)}
+header p{font-size:.85rem;color:var(--text-dim);max-width:480px;margin:0 auto}
+
+.score-bar{display:flex;gap:20px;margin-bottom:24px;justify-content:center}
+.sb-item{text-align:center;background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:10px;padding:10px 18px;min-width:80px}
+.sb-item .sv{font-family:var(--mono);font-size:1.4rem;font-weight:500;line-height:1}
+.sb-item .sl{font-size:.46rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.diff-row{display:flex;gap:6px;margin-bottom:20px;justify-content:center}
+.diff-btn{font-family:var(--mono);font-size:.52rem;padding:5px 14px;border-radius:20px;border:1px solid rgba(110,140,255,0.12);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .3s}
+.diff-btn.active{background:rgba(92,224,214,0.08);border-color:rgba(92,224,214,0.2);color:var(--cyan)}
+
+.problem-card{background:var(--card);border:1px solid rgba(110,140,255,0.08);border-radius:16px;padding:28px;max-width:600px;width:100%;position:relative;overflow:hidden}
+.problem-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--blue))}
+
+.pc-category{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.pc-sat{font-size:.78rem;color:var(--cyan);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.pc-sat .sat-icon{font-size:1rem}
+
+.pc-question{font-family:var(--serif);font-size:1.15rem;font-weight:700;color:#fff;line-height:1.4;margin-bottom:6px}
+.pc-hint{font-size:.76rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5}
+.pc-hint code{font-family:var(--mono);background:rgba(110,140,255,0.06);padding:1px 5px;border-radius:3px;font-size:.72rem;color:var(--blue)}
+
+.pc-visual{background:rgba(6,10,22,0.5);border:1px solid rgba(110,140,255,0.04);border-radius:10px;padding:16px;margin-bottom:16px;text-align:center}
+.pc-visual canvas{max-width:100%}
+
+.pc-input{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.pc-input input{flex:1;font-family:var(--mono);font-size:1rem;padding:10px 14px;border-radius:8px;border:1px solid rgba(110,140,255,0.12);background:rgba(6,10,22,0.8);color:var(--cyan);outline:none;transition:border-color .3s}
+.pc-input input:focus{border-color:rgba(92,224,214,0.3)}
+.pc-input .unit{font-family:var(--mono);font-size:.7rem;color:var(--text-muted);min-width:40px}
+.check-btn{font-family:var(--font);font-size:.8rem;font-weight:600;padding:10px 24px;border-radius:8px;border:1px solid rgba(92,224,214,0.2);background:rgba(92,224,214,0.06);color:var(--cyan);cursor:pointer;transition:all .3s}
+.check-btn:hover{background:rgba(92,224,214,0.12);border-color:var(--cyan)}
+
+.pc-result{padding:12px 16px;border-radius:8px;margin-bottom:10px;font-size:.82rem;line-height:1.5;display:none}
+.pc-result.correct{display:block;background:rgba(111,207,151,0.06);border:1px solid rgba(111,207,151,0.15);color:var(--green)}
+.pc-result.wrong{display:block;background:rgba(252,129,129,0.06);border:1px solid rgba(252,129,129,0.15);color:var(--red)}
+.pc-result .answer{font-family:var(--mono);font-weight:500}
+
+.pc-heritage{background:rgba(232,193,112,0.03);border:1px solid rgba(232,193,112,0.08);border-radius:8px;padding:8px 12px;margin-top:10px}
+.pc-heritage .ht{font-family:var(--mono);font-size:.42rem;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.pc-heritage p{font-size:.68rem;color:var(--text-dim);line-height:1.45}
+.pc-heritage strong{color:var(--gold)}
+
+.next-btn{font-family:var(--font);font-size:.78rem;font-weight:600;padding:10px 28px;border-radius:8px;border:1px solid rgba(110,140,255,0.2);background:rgba(110,140,255,0.06);color:var(--blue);cursor:pointer;transition:all .3s;margin-top:14px;display:none}
+.next-btn:hover{background:rgba(110,140,255,0.12)}
+
+footer{margin-top:40px;text-align:center;font-size:.6rem;color:var(--text-muted)}
+footer .ft{font-family:var(--serif);font-style:italic;color:var(--gold);opacity:.4;font-size:.72rem;margin-bottom:4px}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🧮 Interactive Math" data-fr="🧮 Maths interactives" data-ar="🧮 رياضيات تفاعلية">🧮 Interactive Math</span></div>
+  <h1>Orbital <span>Math Lab</span></h1>
+  <p>Real satellites. Real physics. Real math. Solve problems using live orbital data — the same equations mission control uses.</p>
+</header>
+
+<div class="score-bar">
+  <div class="sb-item"><div class="sv" id="scoreVal" style="color:var(--green)">0</div><div class="sl"><span data-en="Score" data-fr="Score" data-ar="النتيجة">Score</span></div></div>
+  <div class="sb-item"><div class="sv" id="streakVal" style="color:var(--orange)">0</div><div class="sl">Streak</div></div>
+  <div class="sb-item"><div class="sv" id="totalVal" style="color:var(--blue)">0</div><div class="sl"><span data-en="Attempted" data-fr="Tentative" data-ar="محاولة">Attempted</span></div></div>
+</div>
+
+<div class="diff-row">
+  <button class="diff-btn active" data-d="easy"><span data-en="Easy" data-fr="Facile" data-ar="سهل">Easy</span></button>
+  <button class="diff-btn" data-d="medium"><span data-en="Medium" data-fr="Moyen" data-ar="متوسط">Medium</span></button>
+  <button class="diff-btn" data-d="hard"><span data-en="Hard" data-fr="Difficile" data-ar="صعب">Hard</span></button>
+</div>
+
+<div class="problem-card" id="problemCard"></div>
+
+<footer>
+  <div class="ft">"The word 'algorithm' comes from al-Khwarizmi — every calculation here honors him."</div>
+  Part of the Satellites in the Sky project
+</footer>
+
+<script>
+let score=0,streak=0,total=0,difficulty='easy',currentProblem=null;
+const G=6.674e-11,M=5.972e24,Re=6371;
+
+const SATS=[
+  {name:'ISS (ZARYA)',name_fr:'ISS (ZARYA)',name_ar:'م.ف.د (زاريا)',alt:408,icon:'🏗️'},
+  {name:'Hubble',name_fr:'Hubble',name_ar:'هابل',alt:547,icon:'🔭'},
+  {name:'Starlink',name_fr:'Starlink',name_ar:'ستارلينك',alt:550,icon:'📶'},
+  {name:'NOAA-20',name_fr:'NOAA-20',name_ar:'NOAA-20',alt:833,icon:'🌦️'},
+  {name:'GPS IIR-M',name_fr:'GPS IIR-M',name_ar:'GPS IIR-M',alt:20200,icon:'📡'},
+  {name:'Galileo',name_fr:'Galileo',name_ar:'غاليليو',alt:23222,icon:'🇪🇺'},
+  {name:'Arabsat 6A',name_fr:'Arabsat 6A',name_ar:'عربسات 6A',alt:35786,icon:'📺'},
+  {name:'Tiangong',name_fr:'Tiangong',name_ar:'تيانغونغ',alt:390,icon:'🇨🇳'},
+];
+
+function randSat(){return SATS[Math.floor(Math.random()*SATS.length)]}
+function orbitalSpeed(alt){return Math.sqrt(G*M/((Re+alt)*1000))/1000}// km/s
+function orbitalPeriod(alt){return 2*Math.PI*Math.sqrt(Math.pow((Re+alt)*1000,3)/(G*M))/60}// minutes
+function circumference(alt){return 2*Math.PI*(Re+alt)}// km
+
+function generateProblem(){
+  const s=randSat();const problems=[];
+  
+  // EASY
+  if(difficulty==='easy'){
+    problems.push({
+      cat:'Orbital Circumference',sat:s,
+      q:`${s.name} orbits at ${s.alt.toLocaleString()} km altitude. What is the circumference of its orbit?`,
+      hint:`Formula: C = 2π(R_earth + altitude). Earth's radius = 6,371 km.`,
+      unit:'km',answer:Math.round(circumference(s.alt)),tolerance:.02,
+      heritage:'Al-Biruni calculated Earth\'s radius (6,371 km) in 973 CE using a mountain and trigonometry — accurate to within 16 km.'
+    });
+    problems.push({
+      cat:'Orbits Per Day',sat:s,
+      q:`${s.name} completes one orbit every ${Math.round(orbitalPeriod(s.alt))} minutes. How many orbits does it complete per day?`,
+      hint:`There are 1,440 minutes in a day. Divide!`,
+      unit:'orbits',answer:+(1440/orbitalPeriod(s.alt)).toFixed(1),tolerance:.1,
+      heritage:'Al-Battani refined the length of a year to within 2 minutes — the same precision needed for orbital timing.'
+    });
+    problems.push({
+      cat:'Distance Traveled',sat:s,
+      q:`${s.name} moves at ${orbitalSpeed(s.alt).toFixed(1)} km/s. How far does it travel in one hour?`,
+      hint:`Speed × time. One hour = 3,600 seconds.`,
+      unit:'km',answer:Math.round(orbitalSpeed(s.alt)*3600),tolerance:.02,
+      heritage:'The algorithms computing satellite speed are named after al-Khwarizmi (780 CE), father of algebra.'
+    });
+  }
+  
+  // MEDIUM
+  if(difficulty==='medium'){
+    problems.push({
+      cat:'Orbital Velocity',sat:s,
+      q:`${s.name} orbits at ${s.alt.toLocaleString()} km altitude. What is its orbital velocity?`,
+      hint:`Formula: v = √(GM/r) where G×M = 3.986×10¹⁴ m³/s², r = (6371 + ${s.alt}) km in meters.`,
+      unit:'km/s',answer:+orbitalSpeed(s.alt).toFixed(2),tolerance:.05,
+      heritage:'This formula derives from Newton\'s gravitational law, but the trigonometry within it was formalized by al-Battani (858 CE).'
+    });
+    problems.push({
+      cat:'Orbital Period (Kepler)',sat:s,
+      q:`Using Kepler's Third Law, calculate the orbital period of ${s.name} at ${s.alt.toLocaleString()} km altitude.`,
+      hint:`T = 2π√(r³/GM). r = (6371 + ${s.alt}) km → convert to meters. Answer in minutes.`,
+      unit:'min',answer:+orbitalPeriod(s.alt).toFixed(1),tolerance:.03,
+      heritage:'Kepler built on al-Zarqali\'s observations and al-Tusi\'s mathematics. His laws have Islamic foundations.'
+    });
+    problems.push({
+      cat:'Signal Delay',sat:s,
+      q:`How long does a radio signal take to travel from ${s.name} (${s.alt.toLocaleString()} km) to the ground?`,
+      hint:`Speed of light = 299,792 km/s. Time = distance / speed.`,
+      unit:'ms',answer:+((s.alt/299792)*1000).toFixed(1),tolerance:.1,
+      heritage:'Ibn al-Haytham (965 CE) was the first to prove light travels in straight lines at finite speed — the foundation of signal delay calculations.'
+    });
+  }
+  
+  // HARD
+  if(difficulty==='hard'){
+    const s2=randSat();
+    problems.push({
+      cat:'Kepler Ratio',sat:s,
+      q:`${s.name} (${s.alt.toLocaleString()} km) has period T₁. ${s2.name} (${s2.alt.toLocaleString()} km) has period T₂. What is the ratio T₂/T₁?`,
+      hint:`Kepler's 3rd: T²∝r³. So T₂/T₁ = (r₂/r₁)^(3/2). Use r = R_earth + altitude.`,
+      unit:'ratio',answer:+Math.pow((Re+s2.alt)/(Re+s.alt),1.5).toFixed(3),tolerance:.02,
+      heritage:'Kepler\'s Third Law was influenced by Islamic astronomers — al-Battani\'s precise period measurements and al-Tusi\'s mathematical models of circular motion.'
+    });
+    problems.push({
+      cat:'Gravitational Acceleration',sat:s,
+      q:`What is the gravitational acceleration (g) at ${s.name}'s altitude of ${s.alt.toLocaleString()} km?`,
+      hint:`g = GM/r². GM = 3.986×10¹⁴ m³/s². r in meters. Surface g = 9.81 m/s².`,
+      unit:'m/s²',answer:+(G*M/Math.pow((Re+s.alt)*1000,2)).toFixed(2),tolerance:.03,
+      heritage:'Al-Biruni studied gravity and geodesy. He understood that objects are attracted toward Earth\'s center — 700 years before Newton formalized it.'
+    });
+    problems.push({
+      cat:'Escape Velocity',sat:s,
+      q:`What is the escape velocity from ${s.name}'s orbit at ${s.alt.toLocaleString()} km?`,
+      hint:`v_escape = √(2GM/r). This is √2 times the orbital velocity.`,
+      unit:'km/s',answer:+(Math.sqrt(2)*orbitalSpeed(s.alt)).toFixed(2),tolerance:.03,
+      heritage:'The concept of "escape" from a gravitational field required understanding gravity as al-Biruni and later Newton did — a force diminishing with distance squared.'
+    });
+  }
+  
+  return problems[Math.floor(Math.random()*problems.length)];
+}
+
+function renderProblem(){
+  currentProblem=generateProblem();
+  const p=currentProblem;
+  const card=document.getElementById('problemCard');
+  card.innerHTML=`
+    <div class="pc-category">${p.cat}</div>
+    <div class="pc-sat"><span class="sat-icon">${p.sat.icon}</span> ${p.sat.name} — ${p.sat.alt.toLocaleString()} km altitude</div>
+    <div class="pc-question">${p.q}</div>
+    <div class="pc-hint">${p.hint}</div>
+    <div class="pc-input">
+      <input type="number" step="any" id="ansInput" placeholder="Your answer…" autofocus>
+      <span class="unit">${p.unit}</span>
+      <button class="check-btn" id="checkBtn">Check</button>
+    </div>
+    <div class="pc-result" id="result"></div>
+    <div class="pc-heritage"><div class="ht"><span data-en="☽ Heritage Connection" data-fr="☽ Lien patrimonial" data-ar="☽ الربط التراثي">☽ Heritage Connection</span></div><p><strong>${p.heritage.split('—')[0]}</strong>${p.heritage.includes('—')?'—'+p.heritage.split('—').slice(1).join('—'):''}</p></div>
+    <button class="next-btn" id="nextBtn">→ Next Problem</button>
+  `;
+  document.getElementById('checkBtn').addEventListener('click',checkAnswer);
+  document.getElementById('ansInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkAnswer()});
+  document.getElementById('nextBtn').addEventListener('click',renderProblem);
+}
+
+function checkAnswer(){
+  const input=+document.getElementById('ansInput').value;
+  const p=currentProblem;
+  const correct=p.answer;
+  const tol=Math.abs(correct)*p.tolerance+.5;
+  const isCorrect=Math.abs(input-correct)<=tol;
+  
+  total++;
+  const res=document.getElementById('result');
+  if(isCorrect){
+    score++;streak++;
+    res.className='pc-result correct';
+    res.innerHTML=`✅ Correct! The answer is <span class="answer">${correct} ${p.unit}</span>. ${streak>1?'🔥 '+streak+' streak!':''}`;
+  } else {
+    streak=0;
+    res.className='pc-result wrong';
+    res.innerHTML=`❌ Not quite. The answer is <span class="answer">${correct} ${p.unit}</span>. Your answer: ${input||'—'}`;
+  }
+  
+  document.getElementById('scoreVal').textContent=score;
+  document.getElementById('streakVal').textContent=streak;
+  document.getElementById('totalVal').textContent=total;
+  document.getElementById('nextBtn').style.display='inline-block';
+  document.getElementById('checkBtn').disabled=true;
+}
+
+document.querySelectorAll('.diff-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');difficulty=b.dataset.d;renderProblem();
+  });
+});
+
+renderProblem();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Orbital Math Lab',project:'Satellites in the Sky'},fr:{title:'Labo de Maths Orbitales',project:'Satellites dans le Ciel'},ar:{title:'مختبر الرياضيات المدارية',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

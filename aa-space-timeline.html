@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Timeline — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--ancient:#8a9ab5;--golden:#e8c170;--european:#7eaacc;--modern:#6e8cff;--space:#5ce0d6;--now:#b794f4;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden}
+
+/* Fixed era indicator */
+.era-ind{position:fixed;top:20px;left:20px;z-index:100;background:rgba(6,10,22,0.9);border:1px solid rgba(110,140,255,0.1);border-radius:10px;padding:10px 16px;backdrop-filter:blur(14px);transition:border-color .5s}
+.era-ind .ei-year{font-family:var(--mono);font-size:1.3rem;font-weight:500;line-height:1;transition:color .5s}
+.era-ind .ei-era{font-size:.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;transition:color .5s}
+
+/* Progress bar */
+.progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:101;background:rgba(255,255,255,0.03)}
+.progress-fill{height:100%;width:0%;transition:width .1s,background .5s}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 30px;position:relative}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:200px;background:linear-gradient(to bottom,transparent,var(--bg))}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(110,140,255,0.06);border:1px solid rgba(110,140,255,0.1);border-radius:50px;padding:7px 18px;font-size:.68rem;color:var(--modern);letter-spacing:.06em;text-transform:uppercase;margin-bottom:22px}
+.hero h1{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-weight:800;line-height:1.08;margin-bottom:16px}
+.hero h1 .g1{color:var(--golden)}.hero h1 .g2{color:var(--space)}
+.hero p{font-size:.92rem;color:var(--text-dim);max-width:520px;line-height:1.65;margin-bottom:8px}
+.hero .era-legend{display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;justify-content:center}
+.el-item{display:flex;align-items:center;gap:6px;font-size:.6rem;color:var(--text-dim)}
+.el-dot{width:8px;height:8px;border-radius:50%}
+
+/* Timeline */
+.timeline{position:relative;max-width:750px;margin:0 auto;padding:40px 30px 120px}
+.timeline::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%)}
+
+.event{position:relative;padding:28px 0;display:flex;align-items:flex-start;opacity:0;transform:translateY(30px);transition:opacity .7s,transform .7s}
+.event.vis{opacity:1;transform:translateY(0)}
+.event:nth-child(odd){flex-direction:row;padding-right:52%}
+.event:nth-child(even){flex-direction:row-reverse;padding-left:52%}
+.event:nth-child(even) .ev-content{text-align:right}
+
+.ev-dot{position:absolute;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;border:2px solid;background:var(--bg);z-index:2;top:34px;transition:transform .3s,box-shadow .3s}
+.event.vis .ev-dot{transform:translateX(-50%) scale(1.15)}
+.ev-content{flex:1;padding:0 20px}
+.ev-year{font-family:var(--mono);font-size:1.1rem;font-weight:500;margin-bottom:2px;line-height:1}
+.ev-title{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:4px}
+.ev-desc{font-size:.76rem;color:var(--text-dim);line-height:1.55}
+.ev-desc strong{font-weight:600}
+.ev-connection{margin-top:6px;padding:6px 10px;border-radius:5px;font-size:.68rem;line-height:1.45}
+
+/* Era sections */
+.era-break{text-align:center;padding:60px 30px;max-width:600px;margin:0 auto;position:relative}
+.era-break h2{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:10px}
+.era-break p{font-size:.82rem;color:var(--text-dim);line-height:1.55}
+
+/* Color coding by era */
+.era-ancient .ev-year{color:var(--ancient)}.era-ancient .ev-dot{border-color:var(--ancient)}.era-ancient .ev-connection{background:rgba(138,154,181,0.06);border-left:2px solid rgba(138,154,181,0.2);color:var(--ancient)}
+.era-golden .ev-year{color:var(--golden)}.era-golden .ev-dot{border-color:var(--golden);box-shadow:0 0 10px rgba(232,193,112,0.3)}.era-golden .ev-connection{background:rgba(232,193,112,0.05);border-left:2px solid rgba(232,193,112,0.2);color:var(--golden)}
+.era-golden .ev-title{color:var(--golden)}
+.era-european .ev-year{color:var(--european)}.era-european .ev-dot{border-color:var(--european)}.era-european .ev-connection{background:rgba(126,170,204,0.06);border-left:2px solid rgba(126,170,204,0.15);color:var(--european)}
+.era-modern .ev-year{color:var(--modern)}.era-modern .ev-dot{border-color:var(--modern)}.era-modern .ev-connection{background:rgba(110,140,255,0.06);border-left:2px solid rgba(110,140,255,0.15);color:var(--modern)}
+.era-space .ev-year{color:var(--space)}.era-space .ev-dot{border-color:var(--space);box-shadow:0 0 8px rgba(92,224,214,0.3)}.era-space .ev-connection{background:rgba(92,224,214,0.04);border-left:2px solid rgba(92,224,214,0.15);color:var(--space)}
+.era-now .ev-year{color:var(--now)}.era-now .ev-dot{border-color:var(--now);box-shadow:0 0 8px rgba(183,148,244,0.3)}.era-now .ev-connection{background:rgba(183,148,244,0.04);border-left:2px solid rgba(183,148,244,0.15);color:var(--now)}
+
+footer{text-align:center;padding:60px 30px;font-size:.65rem;color:var(--text-muted)}
+footer .ft{font-family:var(--serif);font-style:italic;color:var(--golden);opacity:.5;font-size:.8rem;margin-bottom:6px}
+
+@media(max-width:640px){
+  .event:nth-child(odd),.event:nth-child(even){flex-direction:column!important;padding-left:30px!important;padding-right:10px!important;text-align:left!important}
+  .event:nth-child(even) .ev-content{text-align:left}
+  .ev-dot{left:0!important;transform:none!important}.event.vis .ev-dot{transform:scale(1.15)!important}
+  .timeline::before{left:6px}
+  .era-ind{display:none}
+}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+<div class="era-ind" id="eraInd"><div class="ei-year" id="eiYear">3000 BCE</div><div class="ei-era" id="eiEra" data-en="Ancient Astronomy" data-fr="Astronomie ancienne" data-ar="الفلك القديم">Ancient Astronomy</div></div>
+
+<div class="hero">
+  <div class="hero-badge"><span data-en="📜 Interactive Timeline" data-fr="📜 Chronologie interactive" data-ar="📜 جدول زمني تفاعلي">📜 Interactive Timeline</span></div>
+  <h1>5,000 Years of<br>Watching the <span class="g1"><span data-en="Sky" data-fr="Ciel" data-ar="السماء">Sky</span></span></h1>
+  <p>From Babylonian clay tablets to Starlink constellations — the unbroken thread of human curiosity about the heavens. The <span style="color:var(--golden)" data-en="Islamic Golden Age" data-fr="Âge d'or islamique" data-ar="العصر الذهبي الإسلامي">Islamic Golden Age</span> sits at the center, the bridge that carried ancient knowledge into the modern world.</p>
+  <div class="era-legend">
+    <div class="el-item"><div class="el-dot" style="background:var(--ancient)"></div data-en="Ancient (3000 BCE–400 CE)" data-fr="Antiquité (3000 AEC–400 EC)" data-ar="العصر القديم (3000 ق.م–400 م)">Ancient (3000 BCE–400 CE)</div>
+    <div class="el-item"><div class="el-dot" style="background:var(--golden)"></div data-en="Islamic Golden Age (750–1450)" data-fr="Âge d'or islamique (750–1450)" data-ar="العصر الذهبي الإسلامي (750–1450)">Islamic Golden Age (750–1450)</div>
+    <div class="el-item"><div class="el-dot" style="background:var(--european)"></div data-en="European Renaissance (1450–1800)" data-fr="Renaissance européenne (1450–1800)" data-ar="النهضة الأوروبية (1450–1800)">European Renaissance (1450–1800)</div>
+    <div class="el-item"><div class="el-dot" style="background:var(--modern)"></div data-en="Modern (1800–1957)" data-fr="Moderne (1800–1957)" data-ar="الحديث (1800–1957)">Modern (1800–1957)</div>
+    <div class="el-item"><div class="el-dot" style="background:var(--space)"></div data-en="Space Age (1957–2010)" data-fr="Ère spatiale (1957–2010)" data-ar="عصر الفضاء (1957–2010)">Space Age (1957–2010)</div>
+    <div class="el-item"><div class="el-dot" style="background:var(--now)"></div data-en="Now (2010–Today)" data-fr="Aujourd'hui (2010–présent)" data-ar="الآن (2010–اليوم)">Now (2010–Today)</div>
+  </div>
+</div>
+
+<div class="timeline" id="timeline"></div>
+
+<footer>
+  <div class="ft">"Every satellite carries centuries of knowledge."</div>
+  Part of the Satellites in the Sky project
+</footer>
+
+<script>
+const EVENTS=[
+// ANCIENT
+{year:'~3000 BCE',title:'Babylonian Star Catalogs',desc:'Priests in Mesopotamia record star positions on clay tablets — the first systematic observation of the sky.',era:'ancient'},
+{year:'~2500 BCE',title:'Egyptian Alignment',desc:'The Great Pyramids of Giza are aligned to true north with <strong>0.05° accuracy</strong> using stellar observation.',era:'ancient'},
+{year:'~600 BCE',title:'Thales Predicts an Eclipse',desc:'The first recorded prediction of a solar eclipse, using patterns observed over centuries of Babylonian records.',era:'ancient'},
+{year:'~350 BCE',title:'Aristotle: Earth is a Sphere',desc:'Argues for a spherical Earth based on the shape of Earth\'s shadow during lunar eclipses.',era:'ancient'},
+{year:'~240 BCE',title:'Eratosthenes Measures Earth',desc:'Calculates Earth\'s circumference using shadows in two cities — accurate to within <strong>2%</strong>.',era:'ancient'},
+{year:'~150 BCE',title:'Hipparchus: Star Catalog',desc:'Catalogs <strong>850 stars</strong> with positions and brightness. Discovers precession of the equinoxes.',era:'ancient'},
+{year:'~150 CE',title:'Ptolemy\'s Almagest',desc:'The definitive astronomical text for 1,400 years. Geocentric model with epicycles. Translated into Arabic as "al-Majisti".',era:'ancient',conn:'The Arabic translation preserved Ptolemy\'s work when Greek originals were lost. Islamic astronomers then corrected and expanded it.'},
+
+// ISLAMIC GOLDEN AGE
+{year:'780 CE',title:'Al-Khwarizmi: Algebra & Algorithms',desc:'Writes <strong>al-Kitāb al-Mukhtaṣar</strong>, founding algebra. His name becomes "algorithm" — the basis of all satellite computation.',era:'golden',conn:'Every SGP4 orbital calculation, every GPS fix, every satellite pass prediction runs on algorithms — named after this man.'},
+{year:'~800 CE',title:'House of Wisdom, Baghdad',desc:'Caliph Harun al-Rashid founds a center of learning. Scholars translate Greek, Persian, Indian texts into Arabic.',era:'golden'},
+{year:'858 CE',title:'Al-Battani Refines Trigonometry',desc:'Introduces <strong>cosine</strong>, refines year length to within <strong>2 minutes</strong>, corrects Ptolemy\'s solar theory.',era:'golden',conn:'Orbital period calculations use trigonometric functions al-Battani formalized. Copernicus cited him 23 times.'},
+{year:'875 CE',title:'Abbas ibn Firnas: First Flight',desc:'Makes the <strong>first recorded human flight</strong> from Córdoba, Spain. Also builds a mechanical planetarium with moving stars.',era:'golden',conn:'From his glide to the ISS at 28,000 km/h — his planetarium was the ancestor of every sky-simulation app.'},
+{year:'903 CE',title:'Al-Sufi: Book of Fixed Stars',desc:'Records <strong>1,018 stars</strong> with Arabic names still used today. First to document the <strong>Andromeda Galaxy</strong> — "a little cloud."',era:'golden',conn:'Satellite star trackers match photos against star catalogs — direct descendants of al-Sufi\'s book. Aldebaran, Altair, Betelgeuse — all his names.'},
+{year:'~965 CE',title:'Ibn al-Haytham: Book of Optics',desc:'Proves vision works by light entering the eye, not rays leaving it. Invents the <strong>scientific method</strong>. 7-volume masterwork.',era:'golden',conn:'Every satellite camera, every telescope lens, every optical sensor descends from his understanding of light.'},
+{year:'973 CE',title:'Al-Biruni: Earth\'s Radius',desc:'Calculates Earth\'s radius using a mountain and trigonometry — accurate to within <strong>16 km</strong> of the modern value.',era:'golden',conn:'GPS satellites measure altitude from the same Earth whose radius al-Biruni first calculated accurately over 1,000 years ago.'},
+{year:'1029 CE',title:'Al-Zarqali: Universal Astrolabe',desc:'Invents the <strong>universal astrolabe</strong> — the first to work at any latitude. Corrects Mercury\'s orbit 500 years before Kepler.',era:'golden',conn:'The astrolabe was the original satellite tracker — clock, compass, star chart, and prediction device in one brass disc.'},
+{year:'1259 CE',title:'Al-Tusi: Maragheh Observatory',desc:'Builds the era\'s greatest observatory. Invents the <strong>Tusi couple</strong> — mathematical device for modeling planetary motion.',era:'golden',conn:'Copernicus used al-Tusi\'s mathematical models. The revolution was built on Islamic foundations.'},
+{year:'1420 CE',title:'Ulugh Beg: Samarkand Catalog',desc:'Builds a massive observatory. Catalogs <strong>1,018 stars</strong> — the most accurate positions before telescopes.',era:'golden',conn:'Modern satellite star-tracker databases are direct descendants of Ulugh Beg\'s Samarkand catalog.'},
+
+// EUROPEAN RENAISSANCE
+{year:'1543',title:'Copernicus: Heliocentric Model',desc:'Publishes <strong>De Revolutionibus</strong>. Places the Sun at center. Cites al-Battani, uses al-Tusi\'s mathematics.',era:'european',conn:'Copernicus explicitly credited Islamic astronomers. His revolution stood on their shoulders.'},
+{year:'1609',title:'Galileo\'s Telescope',desc:'Turns a telescope to the sky. Sees Jupiter\'s moons, craters on the Moon, phases of Venus. Confirms heliocentrism.',era:'european'},
+{year:'1609',title:'Kepler\'s Laws of Planetary Motion',desc:'Orbits are <strong>ellipses</strong>. Equal areas in equal times. T² ∝ a³. Built on Brahe\'s data and Islamic mathematical traditions.',era:'european',conn:'Every satellite follows Kepler\'s laws. Every orbit prediction depends on them.'},
+{year:'1687',title:'Newton: Principia Mathematica',desc:'<strong>Universal gravitation</strong>: F = GMm/r². Explains why Kepler\'s laws work. Makes orbital mechanics a science.',era:'european'},
+{year:'1798',title:'Cavendish Measures G',desc:'First measurement of the gravitational constant G in a lab. Now we can calculate exactly how satellites orbit.',era:'european'},
+
+// MODERN
+{year:'1857',title:'First Orbital Mechanics Paper',desc:'The mathematics of placing objects into orbit begins to be formalized as theoretical possibility.',era:'modern'},
+{year:'1903',title:'Tsiolkovsky: Rocket Equation',desc:'Publishes the <strong>rocket equation</strong>: Δv = ve × ln(m₀/mf). The math that makes spaceflight possible.',era:'modern'},
+{year:'1926',title:'Goddard Launches First Liquid Rocket',desc:'The first liquid-fueled rocket flies for <strong>2.5 seconds</strong>, reaching 12 meters. The space age begins.',era:'modern'},
+{year:'1945',title:'Arthur C. Clarke: Geostationary Orbit',desc:'Predicts <strong>geostationary communications satellites</strong> at 35,786 km. Now called the "Clarke Belt."',era:'modern'},
+
+// SPACE AGE
+{year:'4 Oct 1957',title:'🛰️ Sputnik 1',desc:'The Soviet Union launches the <strong>first artificial satellite</strong>. 83 kg, 96 minutes per orbit. Its beep changes history forever.',era:'space',conn:'The dream of al-Khwarizmi\'s algorithms and al-Zarqali\'s star-tracking — realized in orbit.'},
+{year:'1961',title:'Yuri Gagarin: First Human in Space',desc:'Orbits Earth once in <strong>108 minutes</strong>. "I see Earth! It is so beautiful!"',era:'space'},
+{year:'1964',title:'First Geostationary Satellite',desc:'<strong>Syncom 3</strong> achieves geostationary orbit — exactly as Clarke predicted. Broadcasts the Tokyo Olympics.',era:'space'},
+{year:'20 Jul 1969',title:'🌙 Moon Landing',desc:'Apollo 11. Armstrong and Aldrin walk on the Moon. 384,400 km from Earth. 600 million people watch.',era:'space'},
+{year:'1973',title:'GPS Development Begins',desc:'The U.S. begins building the <strong>Global Positioning System</strong>. 31 satellites at 20,200 km with atomic clocks.',era:'space',conn:'GPS measures position on the Earth whose radius al-Biruni calculated, using the trigonometry al-Battani formalized.'},
+{year:'1978',title:'Kessler Syndrome Predicted',desc:'NASA scientist Donald Kessler predicts that orbital debris could cascade — each collision creating more debris.',era:'space'},
+{year:'1990',title:'Hubble Space Telescope',desc:'Launched to 547 km. Above the atmosphere, it photographs galaxies <strong>13.4 billion light-years</strong> away.',era:'space',conn:'Hubble\'s optics are built on principles Ibn al-Haytham established in his Book of Optics (1011 CE).'},
+{year:'1998',title:'ISS Construction Begins',desc:'The <strong>International Space Station</strong>: 109 meters wide, crew of 6-7, orbiting every 92 minutes at 28,000 km/h.',era:'space'},
+
+// NOW
+{year:'2009',title:'First Orbital Collision',desc:'Iridium 33 and Cosmos 2251 collide at 42,000 km/h — creating <strong>2,000+ tracked debris</strong> pieces.',era:'now'},
+{year:'2014',title:'UAE Mars Hope Announced',desc:'The UAE announces the <strong>Hope Mars Mission</strong> — the first interplanetary mission by an Arab nation.',era:'now'},
+{year:'2019',title:'Starlink Begins',desc:'SpaceX launches first 60 Starlink satellites. The largest constellation in history begins forming. Over <strong>5,000</strong> now orbit.',era:'now'},
+{year:'2021',title:'UAE Hope Reaches Mars',desc:'<strong>Al-Amal (Hope)</strong> enters Mars orbit. The UAE becomes the 5th entity to reach Mars.',era:'now',conn:'From al-Khwarizmi\'s algebra to a Martian orbit — the tradition continues.'},
+{year:'2024',title:'36,500 Tracked Objects',desc:'NORAD tracks 36,500+ objects in orbit. Millions of smaller fragments remain untracked. Space is getting crowded.',era:'now'},
+{year:'2025',title:'You, Looking Up',desc:'You open an app. It uses <strong>algorithms</strong> (al-Khwarizmi) to propagate <strong>TLE data</strong> and show satellites above you — continuing a 5,000 year tradition of watching the sky.',era:'now',conn:'Every feature of this app has roots in history. The line from Babylon to your phone screen is unbroken.'},
+];
+
+const timeline=document.getElementById('timeline');
+const eraColors={ancient:'var(--ancient)',golden:'var(--golden)',european:'var(--european)',modern:'var(--modern)',space:'var(--space)',now:'var(--now)'};
+const eraNames={ancient:'Ancient Astronomy',golden:'Islamic Golden Age',european:'European Renaissance',modern:'Modern Era',space:'Space Age',now:'The Present'};
+
+let lastEra='';
+EVENTS.forEach((e,i)=>{
+  // Era break
+  if(e.era!==lastEra){
+    const br=document.createElement('div');
+    br.className='era-break';
+    br.innerHTML=`<h2 style="color:${eraColors[e.era]}">${eraNames[e.era]}</h2>`;
+    if(e.era==='golden')br.innerHTML+=`<p>For 700 years, Islamic civilization preserved, corrected, and expanded all known astronomy. The names they gave — Algorithm, Azimuth, Nadir, Zenith, Almanac — are still used by every space agency today.</p>`;
+    else if(e.era==='space')br.innerHTML+=`<p>The dreams of 5,000 years of skygazers become reality in orbit.</p>`;
+    timeline.appendChild(br);
+    lastEra=e.era;
+  }
+  
+  const ev=document.createElement('div');
+  ev.className=`event era-${e.era}`;
+  ev.dataset.year=e.year;ev.dataset.era=e.era;
+  ev.innerHTML=`<div class="ev-dot"></div><div class="ev-content"><div class="ev-year">${e.year}</div><div class="ev-title">${e.title}</div><div class="ev-desc">${e.desc}</div>${e.conn?`<div class="ev-connection">🔗 ${e.conn}</div>`:''}</div>`;
+  ev.style.transitionDelay=`${(i%4)*.05}s`;
+  timeline.appendChild(ev);
+});
+
+// Timeline spine gradient
+const spineGrad=`linear-gradient(to bottom,${eraColors.ancient},${eraColors.golden},${eraColors.golden},${eraColors.european},${eraColors.modern},${eraColors.space},${eraColors.now})`;
+document.querySelector('.timeline').style.setProperty('--spine',spineGrad);
+document.querySelector('.timeline::before')
+// Apply via style tag
+const st=document.createElement('style');
+st.textContent=`.timeline::before{background:${spineGrad}}`;
+document.head.appendChild(st);
+
+// Scroll observer
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')});
+},{threshold:.15,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.event').forEach(e=>obs.observe(e));
+
+// Era indicator + progress
+function updateScroll(){
+  const scrollY=window.scrollY;
+  const docH=document.documentElement.scrollHeight-innerHeight;
+  const pct=Math.min(1,scrollY/docH);
+  document.getElementById('progressFill').style.width=pct*100+'%';
+  
+  // Find current era
+  const events=document.querySelectorAll('.event');
+  let currentYear='3000 BCE',currentEra='ancient';
+  for(const ev of events){
+    const rect=ev.getBoundingClientRect();
+    if(rect.top<innerHeight*.5){currentYear=ev.dataset.year;currentEra=ev.dataset.era}
+  }
+  
+  const col=eraColors[currentEra]||'var(--text)';
+  document.getElementById('eiYear').textContent=currentYear;
+  document.getElementById('eiYear').style.color=col;
+  document.getElementById('eiEra').textContent=eraNames[currentEra]||'';
+  document.getElementById('eiEra').style.color=col;
+  document.getElementById('eraInd').style.borderColor=col.replace('var(','').replace(')','')!==col?col:'rgba(110,140,255,0.1)';
+  document.getElementById('progressFill').style.background=col;
+}
+addEventListener('scroll',updateScroll,{passive:true});
+updateScroll();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Space Timeline',project:'Satellites in the Sky'},fr:{title:'Chronologie Spatiale',project:'Satellites dans le Ciel'},ar:{title:'الجدول الزمني للفضاء',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

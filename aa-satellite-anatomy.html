@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Anatomy — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(110,140,255,0.06);border:1px solid rgba(110,140,255,0.1);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--blue)}
+header p{font-size:.82rem;color:var(--text-dim);max-width:480px;margin:0 auto}
+
+.type-row{display:flex;gap:6px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.type-btn{font-family:var(--mono);font-size:.52rem;padding:6px 14px;border-radius:20px;border:1px solid rgba(110,140,255,0.12);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .3s}
+.type-btn.active{background:rgba(92,224,214,0.08);border-color:rgba(92,224,214,0.2);color:var(--cyan)}
+
+.diagram{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+@media(max-width:700px){.diagram{grid-template-columns:1fr;gap:12px}}
+
+/* Satellite visual */
+.sat-visual{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:16px;padding:24px;position:relative;min-height:400px}
+.sat-visual svg{width:100%;height:auto}
+
+.component{cursor:pointer;transition:all .3s;opacity:.7}
+.component:hover,.component.active{opacity:1}
+.component.active rect,.component.active ellipse,.component.active polygon,.component.active path{stroke-width:2}
+
+/* Parts grid */
+.parts-grid{display:flex;flex-direction:column;gap:6px}
+.part{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .3s}
+.part:hover{border-color:rgba(110,140,255,0.12)}
+.part.active{border-color:rgba(92,224,214,0.2);background:rgba(92,224,214,0.02)}
+.part-head{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.part-icon{font-size:.9rem}
+.part-name{font-size:.78rem;font-weight:600;color:#fff}
+.part-tag{font-family:var(--mono);font-size:.38rem;padding:1px 5px;border-radius:3px;margin-left:auto}
+.part-desc{font-size:.68rem;color:var(--text-dim);line-height:1.45;display:none}
+.part.active .part-desc{display:block}
+.part-specs{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.part-spec{font-family:var(--mono);font-size:.42rem;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,0.03);color:var(--text-muted)}
+
+/* Detail panel */
+.detail-panel{background:var(--card);border:1px solid rgba(92,224,214,0.08);border-radius:14px;padding:18px;margin-top:12px;display:none}
+.detail-panel.show{display:block}
+.dp-name{font-family:var(--serif);font-size:1rem;font-weight:700;color:var(--cyan);margin-bottom:6px}
+.dp-body{font-size:.76rem;color:var(--text-dim);line-height:1.6}
+.dp-body strong{font-weight:600}
+
+footer{text-align:center;padding:40px 20px;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🔧 Engineering" data-fr="🔧 Ingénierie" data-ar="🔧 الهندسة">🔧 Engineering</span></div>
+  <h1>Satellite <span><span data-en="Anatomy" data-fr="Anatomie" data-ar="التشريح">Anatomy</span></span></h1>
+  <p>What's inside a satellite? Every component has a purpose. Click each part to explore its function, physics, and how it keeps the mission running.</p>
+</header>
+
+<div class="type-row" id="typeRow">
+  <button class="type-btn active" data-t="comms"><span data-en="📡 Communications" data-fr="📡 Communications" data-ar="📡 الاتصالات">📡 Communications</span></button>
+  <button class="type-btn" data-t="gps"><span data-en="📍 GPS" data-fr="📍 GPS" data-ar="📍 نظام تحديد المواقع">📍 GPS</span></button>
+  <button class="type-btn" data-t="earth"><span data-en="📸 Earth Observation" data-fr="📸 Observation de la Terre" data-ar="📸 مراقبة الأرض">📸 Earth Observation</span></button>
+  <button class="type-btn" data-t="cubesat"><span data-en="📦 CubeSat" data-fr="📦 CubeSat" data-ar="📦 قمر مكعب">📦 CubeSat</span></button>
+</div>
+
+<div class="diagram">
+  <div class="sat-visual">
+    <svg viewBox="0 0 500 400" id="satSvg"></svg>
+  </div>
+  <div class="parts-grid" id="partsGrid"></div>
+</div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const SATELLITES={
+  comms:{
+    name:'GEO Communications Satellite',name_fr:'Satellite de communications GEO',name_ar:'قمر اتصالات ثابت',
+    desc:'Geostationary orbit (35,786 km). Hovers over one spot. Relays TV, internet, and phone signals. ~4,000 kg, 15-year lifespan.',
+    parts:[
+      {id:'solar',icon:'☀️',name:'Solar Arrays',name_fr:'Panneaux solaires',name_ar:'ألواح شمسية',tag:'Power',tagCol:'var(--gold)',
+        desc:'Two large deployable wings covered in <strong>gallium arsenide triple-junction solar cells</strong>. Generate 12-20 kW of power. Track the Sun with stepper motors. Each wing spans 10-15 meters. Degrade ~1% per year from radiation damage.',
+        specs:['12-20 kW','GaAs cells','15m span','Sun-tracking']},
+      {id:'bus',icon:'📦',name:'Satellite Bus',name_fr:'Bus satellite',name_ar:'هيكل القمر',tag:'Structure',tagCol:'var(--blue)',
+        desc:'The main body — a box of <strong>aluminum honeycomb</strong> panels. Houses all electronics, fuel tanks, and batteries. Designed to survive launch vibrations (6-8 G) and thermal cycling (-180°C to +150°C in shadow/sun).',
+        specs:['2×2×3 m','Al honeycomb','6-8 G rated','-180 to +150°C']},
+      {id:'antenna',icon:'📡',name:'Communications Antenna',name_fr:'Antenne de communications',name_ar:'هوائي الاتصالات',tag:'Payload',tagCol:'var(--cyan)',
+        desc:'The whole point of the satellite. <strong>High-gain parabolic dish</strong> (1-3m diameter) for focused beams back to Earth. Some have phased arrays with 100+ spot beams covering different regions. Operates at C-band (4-8 GHz), Ku-band (12-18 GHz), or Ka-band (26-40 GHz).',
+        specs:['1-3m dish','100+ beams','Ku/Ka band','50 Gbps']},
+      {id:'thrusters',icon:'🔥',name:'Thruster System',name_fr:'Système de propulsion',name_ar:'نظام الدفع',tag:'Propulsion',tagCol:'var(--orange)',
+        desc:'<strong>Bipropellant thrusters</strong> (hydrazine + MON-3) for orbit raising and station-keeping. Ion thrusters for fine adjustments — using xenon gas accelerated by electric fields. Must maintain position within ±0.1° of assigned orbital slot.',
+        specs:['Bipropellant','Ion thrusters','±0.1° accuracy','15-year fuel']},
+      {id:'battery',icon:'🔋',name:'Battery Pack',name_fr:'Batterie',name_ar:'حزمة البطارية',tag:'Power',tagCol:'var(--gold)',
+        desc:'<strong>Lithium-ion batteries</strong> for eclipse seasons. Twice a year (near equinoxes), the satellite enters Earth\'s shadow for up to 72 minutes. Batteries must power everything during these blackouts. 100+ kg of batteries.',
+        specs:['Li-ion','72 min capacity','45 eclipses/yr','100+ kg']},
+      {id:'reaction',icon:'⚙️',name:'Reaction Wheels',name_fr:'Roues de réaction',name_ar:'عجلات التفاعل',tag:'Attitude',tagCol:'var(--purple)',
+        desc:'<strong>Spinning flywheels</strong> (3-4 of them) that control which way the satellite points. Spin one up → satellite rotates the opposite way (conservation of angular momentum). No fuel needed. Speeds up to 6,000 RPM.',
+        specs:['3-4 wheels','6000 RPM','No fuel','0.001° precision']},
+      {id:'startracker',icon:'⭐',name:'Star Trackers',name_fr:'Traqueurs d\'étoiles',name_ar:'متتبعات النجوم',tag:'Navigation',tagCol:'var(--green)',
+        desc:'<strong>Cameras that photograph stars</strong> and match patterns against a catalog to determine exact orientation. Accurate to 0.001°. The satellite literally navigates by the stars — just like sailors and <strong>medieval Arab astronomers</strong>.',
+        specs:['0.001° accuracy','Star catalog','2+ redundant','CCD sensor']},
+      {id:'thermal',icon:'🌡️',name:'Thermal Control',name_fr:'Contrôle thermique',name_ar:'التحكم الحراري',tag:'Survival',tagCol:'var(--red)',
+        desc:'<strong>Multi-layer insulation (MLI)</strong> blankets, heat pipes, radiators, and heaters. Space is -270°C in shadow, +150°C in sun. Electronics need 0-40°C. The thermal system manages this 300°C swing every orbit.',
+        specs:['MLI blankets','Heat pipes','Radiators','±2°C control']},
+    ]
+  },
+  gps:{
+    name:'GPS Block III Satellite',name_fr:'Satellite GPS Block III',name_ar:'قمر GPS بلوك III',
+    desc:'MEO orbit (20,200 km). 31 satellites in 6 orbital planes. Each carries 3 rubidium + 1 cesium atomic clocks. 3,880 kg.',
+    parts:[
+      {id:'clock',icon:'⏱️',name:'Atomic Clocks',name_fr:'Horloges atomiques',name_ar:'ساعات ذرية',tag:'Core Payload',tagCol:'var(--cyan)',
+        desc:'The heart of GPS. <strong>3 rubidium + 1 cesium atomic clocks</strong> per satellite. Accurate to 1 nanosecond per day. A 10 ns error = 3 meter position error. The clocks are so precise they must account for <strong>Einstein\'s relativity</strong> — time runs faster by 38 μs/day at GPS altitude.',
+        specs:['4 clocks','±1 ns/day','Relativity corrected','$50K each']},
+      {id:'solar',icon:'☀️',name:'Solar Arrays',tag:'Power',tagCol:'var(--gold)',
+        desc:'Deployable solar panels providing <strong>2,900 watts</strong>. GPS orbits are high enough to spend only ~1 hour in shadow per orbit, reducing battery needs.',
+        specs:['2,900 W','GaAs cells','~1 hr eclipse','Deployable']},
+      {id:'antenna',icon:'📡',name:'L-Band Antenna Array',name_fr:'Réseau d\'antennes L-Band',name_ar:'مصفوفة هوائيات L-Band',tag:'Payload',tagCol:'var(--cyan)',
+        desc:'Transmits navigation signals on <strong>L1 (1575 MHz), L2 (1228 MHz), and L5 (1176 MHz)</strong>. Power: only 20-50 watts total. By the time it reaches Earth, the signal is weaker than thermal noise.',
+        specs:['L1/L2/L5','20-50 W','Earth-facing','Phased array']},
+      {id:'bus',icon:'📦',name:'Satellite Bus',tag:'Structure',tagCol:'var(--blue)',
+        desc:'<strong>Lockheed Martin A2100</strong> bus platform. Houses all electronics, propulsion, and thermal systems. Designed for 15-year operational life.',
+        specs:['3,880 kg','A2100 bus','15-year life','Radiation hardened']},
+      {id:'thrusters',icon:'🔥',name:'Propulsion',name_fr:'Propulsion',name_ar:'الدفع',tag:'Propulsion',tagCol:'var(--orange)',
+        desc:'Hydrazine thrusters for orbit maintenance. GPS satellites must stay in precise orbits — <strong>any drift changes the timing and degrades accuracy for everyone on Earth</strong>.',
+        specs:['Hydrazine','Station-keeping','Orbit adjust','De-orbit capable']},
+      {id:'startracker',icon:'⭐',name:'Star Trackers & Sun Sensors',tag:'Navigation',tagCol:'var(--green)',
+        desc:'Determines satellite orientation by photographing stars. <strong>Must know exactly which way the antenna points</strong> to within thousandths of a degree.',
+        specs:['Star matching','Sun sensors','Earth sensors','Gyroscopes']},
+    ]
+  },
+  earth:{
+    name:'Earth Observation Satellite',name_fr:'Satellite d\'observation terrestre',name_ar:'قمر مراقبة الأرض',
+    desc:'Sun-synchronous orbit (700 km). Passes over every point on Earth every 16 days. High-res cameras, radar, multispectral sensors.',
+    parts:[
+      {id:'camera',icon:'📸',name:'Imaging Payload',name_fr:'Charge utile d\'imagerie',name_ar:'حمولة التصوير',tag:'Core Payload',tagCol:'var(--cyan)',
+        desc:'<strong>Pushbroom scanner</strong> — a line of 10,000+ CCD detectors. The satellite\'s motion sweeps this line across the ground, building up an image strip. Resolution: 0.3-30 meters depending on mission. Multispectral: visible, infrared, thermal.',
+        specs:['0.3-30 m resolution','10,000+ pixels','Multispectral','Pushbroom']},
+      {id:'solar',icon:'☀️',name:'Solar Panel',tag:'Power',tagCol:'var(--gold)',
+        desc:'Single deployable wing oriented toward the Sun. <strong>Sun-synchronous orbit means consistent illumination</strong> — the satellite always crosses the equator at the same local time.',
+        specs:['1-3 kW','Single wing','Consistent sun','GaAs cells']},
+      {id:'recorder',icon:'💾',name:'Data Recorder',name_fr:'Enregistreur de données',name_ar:'مسجل بيانات',tag:'Data',tagCol:'var(--purple)',
+        desc:'<strong>Solid-state recorder</strong> storing terabits of imagery. The satellite photographs continuously but can only downlink data when passing over ground stations. Stores hours of data for later transmission.',
+        specs:['1+ TB storage','Solid state','Hours of buffer','Encrypted']},
+      {id:'antenna',icon:'📡',name:'X-Band Downlink',name_fr:'Liaison descendante X-Band',name_ar:'رابط هبوطي X-Band',tag:'Communications',tagCol:'var(--orange)',
+        desc:'High-bandwidth <strong>X-band antenna (8-12 GHz)</strong> for downlinking imagery to ground stations. Data rates up to 800 Mbps — like downloading a movie every few seconds.',
+        specs:['X-band','800 Mbps','Steerable dish','Ground stations']},
+      {id:'bus',icon:'📦',name:'Satellite Bus',tag:'Structure',tagCol:'var(--blue)',
+        desc:'Precision-stabilized platform. The camera needs the satellite to point with <strong>arcsecond accuracy</strong> — equivalent to pointing at a coin from 4 km away.',
+        specs:['1-3 tons','Arcsecond pointing','Vibration isolated','Thermal stable']},
+      {id:'startracker',icon:'⭐',name:'Star Trackers',tag:'Navigation',tagCol:'var(--green)',
+        desc:'Critical for geo-referencing images. The satellite must know <strong>exactly where it is and which way it\'s pointing</strong> to map each pixel to a ground location.',
+        specs:['Arcsecond accuracy','3+ cameras','Continuous','Star catalog']},
+    ]
+  },
+  cubesat:{
+    name:'3U CubeSat',
+    desc:'The democratization of space. 10×10×30 cm, ~4 kg. Built by universities for $50K-$500K. Launched as secondary payloads.',
+    parts:[
+      {id:'bus',icon:'📦',name:'CubeSat Frame',tag:'Structure',tagCol:'var(--blue)',
+        desc:'<strong>Standard 10×10×10 cm "unit" (1U)</strong>. This is a 3U — three units stacked. Aluminum frame with standardized deployment rails. Must survive launch inside a P-POD deployer with other CubeSats.',
+        specs:['10×10×30 cm','~4 kg','Aluminum','P-POD compatible']},
+      {id:'solar',icon:'☀️',name:'Deployable Solar Panels',tag:'Power',tagCol:'var(--gold)',
+        desc:'<strong>Body-mounted and deployable panels</strong>. Total power: 5-20 watts. Enough for a small computer, radio, and payload. Some use spring-loaded panels that pop open after deployment.',
+        specs:['5-20 W','Deployable','Body-mounted','Spring loaded']},
+      {id:'radio',icon:'📻',name:'UHF/S-Band Radio',tag:'Communications',tagCol:'var(--orange)',
+        desc:'<strong>Ham radio frequencies (437 MHz)</strong> or S-band. Data rates: 1-100 kbps. Many CubeSats use amateur radio — anyone with a ham radio can receive their signals. Truly open-source space.',
+        specs:['UHF 437 MHz','1-100 kbps','Ham radio','Open source']},
+      {id:'computer',icon:'💻',name:'On-Board Computer',name_fr:'Ordinateur de bord',name_ar:'حاسوب متنقل',tag:'Avionics',tagCol:'var(--purple)',
+        desc:'Often a <strong>Raspberry Pi-class computer</strong> or custom ARM board. Runs Linux. Manages all satellite functions: attitude control, data handling, power management, communications scheduling.',
+        specs:['ARM processor','Linux OS','Radiation tolerant','Low power']},
+      {id:'payload',icon:'🔬',name:'Science Payload',tag:'Mission',tagCol:'var(--cyan)',
+        desc:'Could be anything: camera, spectrometer, radiation detector, technology demonstration. <strong>The whole point of the mission</strong>. Occupies 1U of the 3U volume.',
+        specs:['1U volume','Mission-specific','Custom','Modular']},
+      {id:'magnets',icon:'🧲',name:'Magnetorquer Rods',tag:'Attitude',tagCol:'var(--green)',
+        desc:'<strong>Electromagnetic coils that interact with Earth\'s magnetic field</strong> to control orientation. No moving parts, no fuel. Simple but slow — takes minutes to rotate. Some CubeSats add reaction wheels for faster control.',
+        specs:['Electromagnetic','No fuel','No moving parts','Earth\'s B-field']},
+    ]
+  }
+};
+
+let currentType='comms',activePart=null;
+
+function renderSatellite(type){
+  const sat=SATELLITES[type];
+  currentType=type;activePart=null;
+  
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('active',b.dataset.t===type));
+  
+  // SVG visual (schematic style)
+  const svg=document.getElementById('satSvg');
+  const colors={comms:'#5ce0d6',gps:'#6fcf97',earth:'#f6ad55',cubesat:'#b794f4'};
+  const c=colors[type];
+  
+  let svgContent=`<rect x="0" y="0" width="500" height="400" fill="transparent"/>`;
+  
+  // Simple schematic based on type
+  if(type==='comms'){
+    svgContent+=`
+      <rect x="190" y="120" width="120" height="160" rx="4" fill="rgba(110,140,255,0.06)" stroke="${c}" stroke-width="1" class="component" data-id="bus"/>
+      <rect x="40" y="170" width="140" height="60" rx="2" fill="rgba(232,193,112,0.06)" stroke="#e8c170" stroke-width="1" class="component" data-id="solar"/>
+      <rect x="320" y="170" width="140" height="60" rx="2" fill="rgba(232,193,112,0.06)" stroke="#e8c170" stroke-width="1" class="component" data-id="solar"/>
+      <ellipse cx="250" cy="90" rx="50" ry="25" fill="rgba(92,224,214,0.06)" stroke="${c}" stroke-width="1" class="component" data-id="antenna"/>
+      <line x1="250" y1="115" x2="250" y2="120" stroke="${c}" stroke-width="1"/>
+      <circle cx="220" cy="300" r="6" fill="rgba(246,173,85,0.1)" stroke="#f6ad55" stroke-width="1" class="component" data-id="thrusters"/>
+      <circle cx="280" cy="300" r="6" fill="rgba(246,173,85,0.1)" stroke="#f6ad55" stroke-width="1" class="component" data-id="thrusters"/>
+      <rect x="200" y="230" width="30" height="20" rx="2" fill="rgba(232,193,112,0.08)" stroke="#e8c170" stroke-width="0.5" class="component" data-id="battery"/>
+      <rect x="270" y="230" width="30" height="20" rx="2" fill="rgba(232,193,112,0.08)" stroke="#e8c170" stroke-width="0.5" class="component" data-id="battery"/>
+      <circle cx="230" cy="150" r="5" fill="rgba(183,148,244,0.1)" stroke="#b794f4" stroke-width="0.5" class="component" data-id="reaction"/>
+      <circle cx="270" cy="150" r="5" fill="rgba(183,148,244,0.1)" stroke="#b794f4" stroke-width="0.5" class="component" data-id="reaction"/>
+      <circle cx="310" cy="130" r="3" fill="rgba(111,207,151,0.15)" stroke="#6fcf97" stroke-width="0.5" class="component" data-id="startracker"/>
+      <text x="250" y="375" text-anchor="middle" fill="rgba(200,210,230,0.15)" font-family="'Playfair Display',serif" font-size="10" font-weight="700">${sat.name}</text>
+    `;
+  } else if(type==='cubesat'){
+    svgContent+=`
+      <rect x="200" y="100" width="100" height="200" rx="3" fill="rgba(183,148,244,0.06)" stroke="${c}" stroke-width="1" class="component" data-id="bus"/>
+      <rect x="120" y="150" width="70" height="100" rx="2" fill="rgba(232,193,112,0.06)" stroke="#e8c170" stroke-width="0.5" class="component" data-id="solar"/>
+      <rect x="310" y="150" width="70" height="100" rx="2" fill="rgba(232,193,112,0.06)" stroke="#e8c170" stroke-width="0.5" class="component" data-id="solar"/>
+      <line x1="255" y1="100" x2="270" y2="70" stroke="${c}" stroke-width="0.5"/>
+      <circle cx="270" cy="65" r="5" fill="none" stroke="${c}" stroke-width="0.5" class="component" data-id="radio"/>
+      <rect x="210" y="120" width="80" height="50" rx="2" fill="rgba(183,148,244,0.04)" stroke="#b794f4" stroke-width="0.5" class="component" data-id="computer"/>
+      <rect x="210" y="180" width="80" height="50" rx="2" fill="rgba(92,224,214,0.04)" stroke="${c}" stroke-width="0.5" class="component" data-id="payload"/>
+      <rect x="210" y="240" width="80" height="40" rx="2" fill="rgba(111,207,151,0.04)" stroke="#6fcf97" stroke-width="0.5" class="component" data-id="magnets"/>
+      <text x="250" y="375" text-anchor="middle" fill="rgba(200,210,230,0.15)" font-family="'Playfair Display',serif" font-size="10" font-weight="700">${sat.name}</text>
+    `;
+  } else {
+    // Generic sat
+    svgContent+=`
+      <rect x="190" y="120" width="120" height="160" rx="4" fill="rgba(110,140,255,0.06)" stroke="${c}" stroke-width="1" class="component" data-id="bus"/>
+      <rect x="40" y="170" width="140" height="60" rx="2" fill="rgba(232,193,112,0.06)" stroke="#e8c170" stroke-width="1" class="component" data-id="solar"/>
+      <rect x="320" y="170" width="140" height="60" rx="2" fill="rgba(232,193,112,0.06)" stroke="#e8c170" stroke-width="1" class="component" data-id="solar"/>
+      <ellipse cx="250" cy="95" rx="40" ry="20" fill="rgba(92,224,214,0.06)" stroke="${c}" stroke-width="1" class="component" data-id="antenna"/>
+      <circle cx="310" cy="130" r="3" fill="rgba(111,207,151,0.15)" stroke="#6fcf97" stroke-width="0.5" class="component" data-id="startracker"/>
+      <circle cx="220" cy="300" r="6" fill="rgba(246,173,85,0.1)" stroke="#f6ad55" stroke-width="1" class="component" data-id="thrusters"/>
+      <text x="250" y="375" text-anchor="middle" fill="rgba(200,210,230,0.15)" font-family="'Playfair Display',serif" font-size="10" font-weight="700">${sat.name}</text>
+    `;
+  }
+  
+  svg.innerHTML=svgContent;
+  
+  // Parts grid
+  const grid=document.getElementById('partsGrid');
+  grid.innerHTML=sat.parts.map(p=>`
+    <div class="part" data-id="${p.id}">
+      <div class="part-head">
+        <span class="part-icon">${p.icon}</span>
+        <span class="part-name">${p.name}</span>
+        <span class="part-tag" style="background:${p.tagCol}22;color:${p.tagCol}">${p.tag}</span>
+      </div>
+      <div class="part-desc">${p.desc}
+        <div class="part-specs">${p.specs.map(s=>`<span class="part-spec">${s}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  // Click handlers
+  grid.querySelectorAll('.part').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const id=el.dataset.id;
+      grid.querySelectorAll('.part').forEach(p=>p.classList.toggle('active',p.dataset.id===id&&!p.classList.contains('active')));
+      svg.querySelectorAll('.component').forEach(c=>c.classList.toggle('active',c.dataset.id===id));
+    });
+  });
+  
+  svg.querySelectorAll('.component').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const id=el.dataset.id;
+      grid.querySelectorAll('.part').forEach(p=>{p.classList.toggle('active',p.dataset.id===id);if(p.dataset.id===id)p.scrollIntoView({behavior:'smooth',block:'nearest'})});
+      svg.querySelectorAll('.component').forEach(c=>c.classList.toggle('active',c.dataset.id===id));
+    });
+  });
+}
+
+document.querySelectorAll('.type-btn').forEach(b=>{
+  b.addEventListener('click',()=>renderSatellite(b.dataset.t));
+});
+
+renderSatellite('comms');
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Satellite Anatomy',project:'Satellites in the Sky'},fr:{title:'Satellite Anatomy',project:'Satellites dans le Ciel'},ar:{title:'Satellite Anatomy',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

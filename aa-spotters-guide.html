@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotter's Guide — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#040810;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--magenta:#f687b3;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--border:rgba(110,140,255,0.06);--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+header{text-align:center;padding:60px 30px 40px;position:relative}
+header::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(110,140,255,0.03),transparent);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(110,140,255,0.06);border:1px solid rgba(110,140,255,0.1);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}
+header h1{font-family:var(--serif);font-size:clamp(2rem,4.5vw,3.4rem);font-weight:800;line-height:1.08;margin-bottom:12px}
+header h1 span{color:var(--cyan)}
+header p{font-size:.88rem;color:var(--text-dim);max-width:520px;margin:0 auto 24px;line-height:1.6}
+
+/* Filter */
+.filter-bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;padding:0 20px}
+.filter-btn{font-family:var(--mono);font-size:.52rem;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .3s;letter-spacing:.04em;text-transform:uppercase}
+.filter-btn.active{background:rgba(92,224,214,0.08);border-color:rgba(92,224,214,0.2);color:var(--cyan)}
+.filter-btn:hover{border-color:rgba(110,140,255,0.15)}
+
+/* Cards grid */
+.grid{max-width:1100px;margin:0 auto;padding:0 20px 80px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+
+/* Field Guide Card */
+.fg-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .4s;position:relative}
+.fg-card:hover{border-color:rgba(110,140,255,0.12);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+.fg-card.hidden{display:none}
+
+/* Card header with illustration */
+.fg-header{position:relative;height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.fg-header::before{content:'';position:absolute;inset:0;opacity:.06}
+.fg-illus{position:relative;z-index:1;font-size:3.5rem;filter:drop-shadow(0 0 20px currentColor)}
+.fg-orbit-ring{position:absolute;width:80px;height:80px;border-radius:50%;border:1px dashed;opacity:.15;animation:spin 20s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Type badge */
+.fg-type{position:absolute;top:10px;left:10px;font-family:var(--mono);font-size:.46rem;padding:3px 8px;border-radius:4px;letter-spacing:.06em;text-transform:uppercase;font-weight:500;z-index:2}
+
+/* Card body */
+.fg-body{padding:16px 18px 18px}
+.fg-name{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:2px}
+.fg-subtitle{font-size:.7rem;color:var(--text-dim);margin-bottom:12px;font-style:italic}
+
+/* Specs grid */
+.fg-specs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.fg-spec{background:rgba(255,255,255,0.02);border-radius:6px;padding:6px 8px}
+.fg-spec .fs-label{font-family:var(--mono);font-size:.4rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.fg-spec .fs-value{font-family:var(--mono);font-size:.65rem;font-weight:500;margin-top:1px}
+
+/* How to spot */
+.fg-spot{background:rgba(110,140,255,0.03);border:1px solid rgba(110,140,255,0.06);border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.fg-spot-title{font-family:var(--mono);font-size:.42rem;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.fg-spot-text{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+
+/* Fun fact */
+.fg-fact{font-size:.7rem;color:var(--text-dim);line-height:1.45;padding-top:8px;border-top:1px solid rgba(255,255,255,0.03)}
+.fg-fact strong{font-weight:600}
+
+/* Heritage note */
+.fg-heritage{background:rgba(232,193,112,0.03);border:1px solid rgba(232,193,112,0.08);border-radius:8px;padding:8px 12px;margin-top:8px}
+.fg-heritage .fh-title{font-family:var(--mono);font-size:.42rem;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.fg-heritage .fh-text{font-size:.68rem;color:var(--text-dim);line-height:1.45}
+.fg-heritage .fh-text strong{color:var(--gold)}
+
+/* Brightness bar */
+.bright-bar{display:flex;align-items:center;gap:4px;margin-top:2px}
+.bright-dot{width:5px;height:5px;border-radius:50%}
+
+footer{text-align:center;padding:40px 30px 60px;font-size:.65rem;color:var(--text-muted)}
+footer .ft{font-family:var(--serif);font-style:italic;color:var(--gold);opacity:.4;font-size:.75rem;margin-bottom:4px}
+
+@media(max-width:480px){.grid{grid-template-columns:1fr}.fg-header{height:90px}.fg-illus{font-size:2.5rem}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🔭 Identification Guide" data-fr="🔭 Guide d'identification" data-ar="🔭 دليل التعرف">🔭 Identification Guide</span></div>
+  <h1>The Satellite<br><span><span data-en="Spotter's Guide" data-fr="Guide d'observation" data-ar="دليل الرصد">Spotter's Guide</span></span></h1>
+  <p>Like bird-watching, but at 28,000 km/h. Learn to identify what's flying overhead by brightness, speed, orbit pattern, and behavior. Each type tells a different story.</p>
+</header>
+
+<div class="filter-bar" id="filterBar">
+  <button class="filter-btn active" data-filter="all"><span data-en="All Types" data-fr="Tous types" data-ar="كل الأنواع">All Types</span></button>
+  <button class="filter-btn" data-filter="station"><span data-en="Stations" data-fr="Stations" data-ar="المحطات">Stations</span></button>
+  <button class="filter-btn" data-filter="comms"><span data-en="Comms" data-fr="Comm." data-ar="اتصالات">Comms</span></button>
+  <button class="filter-btn" data-filter="nav"><span data-en="Navigation" data-fr="Navigation" data-ar="الملاحة">Navigation</span></button>
+  <button class="filter-btn" data-filter="weather"><span data-en="Weather" data-fr="Météo" data-ar="الطقس">Weather</span></button>
+  <button class="filter-btn" data-filter="science"><span data-en="Science" data-fr="Science" data-ar="العلوم">Science</span></button>
+  <button class="filter-btn" data-filter="imaging"><span data-en="Imaging" data-fr="Imagerie" data-ar="تصوير">Imaging</span></button>
+  <button class="filter-btn" data-filter="debris"><span data-en="Debris" data-fr="Débris" data-ar="حطام">Debris</span></button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  <div class="ft">"The sky is the ultimate bird book — and the satellites are its newest species."</div>
+  Part of the Satellites in the Sky project
+</footer>
+
+<script>
+const GUIDE=[
+{type:'station',name:'International Space Station',name_fr:'Station Spatiale Internationale',name_ar:'محطة الفضاء الدولية',subtitle:'The brightest human-made object in the sky',subtitle_fr:'L\'objet artificiel le plus brillant du ciel',subtitle_ar:'أسطع جسم صنعه الإنسان في السماء',icon:'🏗️',color:'var(--gold)',bgGrad:'linear-gradient(135deg,rgba(232,193,112,0.08),rgba(232,193,112,0.02))',
+specs:[{l:'Altitude',v:'~408 km'},{l:'Speed',v:'28,000 km/h'},{l:'Period',v:'92 minutes'},{l:'Size',v:'109 × 73 m'},{l:'Brightness',v:'mag -3.5 to -5.9',bright:5},{l:'Visible',v:'Dawn & dusk'}],
+spot:'The ISS is the <strong>brightest satellite</strong> you\'ll see — brighter than any star. Moves smoothly from west to east, taking 3-5 minutes to cross the sky. No blinking. Steady, gold-white light. Moves noticeably faster than aircraft.',
+fact:'Six humans live aboard right now. It sees <strong>16 sunrises per day</strong>. At 109m wide, it\'s the size of a football pitch — the largest structure humans have ever built in space.',
+heritage:{scholar:'Al-Battani',text:'When the ISS passes, it\'s following orbital periods refined by <strong>al-Battani\'s trigonometry</strong> (858 CE). He calculated Earth\'s year to within 2 minutes.'}},
+
+{type:'station',name:'Tiangong Station',name_fr:'Station Tiangong',name_ar:'محطة تيانغونغ',subtitle:'China\'s permanent space station',icon:'🇨🇳',color:'var(--gold)',bgGrad:'linear-gradient(135deg,rgba(232,193,112,0.06),rgba(232,193,112,0.01))',
+specs:[{l:'Altitude',v:'~390 km'},{l:'Speed',v:'28,200 km/h'},{l:'Period',v:'91 minutes'},{l:'Size',v:'~20 m'},{l:'Brightness',v:'mag -1 to -3',bright:3},{l:'Visible',v:'Dawn & dusk'}],
+spot:'Dimmer than the ISS but still bright — similar to Jupiter. Same west-to-east motion. Slightly different timing means you might see it on nights when the ISS isn\'t visible.',
+fact:'Crew of 3. China\'s third space station and first permanent one. "Tiangong" means <strong>"Heavenly Palace"</strong>.'},
+
+{type:'comms',name:'Starlink Constellation',name_fr:'Constellation Starlink',name_ar:'كوكبة ستارلينك',subtitle:'SpaceX\'s internet mega-constellation',subtitle_fr:'La méga-constellation internet de SpaceX',subtitle_ar:'كوكبة سبيس إكس العملاقة للإنترنت',icon:'📶',color:'var(--cyan)',bgGrad:'linear-gradient(135deg,rgba(92,224,214,0.06),rgba(92,224,214,0.01))',
+specs:[{l:'Altitude',v:'~550 km'},{l:'Count',v:'5,000+'},{l:'Period',v:'95 minutes'},{l:'Size',v:'3.5 m'},{l:'Brightness',v:'mag 3-6',bright:2},{l:'Pattern',v:'Trains & scattered'}],
+spot:'Newly launched Starlinks appear as a <strong>"train" of bright dots</strong> moving in a line — unmistakable. After weeks they spread out and become individual dim moving points. Look for multiple faint dots moving in roughly the same direction.',
+fact:'The largest satellite constellation in history. Each weighs 260 kg with a single solar panel. They\'ve caused controversy among astronomers for <strong>polluting the night sky</strong>.',
+heritage:{scholar:'Al-Khwarizmi',text:'Every Starlink\'s position is predicted using <strong>algorithms</strong> — the word itself comes from al-Khwarizmi (780 CE).'}},
+
+{type:'comms',name:'Iridium (Next)',name_fr:'Iridium (Next)',name_ar:'إيريديوم (الجيل التالي)',subtitle:'Global voice & data network',subtitle_fr:'Réseau mondial voix et données',subtitle_ar:'شبكة عالمية للصوت والبيانات',icon:'📱',color:'var(--cyan)',bgGrad:'linear-gradient(135deg,rgba(92,224,214,0.05),rgba(92,224,214,0.01))',
+specs:[{l:'Altitude',v:'~780 km'},{l:'Count',v:'66 active'},{l:'Period',v:'100 minutes'},{l:'Size',v:'4 m'},{l:'Brightness',v:'mag 5-6',bright:1},{l:'Pattern',v:'Evenly spaced'}],
+spot:'The original Iridium satellites were famous for brilliant <strong>"Iridium flares"</strong> — brief flashes up to mag -8 (brighter than Venus). The new Iridium NEXT satellites don\'t flare as dramatically but are still visible as steady dim dots.',
+fact:'66 satellites in 6 orbital planes, plus spares. The constellation ensures <strong>every point on Earth</strong> can make a phone call.'},
+
+{type:'nav',name:'GPS (NAVSTAR)',name_fr:'GPS (NAVSTAR)',name_ar:'GPS (نافستار)',subtitle:'Your phone\'s best friend — 20,200 km up',subtitle_fr:'Le meilleur ami de votre téléphone — 20 200 km',subtitle_ar:'أفضل صديق لهاتفك — ٢٠,٢٠٠ كم',icon:'📡',color:'var(--green)',bgGrad:'linear-gradient(135deg,rgba(111,207,151,0.06),rgba(111,207,151,0.01))',
+specs:[{l:'Altitude',v:'20,200 km'},{l:'Count',v:'31 active'},{l:'Period',v:'12 hours'},{l:'Size',v:'~6 m'},{l:'Brightness',v:'mag 8-10',bright:0},{l:'Visible',v:'Binoculars only'}],
+spot:'GPS satellites orbit too high to see with the naked eye. With binoculars or a small telescope, they appear as very slow-moving faint dots — taking <strong>hours to cross the sky</strong> rather than minutes.',
+fact:'Each carries an <strong>atomic clock accurate to 1 nanosecond</strong>. Your phone triangulates signals from 4+ GPS satellites to fix your position within 3 meters. Relativistic corrections are applied — GPS proved Einstein right every day.',
+heritage:{scholar:'Al-Biruni',text:'GPS measures distance on the Earth whose radius <strong>al-Biruni</strong> calculated (973 CE) — using a mountain and trigonometry, accurate to 16 km.'}},
+
+{type:'nav',name:'Galileo',name_fr:'Galileo',name_ar:'غاليليو',subtitle:'Europe\'s precision navigation system',icon:'🇪🇺',color:'var(--green)',bgGrad:'linear-gradient(135deg,rgba(111,207,151,0.05),rgba(111,207,151,0.01))',
+specs:[{l:'Altitude',v:'23,222 km'},{l:'Count',v:'30'},{l:'Period',v:'14 hours'},{l:'Size',v:'~3 m'},{l:'Brightness',v:'mag 9-11',bright:0},{l:'Visible',v:'Telescope only'}],
+spot:'Even higher than GPS, Galileo satellites are invisible to the naked eye. Telescope only — extremely slow apparent motion.',
+fact:'Named after the astronomer. Provides <strong>1-meter accuracy</strong> for the paid service — better than GPS. The EU\'s first major space infrastructure.'},
+
+{type:'weather',name:'NOAA Weather Satellites',name_fr:'Satellites météo NOAA',name_ar:'أقمار الأرصاد NOAA',subtitle:'Eyes on Earth\'s weather from LEO',icon:'🌦️',color:'var(--blue)',bgGrad:'linear-gradient(135deg,rgba(110,140,255,0.06),rgba(110,140,255,0.01))',
+specs:[{l:'Altitude',v:'~850 km'},{l:'Type',v:'Polar orbit'},{l:'Period',v:'102 minutes'},{l:'Size',v:'~5 m'},{l:'Brightness',v:'mag 3-5',bright:2},{l:'Pattern',v:'North-south pass'}],
+spot:'Weather satellites in polar orbits pass <strong>roughly north to south</strong> (or south to north) — different from most satellites which go west to east. This north-south motion is your best identifier. Moderate brightness, steady light.',
+fact:'Every weather forecast on your phone comes from data gathered by these satellites. They photograph <strong>the entire Earth twice a day</strong> by passing over different strips as Earth rotates below.',
+heritage:{scholar:'Al-Zarqali',text:'Weather prediction descends from astronomical observation. <strong>Al-Zarqali\'s</strong> astrolabe was used to predict seasons and weather patterns.'}},
+
+{type:'weather',name:'GOES Geostationary',name_fr:'GOES Géostationnaire',name_ar:'GOES الثابت',subtitle:'Fixed above one spot — always watching',icon:'🌍',color:'var(--blue)',bgGrad:'linear-gradient(135deg,rgba(110,140,255,0.05),rgba(110,140,255,0.01))',
+specs:[{l:'Altitude',v:'35,786 km'},{l:'Type',v:'Geostationary'},{l:'Period',v:'24 hours'},{l:'Size',v:'~5 m'},{l:'Brightness',v:'mag 10-12',bright:0},{l:'Visible',v:'Telescope only'}],
+spot:'Geostationary satellites appear <strong>stationary</strong> — they don\'t move across the sky. With a telescope, they look like faint stars that don\'t twinkle and never move. Cluster along the celestial equator.',
+fact:'GOES-16 and GOES-18 provide the hurricane tracking imagery you see on TV. They take a <strong>full-disk image of Earth every 10 minutes</strong>.'},
+
+{type:'science',name:'Hubble Space Telescope',name_fr:'Télescope Spatial Hubble',name_ar:'تلسكوب هابل الفضائي',subtitle:'The eye above the atmosphere',subtitle_fr:'L\'œil au-dessus de l\'atmosphère',subtitle_ar:'العين فوق الغلاف الجوي',icon:'🔭',color:'var(--purple)',bgGrad:'linear-gradient(135deg,rgba(183,148,244,0.06),rgba(183,148,244,0.01))',
+specs:[{l:'Altitude',v:'547 km'},{l:'Period',v:'95 minutes'},{l:'Size',v:'13 m'},{l:'Mirror',v:'2.4 m primary'},{l:'Brightness',v:'mag 1-2',bright:4},{l:'Visible',v:'Naked eye!'}],
+spot:'Hubble is surprisingly bright — about as bright as Polaris. <strong>Steady, slightly yellowish light</strong> moving at medium speed. Passes are less frequent than ISS since it\'s in a higher, less inclined orbit (28.5°).',
+fact:'Has photographed galaxies <strong>13.4 billion light-years away</strong>. Its mirror was initially ground incorrectly — astronauts installed corrective "glasses" in 1993.',
+heritage:{scholar:'Ibn al-Haytham',text:'Every lens in Hubble descends from <strong>Ibn al-Haytham\'s</strong> Book of Optics (1011 CE) — the foundation of how we understand light.'}},
+
+{type:'imaging',name:'Landsat Series',name_fr:'Série Landsat',name_ar:'سلسلة لاندسات',subtitle:'Photographing Earth since 1972',icon:'📸',color:'var(--orange)',bgGrad:'linear-gradient(135deg,rgba(246,173,85,0.06),rgba(246,173,85,0.01))',
+specs:[{l:'Altitude',v:'~705 km'},{l:'Type',v:'Sun-synchronous'},{l:'Period',v:'99 minutes'},{l:'Size',v:'~7 m'},{l:'Brightness',v:'mag 4-6',bright:1},{l:'Pattern',v:'Sun-sync pass'}],
+spot:'Sun-synchronous satellites always pass at the <strong>same local time</strong> — look for them at the same time each clear night. Moderate speed, dim but visible. North-south path like weather sats.',
+fact:'The longest continuous record of Earth from space. <strong>Over 50 years</strong> of data tracking deforestation, urbanization, glacial retreat, and crop health.'},
+
+{type:'imaging',name:'Sentinel (Copernicus)',name_fr:'Sentinel (Copernicus)',name_ar:'سنتينل (كوبرنيكوس)',subtitle:'Europe\'s Earth observation fleet',icon:'🛰️',color:'var(--orange)',bgGrad:'linear-gradient(135deg,rgba(246,173,85,0.05),rgba(246,173,85,0.01))',
+specs:[{l:'Altitude',v:'~700 km'},{l:'Count',v:'Multiple'},{l:'Period',v:'~99 minutes'},{l:'Size',v:'~4 m'},{l:'Brightness',v:'mag 5-7',bright:1},{l:'Pattern',v:'Sun-synchronous'}],
+spot:'Similar to Landsat — dim dots in sun-synchronous (north-south) orbits. Multiple Sentinel types observe radar, optical, ocean color, and atmospheric composition.',
+fact:'Sentinel-1 uses radar — it can image Earth <strong>through clouds, at night</strong>. Sentinel-2 provides the free satellite imagery used by Google Earth and farmers worldwide.'},
+
+{type:'debris',name:'Rocket Bodies',name_fr:'Corps de fusées',name_ar:'هياكل صاروخية',subtitle:'The ghosts of past launches',icon:'🚀',color:'var(--red)',bgGrad:'linear-gradient(135deg,rgba(252,129,129,0.06),rgba(252,129,129,0.01))',
+specs:[{l:'Altitude',v:'Varies widely'},{l:'Count',v:'~2,000 tracked'},{l:'Size',v:'3-40 m'},{l:'Brightness',v:'mag 2-8',bright:3},{l:'Pattern',v:'Often tumbling'}],
+spot:'Rocket bodies often <strong>tumble</strong> — creating a distinctive <strong>flashing or flickering</strong> brightness pattern as different surfaces catch sunlight. This periodic brightening and dimming is the best identifier. Some are surprisingly bright.',
+fact:'Every rocket launch leaves its upper stage in orbit. Most eventually decay, but some will orbit for <strong>centuries</strong>. The largest tracked debris is the 20-ton Chinese CZ-5B upper stages.',
+heritage:{scholar:'Kessler',text:'Donald Kessler (1978) predicted that debris collisions would cascade. There are now <strong>36,500+ tracked objects</strong> and millions of smaller fragments.'}},
+
+{type:'debris',name:'Small Debris & Fragments',name_fr:'Petits débris et fragments',name_ar:'حطام صغير وشظايا',subtitle:'The invisible threat',icon:'⚠️',color:'var(--red)',bgGrad:'linear-gradient(135deg,rgba(252,129,129,0.05),rgba(252,129,129,0.01))',
+specs:[{l:'Altitude',v:'All altitudes'},{l:'Count',v:'Millions'},{l:'Size',v:'1 mm – 10 cm'},{l:'Brightness',v:'Invisible',bright:0},{l:'Threat',v:'Catastrophic'}],
+spot:'You <strong>cannot see debris</strong> smaller than ~10 cm. But at 28,000 km/h, a 1 cm fragment hits with the <strong>force of a hand grenade</strong>. The ISS regularly maneuvers to avoid tracked debris.',
+fact:'The 2009 Iridium-Cosmos collision created <strong>2,300+ tracked fragments</strong>. A Chinese anti-satellite test in 2007 created 3,500+. These fragments will orbit for decades.'},
+];
+
+// Render cards
+const grid=document.getElementById('grid');
+GUIDE.forEach(g=>{
+  const brightDots=g.specs.find(s=>s.bright!==undefined);
+  const bv=brightDots?brightDots.bright:0;
+  
+  const card=document.createElement('div');
+  card.className='fg-card';
+  card.dataset.type=g.type;
+  
+  const typeLabels={station:'Station',comms:'Communications',nav:'Navigation',weather:'Weather',science:'Science',imaging:'Earth Imaging',debris:'Debris'};
+  const typeColors={station:'var(--gold)',comms:'var(--cyan)',nav:'var(--green)',weather:'var(--blue)',science:'var(--purple)',imaging:'var(--orange)',debris:'var(--red)'};
+  const tc=typeColors[g.type]||'var(--blue)';
+  
+  card.innerHTML=`
+    <div class="fg-header" style="background:${g.bgGrad}">
+      <div class="fg-type" style="background:${tc}15;color:${tc}">${typeLabels[g.type]}</div>
+      <div class="fg-orbit-ring" style="border-color:${tc}"></div>
+      <div class="fg-illus" style="color:${tc}">${g.icon}</div>
+    </div>
+    <div class="fg-body">
+      <div class="fg-name">${g.name}</div>
+      <div class="fg-subtitle">${g.subtitle}</div>
+      <div class="fg-specs">${g.specs.map(s=>`<div class="fg-spec"><div class="fs-label">${s.l}</div><div class="fs-value" style="color:${tc}">${s.v}</div>${s.bright!==undefined?`<div class="bright-bar">${Array(5).fill(0).map((_,i)=>`<div class="bright-dot" style="background:${i<s.bright?tc:'rgba(255,255,255,0.06)'}"></div>`).join('')}</div>`:''}</div>`).join('')}</div>
+      <div class="fg-spot"><div class="fg-spot-title">🔭 How to Spot</div><div class="fg-spot-text">${g.spot}</div></div>
+      <div class="fg-fact">${g.fact}</div>
+      ${g.heritage?`<div class="fg-heritage"><div class="fh-title">☽ ${g.heritage.scholar}</div><div class="fh-text">${g.heritage.text}</div></div>`:''}
+    </div>`;
+  grid.appendChild(card);
+});
+
+// Filter
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const f=btn.dataset.filter;
+    document.querySelectorAll('.fg-card').forEach(c=>{
+      c.classList.toggle('hidden',f!=='all'&&c.dataset.type!==f);
+    });
+  });
+});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Spotters Guide',project:'Satellites in the Sky'},fr:{title:'Spotters Guide',project:'Satellites dans le Ciel'},ar:{title:'Spotters Guide',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

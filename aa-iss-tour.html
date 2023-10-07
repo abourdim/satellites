@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISS Tour — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(92,224,214,0.06);border:1px solid rgba(92,224,214,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--cyan)}
+header p{font-size:.82rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.6}
+
+.station{max-width:900px;margin:0 auto;overflow-x:auto;padding-bottom:10px}
+.station-map{display:flex;align-items:center;gap:0;min-width:800px;padding:20px 0;justify-content:center;flex-wrap:nowrap}
+.module{position:relative;border-radius:8px;cursor:pointer;transition:all .3s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex-shrink:0}
+.module:hover{transform:translateY(-3px)}
+.module.active{transform:translateY(-5px)}
+.module .m-body{border-radius:6px;padding:6px 4px;transition:all .3s;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.module .m-icon{font-size:1rem;margin-bottom:2px}
+.module .m-name{font-family:var(--mono);font-size:.36rem;font-weight:500;letter-spacing:.02em;white-space:nowrap}
+.module .m-flag{font-size:.6rem;position:absolute;top:-6px;right:-2px}
+.connector{width:6px;height:3px;background:rgba(110,140,255,0.08);flex-shrink:0;align-self:center;border-radius:1px}
+
+/* Branches (vertical modules) */
+.branch{display:flex;flex-direction:column;align-items:center;gap:0}
+.branch .connector{width:3px;height:6px}
+
+.detail{max-width:600px;margin:16px auto 0;background:var(--card);border:1px solid rgba(92,224,214,0.08);border-radius:14px;padding:18px 22px;display:none}
+.detail.show{display:block}
+.det-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.det-name{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--cyan)}
+.det-sub{font-size:.7rem;color:var(--dim)}
+.det-flag{font-size:1.2rem}
+.det-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.dg{background:rgba(255,255,255,0.02);border-radius:5px;padding:5px;text-align:center}
+.dg .dl{font-family:var(--mono);font-size:.34rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.dg .dv{font-family:var(--mono);font-size:.6rem;color:var(--cyan);font-weight:500;margin-top:1px}
+.det-body{font-size:.76rem;color:var(--dim);line-height:1.6}
+.det-body strong{font-weight:600}
+
+.crew-areas{max-width:600px;margin:16px auto 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.ca{background:var(--card);border:1px solid rgba(110,140,255,0.04);border-radius:8px;padding:8px 10px;text-align:center}
+.ca .ci{font-size:1rem;margin-bottom:2px}
+.ca .cn{font-size:.68rem;font-weight:600;color:#fff}
+.ca .cd{font-size:.56rem;color:var(--dim)}
+
+.stats{max-width:600px;margin:16px auto;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.stat{background:var(--card);border:1px solid rgba(110,140,255,0.04);border-radius:8px;padding:8px 14px;text-align:center}
+.stat .sv{font-family:var(--mono);font-size:1rem;font-weight:500;color:var(--cyan)}
+.stat .sl{font-size:.4rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge">🏗️ Interactive Tour</div>
+  <h1>Inside the <span><span data-en="ISS" data-fr="ISS" data-ar="م.ف.د">ISS</span></span></h1>
+  <p>The International Space Station is the size of a football field, weighs 420 tonnes, and has been continuously occupied since November 2000. Click any module to explore.</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="sv">109m</div><div class="sl">Length</div></div>
+  <div class="stat"><div class="sv">73m</div><div class="sl">Width (truss)</div></div>
+  <div class="stat"><div class="sv">420t</div><div class="sl"><span data-en="Mass" data-fr="Masse" data-ar="الكتلة">Mass</span></div></div>
+  <div class="stat"><div class="sv">16</div><div class="sl"><span data-en="Modules" data-fr="Modules" data-ar="الوحدات">Modules</span></div></div>
+  <div class="stat"><div class="sv">6</div><div class="sl"><span data-en="Crew" data-fr="Équipage" data-ar="الطاقم">Crew</span></div></div>
+  <div class="stat"><div class="sv">24+</div><div class="sl">Years Occupied</div></div>
+</div>
+
+<div class="station"><div class="station-map" id="stationMap"></div></div>
+<div class="detail" id="detail"></div>
+
+<div class="crew-areas">
+  <div class="ca"><div class="ci">🛏️</div><div class="cn"><span data-en="Crew Quarters" data-fr="Quartiers de l'équipage" data-ar="غرف الطاقم">Crew Quarters</span></div><div class="cd">6 phone-booth-sized pods in Harmony + Zvezda</div></div>
+  <div class="ca"><div class="ci">🚽</div><div class="cn"><span data-en="Toilets" data-fr="Toilettes" data-ar="المراحيض">Toilets</span></div><div class="cd">2 toilets. Use suction. $19M each</div></div>
+  <div class="ca"><div class="ci">🏋️</div><div class="cn"><span data-en="Gym" data-fr="Salle de sport" data-ar="الصالة الرياضية">Gym</span></div><div class="cd">2 hrs/day mandatory. Treadmill, bike, ARED</div></div>
+  <div class="ca"><div class="ci">🍽️</div><div class="cn"><span data-en="Galley" data-fr="Cuisine" data-ar="المطبخ">Galley</span></div><div class="cd">In Zvezda. Hot water, food warmer. No fridge</div></div>
+  <div class="ca"><div class="ci">🪟</div><div class="cn"><span data-en="Cupola" data-fr="Coupole" data-ar="القبة">Cupola</span></div><div class="cd">7 windows. Best view in the universe</div></div>
+  <div class="ca"><div class="ci">🧪</div><div class="cn"><span data-en="Labs" data-fr="Laboratoires" data-ar="المختبرات">Labs</span></div><div class="cd">3 labs: Destiny (US), Columbus (EU), Kibo (JP)</div></div>
+</div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const MODULES=[
+  {id:'nauka',name:'Nauka',flag:'🇷🇺',icon:'🧪',w:60,h:35,col:'rgba(252,129,129,0.08)',bc:'rgba(252,129,129,0.15)',
+    nation:'Russia',launched:'Jul 2021',mass:'20,357 kg',length:'13.1 m',purpose:'Laboratory',
+    desc:'Russia\'s long-delayed multipurpose lab module. <strong>Arrived 2021 after 20 years of delays.</strong> Nearly caused a crisis when its thrusters fired unexpectedly, rotating the entire station 540°.'},
+  {id:'zvezda',name:'Zvezda',name_fr:'Zvezda',name_ar:'زفيزدا',flag:'🇷🇺',icon:'🏠',w:65,h:40,col:'rgba(252,129,129,0.06)',bc:'rgba(252,129,129,0.12)',
+    nation:'Russia',launched:'Jul 2000',mass:'19,050 kg',length:'13.1 m',purpose:'Service Module / Living Quarters',
+    desc:'The <strong>heart of the Russian segment</strong>. Provides life support, crew quarters, galley, and main propulsion. Crew sleeps here. Contains the primary toilet (until a second was added).'},
+  {id:'zarya',name:'Zarya',flag:'🇷🇺',icon:'📦',w:60,h:38,col:'rgba(252,129,129,0.06)',bc:'rgba(252,129,129,0.12)',
+    nation:'Russia (US-funded)',launched:'Nov 1998',mass:'19,323 kg',length:'12.6 m',purpose:'Cargo / Propulsion',
+    desc:'<strong>The first module launched.</strong> Originally provided propulsion and power. Now mainly used for storage. Fun fact: "Zarya" means "sunrise" in Russian — the dawn of the station.'},
+  {id:'unity',name:'Unity',name_fr:'Unity',name_ar:'يونيتي',flag:'🇺🇸',icon:'🔗',w:45,h:35,col:'rgba(110,140,255,0.06)',bc:'rgba(110,140,255,0.12)',
+    nation:'USA',launched:'Dec 1998',mass:'11,612 kg',length:'5.5 m',purpose:'Connecting Node',
+    desc:'<strong>Node 1</strong>. The first US module. Has 6 docking ports connecting the US and Russian segments. The crossroads of the station.'},
+  {id:'destiny',name:'Destiny',name_fr:'Destiny',name_ar:'ديستني',flag:'🇺🇸',icon:'🔬',w:60,h:38,col:'rgba(110,140,255,0.08)',bc:'rgba(110,140,255,0.15)',
+    nation:'USA',launched:'Feb 2001',mass:'14,515 kg',length:'8.5 m',purpose:'US Laboratory',
+    desc:'The <strong>primary US research lab</strong>. 24 equipment racks. Experiments in fluid physics, combustion, biology, materials science. Contains a window with the best Earth view (before Cupola).'},
+  {id:'harmony',name:'Harmony',name_fr:'Harmony',name_ar:'هارموني',flag:'🇺🇸',icon:'🔗',w:48,h:35,col:'rgba(110,140,255,0.06)',bc:'rgba(110,140,255,0.12)',
+    nation:'USA',launched:'Oct 2007',mass:'14,288 kg',length:'7.2 m',purpose:'Connecting Node / Crew Quarters',
+    desc:'<strong>Node 2</strong>. Provides docking ports for visiting spacecraft (Crew Dragon, Starliner). Contains 4 of the 6 crew sleeping quarters. Also routes power and data.'},
+  {id:'columbus',name:'Columbus',name_fr:'Columbus',name_ar:'كولومبوس',flag:'🇪🇺',icon:'🇪🇺',w:55,h:35,col:'rgba(183,148,244,0.06)',bc:'rgba(183,148,244,0.12)',
+    nation:'ESA (Europe)',launched:'Feb 2008',mass:'10,300 kg',length:'6.9 m',purpose:'European Laboratory',
+    desc:'<strong>ESA\'s research lab.</strong> Fluid physics, materials science, biology, physiology. Has external payload platforms. Europe\'s largest contribution to ISS.'},
+  {id:'kibo',name:'Kibo',name_fr:'Kibo',name_ar:'كيبو',flag:'🇯🇵',icon:'🇯🇵',w:65,h:40,col:'rgba(111,207,151,0.06)',bc:'rgba(111,207,151,0.12)',
+    nation:'Japan (JAXA)',launched:'Jun 2008',mass:'15,900 kg',length:'11.2 m',purpose:'Japanese Laboratory',
+    desc:'<strong>The largest single module.</strong> Has its own airlock for deploying experiments into space, a robotic arm, and an external platform. Can deploy CubeSats directly into orbit.'},
+  {id:'tranq',name:'Tranquility',name_fr:'Tranquility',name_ar:'ترانكويليتي',flag:'🇺🇸',icon:'🧘',w:50,h:35,col:'rgba(110,140,255,0.06)',bc:'rgba(110,140,255,0.12)',
+    nation:'USA',launched:'Feb 2010',mass:'17,992 kg',length:'6.7 m',purpose:'Life Support / Exercise',
+    desc:'<strong>Node 3</strong>. Houses advanced life support: water recycler (turns urine → drinking water), oxygen generator, CO₂ removal. Also the exercise equipment and the Cupola.'},
+];
+
+const map=document.getElementById('stationMap');
+MODULES.forEach((m,i)=>{
+  if(i>0)map.innerHTML+=`<div class="connector"></div>`;
+  map.innerHTML+=`<div class="module" data-id="${m.id}" style="width:${m.w}px;height:${m.h}px" onclick="showModule('${m.id}')">
+    <div class="m-body" style="width:100%;height:100%;background:${m.col};border:1px solid ${m.bc}">
+      <div class="m-icon">${m.icon}</div>
+      <div class="m-name">${m.name}</div>
+    </div>
+    <div class="m-flag">${m.flag}</div>
+  </div>`;
+});
+
+function showModule(id){
+  const m=MODULES.find(x=>x.id===id);if(!m)return;
+  document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.dataset.id===id));
+  const det=document.getElementById('detail');det.classList.add('show');
+  det.innerHTML=`
+    <div class="det-head">
+      <div><div class="det-name">${m.name}</div><div class="det-sub">${m.purpose}</div></div>
+      <div class="det-flag">${m.flag}</div>
+    </div>
+    <div class="det-grid">
+      <div class="dg"><div class="dl">Nation</div><div class="dv">${m.nation}</div></div>
+      <div class="dg"><div class="dl">Launched</div><div class="dv">${m.launched}</div></div>
+      <div class="dg"><div class="dl"><span data-en="Mass" data-fr="Masse" data-ar="الكتلة">Mass</span></div><div class="dv">${m.mass}</div></div>
+      <div class="dg"><div class="dl">Length</div><div class="dv">${m.length}</div></div>
+    </div>
+    <div class="det-body">${m.desc}</div>`;
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Iss Tour',project:'Satellites in the Sky'},fr:{title:'Iss Tour',project:'Satellites dans le Ciel'},ar:{title:'Iss Tour',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){};if(typeof render==='function')try{render()}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

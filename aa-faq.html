@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:28px}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.3rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--cyan)}
+header p{font-size:.82rem;color:var(--dim);max-width:480px;margin:0 auto;line-height:1.6}
+.content{max-width:680px;margin:0 auto}
+.cat{margin-bottom:24px}
+.cat-title{font-family:'JetBrains Mono',monospace;font-size:.46rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid rgba(92,224,214,.06)}
+.faq{background:var(--card);border:1px solid rgba(110,140,255,.06);border-radius:10px;margin-bottom:5px;overflow:hidden}
+.faq-q{padding:12px 16px;cursor:pointer;font-size:.82rem;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px}
+.faq-q::after{content:'▾';margin-left:auto;color:var(--muted);font-size:.7rem;transition:transform .3s}
+.faq.open .faq-q::after{transform:rotate(180deg)}
+.faq-a{display:none;padding:0 16px 14px;font-size:.76rem;color:var(--dim);line-height:1.65}
+.faq.open .faq-a{display:block}
+.faq-a strong{font-weight:600;color:var(--text)}
+.faq-a code{font-family:'JetBrains Mono',monospace;font-size:.68rem;background:rgba(92,224,214,.04);padding:1px 5px;border-radius:3px;color:var(--cyan)}
+.back{display:inline-flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--dim);text-decoration:none;margin-bottom:14px}
+.back:hover{color:var(--cyan)}
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted);max-width:680px;margin:0 auto}
+
+/* === BRANDING + i18n === */
+.t-en,.t-fr,.t-ar{display:none}
+[data-lang="en"] .t-en,[data-lang="fr"] .t-fr,[data-lang="ar"] .t-ar{display:inline}
+:not([data-lang]) .t-en{display:inline}
+[data-lang="ar"] .faq{text-align:right}
+[data-lang="ar"] .faq-q{flex-direction:row-reverse}
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <a class="back" href="aa-portal.html" data-en="← Back to Portal" data-fr="← Retour au Portail" data-ar="← العودة للبوابة">← Back to Portal</a>
+  <h1><span class="t-en">Frequently Asked </span><span class="t-fr">Questions </span><span class="t-ar">الأسئلة </span><span><span class="t-en">Questions</span><span class="t-fr">Fréquentes</span><span class="t-ar">الشائعة</span></span></h1>
+  <p><span class="t-en">Everything you might wonder about the project, the satellites, and the technology.</span><span class="t-fr">Tout ce que vous pourriez vous demander sur le projet, les satellites et la technologie.</span><span class="t-ar">كل ما قد تتساءل عنه حول المشروع والأقمار الصناعية والتقنية.</span></p>
+</header>
+<div class="content" id="content"></div>
+<footer>Satellites in the Sky v1.0</footer>
+<script>
+const DATA=[
+  {cat:'🚀 About the Project',items:[
+    {q:'What is this?',a:'<strong>Satellites in the Sky</strong> is an interactive educational project about satellites, orbital mechanics, and the Arab astronomical heritage that made space science possible. It\'s 57 standalone HTML files — no internet required after download.'},
+    {q:'Do I need to install anything?',a:'<strong>No.</strong> Every file is a self-contained HTML document. Open <code>aa-portal.html</code> in any modern browser (Chrome, Firefox, Safari, Edge). That\'s it. No npm, no build step, no server.'},
+    {q:'Does it work offline?',a:'<strong>Yes.</strong> All code, styles, and logic are embedded in each file. The only external resource is Google Fonts (Outfit, JetBrains Mono, Playfair Display), which degrade gracefully to system fonts if offline.'},
+    {q:'Does it work on phones?',a:'<strong>Yes.</strong> All experiences are responsive. Some canvas-based simulations work best on larger screens, but everything is usable on mobile. Touch gestures are supported where relevant.'},
+    {q:'How big is the whole project?',a:'About <strong>1.1 MB</strong> total for 57 HTML files. No images, no videos, no large assets. Everything is generated with code (Canvas API, CSS, SVG).'},
+    {q:'Where should I start?',a:'Open <code>aa-portal.html</code> — it\'s the master hub linking to everything, organized in 10 sections. Or jump directly to <code>aa-satellites-ultimate.html</code> for the full 5-phase experience in one file.'},
+  ]},
+  {cat:'🛰️ About Satellites',items:[
+    {q:'How many satellites are in orbit?',a:'As of 2025, there are <strong>10,000+ active satellites</strong> and <strong>36,500+ tracked objects</strong> (including debris). About 60% of active satellites are Starlink. The number is growing rapidly.'},
+    {q:'Can I see satellites with my eyes?',a:'<strong>Yes!</strong> Many satellites are visible as bright dots moving steadily across the sky, especially in the 1-2 hours after sunset or before sunrise. The ISS is the brightest — magnitude -4, brighter than Venus. Use the Spotter\'s Guide experience for tips.'},
+    {q:'Why do satellites stay in orbit?',a:'They\'re <strong>falling around Earth</strong>. A satellite moves forward so fast that as it falls toward Earth, the ground curves away beneath it at the same rate. At ~7.8 km/s in LEO, this balance is maintained. It\'s freefall — astronauts float because they\'re falling, not because there\'s "no gravity."'},
+    {q:'What happens to old satellites?',a:'LEO satellites are supposed to <strong>de-orbit within 25 years</strong> (burning up in the atmosphere). GEO satellites boost to a "graveyard orbit" 300+ km above GEO. Some just become debris. The Satellite Graveyard and Orbit Decay experiences cover this in detail.'},
+    {q:'How fast do satellites move?',a:'LEO satellites: <strong>~7.8 km/s</strong> (28,000 km/h). That\'s ~90 minutes per orbit. GEO satellites: ~3.1 km/s but they orbit in exactly 24 hours, so they appear stationary. GPS (MEO): ~3.9 km/s, 12-hour orbits.'},
+  ]},
+  {cat:'🌙 About the Heritage Content',items:[
+    {q:'Why Arab astronomy?',a:'The mathematical and scientific foundations of satellite technology — algebra, optics, geodesy, star catalogs, orbital models — were substantially developed by <strong>Arab and Muslim scholars</strong> during the Islamic Golden Age (8th-14th century). Over 200 star names still used today are Arabic. This heritage is often overlooked in space education.'},
+    {q:'Which scholars are featured?',a:'<strong>al-Khwarizmi</strong> (algebra, algorithms → GPS math), <strong>al-Biruni</strong> (Earth\'s circumference → satellite geodesy), <strong>Ibn al-Haytham</strong> (optics, scientific method → satellite cameras), <strong>al-Sufi</strong> (star catalog → star trackers), <strong>al-Tusi</strong> (planetary models → orbital mechanics), <strong>Ibn Majid</strong> (celestial navigation → GNSS).'},
+    {q:'Are the Arabic star names accurate?',a:'Yes. We use the standard IAU-recognized Arabic-origin star names. Transliterations follow common English conventions. Arabic script is included where shown. Sources include al-Sufi\'s "Book of Fixed Stars" (964 CE) and modern IAU catalogs.'},
+  ]},
+  {cat:'🔧 Technical Questions',items:[
+    {q:'Is the orbital physics accurate?',a:'<strong>Reasonably so.</strong> We use real values for G, Earth\'s mass, and radius. Orbital velocity, period, and altitude calculations are correct. Atmospheric drag uses exponential density models. Some visualizations simplify 3D→2D projection for clarity. This is educational, not mission-critical software.'},
+    {q:'Can I modify the files?',a:'<strong>Absolutely.</strong> Every file is plain HTML/CSS/JS — open in any text editor. Variables are at the top of each script. The design system uses CSS custom properties for easy theming. No build step needed.'},
+    {q:'Why no framework (React, Vue, etc)?',a:'Deliberate choice. <strong>Zero dependencies = zero breakage.</strong> These files will work in 10 years without npm updates, build failures, or deprecated packages. Every file is a single self-contained document. Open it, it works. Forever.'},
+    {q:'What about the micro:bit code?',a:'The micro:bit experiments include real <strong>MicroPython</strong> code that runs on BBC micro:bit V2. Copy the code blocks into <code>makecode.microbit.org</code> (Python mode) or your preferred micro:bit IDE. All experiments use built-in sensors — no extra hardware.'},
+    {q:'What about the SDR guide?',a:'The SDR guide references real equipment (RTL-SDR V4, ~$30) and real software (SDR#, SatDump, dump1090 — all free). Frequencies are accurate. The NOAA weather image reception pipeline is proven and widely used by the amateur radio community.'},
+  ]},
+  {cat:'📡 SDR & Hardware',items:[
+    {q:'Can I really receive satellite images for $30?',a:'<strong>Yes.</strong> An RTL-SDR V4 dongle ($30) with the included V-dipole antenna can receive NOAA weather satellite images at 137 MHz. It\'s the most popular beginner SDR project. See the SDR Guide for step-by-step instructions.'},
+    {q:'Do I need a ham radio license?',a:'<strong>No — for receive only.</strong> Anyone can listen to satellite signals. You only need a license to transmit. All projects in the SDR guide are receive-only.'},
+    {q:'Can I really hear the ISS?',a:'<strong>Yes.</strong> The ISS transmits on 145.800 MHz. With a simple antenna and the RTL-SDR, you can hear the APRS digital beacon on every pass. Astronaut voice contacts and SSTV image events happen periodically — check ARISS.org for schedules.'},
+  ]},
+];
+
+const ct=document.getElementById('content');
+DATA.forEach(d=>{
+  let h=`<div class="cat"><div class="cat-title">${d.cat}</div>`;
+  d.items.forEach(i=>{h+=`<div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">${i.q}</div><div class="faq-a">${i.a}</div></div>`});
+  h+='</div>';ct.innerHTML+=h;
+});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'FAQ',project:'Satellites in the Sky'},fr:{title:'Questions Fréquentes',project:'Satellites dans le Ciel'},ar:{title:'الأسئلة الشائعة',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

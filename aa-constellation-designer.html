@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constellation Designer — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+header{text-align:center;padding:40px 20px 16px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(183,148,244,0.06);border:1px solid rgba(183,148,244,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--purple);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--purple)}
+header p{font-size:.82rem;color:var(--text-dim);max-width:480px;margin:0 auto}
+
+.layout{max-width:1100px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:280px 1fr;gap:14px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}}
+
+.panel{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:14px;padding:16px}
+.panel h3{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+
+.ctrl{margin-bottom:12px}
+.ctrl label{font-size:.68rem;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:3px}
+.ctrl label span{font-family:var(--mono);color:var(--cyan);font-weight:500}
+.ctrl input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,0.06);outline:none}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer}
+
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px}
+.preset{font-family:var(--mono);font-size:.46rem;padding:6px;border-radius:6px;border:1px solid rgba(110,140,255,0.1);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;text-align:center}
+.preset:hover{border-color:rgba(183,148,244,0.2);color:var(--purple)}
+
+.results{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.res{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.02)}
+.res:last-child{border:none}
+.res .rl{font-size:.68rem;color:var(--text-dim)}.res .rv{font-family:var(--mono);font-size:.68rem;font-weight:500}
+
+/* Visualization */
+.viz{position:relative}
+canvas#orbViz{width:100%;height:500px;border-radius:12px;background:#060a18}
+.viz-legend{position:absolute;bottom:10px;left:10px;font-family:var(--mono);font-size:.42rem;color:var(--text-muted);background:rgba(6,10,24,0.8);padding:6px 10px;border-radius:6px}
+
+.name-row{display:flex;gap:6px;margin-bottom:12px}
+.name-row input{flex:1;font-family:var(--mono);font-size:.7rem;padding:6px 10px;border-radius:6px;border:1px solid rgba(183,148,244,0.15);background:rgba(6,10,22,0.8);color:var(--purple);outline:none}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge">🛰️ Design Tool</div>
+  <h1>Constellation <span><span data-en="Designer" data-fr="Concepteur" data-ar="المصمم">Designer</span></span></h1>
+  <p>How many satellites do you need to cover the Earth? Choose parameters, see the constellation form, and calculate coverage, cost, and revisit time.</p>
+</header>
+
+<div class="layout">
+  <div>
+    <div class="panel">
+      <h3><span data-en="🎛️ Parameters" data-fr="🎛️ Paramètres" data-ar="🎛️ المعلمات">🎛️ Parameters</span></h3>
+      <div class="name-row"><input type="text" id="cName" placeholder="Name your constellation…" value="MyConstellation"></div>
+      <div class="ctrl"><label>Satellites <span id="vSats">24</span></label><input type="range" id="rSats" min="1" max="200" value="24"></div>
+      <div class="ctrl"><label>Orbital Planes <span id="vPlanes">6</span></label><input type="range" id="rPlanes" min="1" max="24" value="6"></div>
+      <div class="ctrl"><label>Altitude <span id="vAlt">20,200 km</span></label><input type="range" id="rAlt" min="200" max="36000" value="20200" step="50"></div>
+      <div class="ctrl"><label>Inclination <span id="vInc">55°</span></label><input type="range" id="rInc" min="0" max="98" value="55"></div>
+    </div>
+    <div class="panel" style="margin-top:10px">
+      <h3><span data-en="📋 Presets" data-fr="📋 Préréglages" data-ar="📋 إعدادات مسبقة">📋 Presets</span></h3>
+      <div class="presets">
+        <button class="preset" onclick="setPreset(24,6,20200,55)">📍 GPS (24/6)</button>
+        <button class="preset" onclick="setPreset(5616,72,550,53)">📶 Starlink</button>
+        <button class="preset" onclick="setPreset(24,3,23222,56)">🇪🇺 Galileo</button>
+        <button class="preset" onclick="setPreset(6,3,833,98)">🌦️ Weather</button>
+        <button class="preset" onclick="setPreset(3,1,35786,0)">📺 GEO Ring</button>
+        <button class="preset" onclick="setPreset(66,6,780,86)">🌐 Iridium</button>
+        <button class="preset" onclick="setPreset(1,1,408,51.6)">🏗️ ISS</button>
+        <button class="preset" onclick="setPreset(148,18,1200,87.9)">🌐 OneWeb</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:10px">
+      <h3><span data-en="📊 Analysis" data-fr="📊 Analyse" data-ar="📊 تحليل">📊 Analysis</span></h3>
+      <div class="results" id="results"></div>
+    </div>
+  </div>
+  
+  <div class="viz">
+    <canvas id="orbViz"></canvas>
+    <div class="viz-legend">Drag to rotate · Scroll to zoom</div>
+  </div>
+</div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const cv=document.getElementById('orbViz'),cx=cv.getContext('2d');
+const T2=Math.PI*2,D=Math.PI/180;
+const G=6.674e-11,Me=5.972e24,Re=6371;
+let W,H,CX,CY;
+
+function resize(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0);CX=W/2;CY=H/2}
+resize();addEventListener('resize',resize);
+
+let nSats=24,nPlanes=6,alt=20200,inc=55;
+let rotX=-.3,rotY=.4,zoom=1;
+let dragging=false,dragX=0,dragY=0;
+
+function speed(a){return Math.sqrt(G*Me/((Re+a)*1000))/1000}
+function period(a){return 2*Math.PI*Math.sqrt(Math.pow((Re+a)*1000,3)/(G*Me))/60}
+function footprint(a){return 2*Re*Math.acos(Re/(Re+a))}
+
+function setPreset(s,p,a,i){
+  nSats=s;nPlanes=p;alt=a;inc=i;
+  document.getElementById('rSats').value=Math.min(200,s);
+  document.getElementById('rPlanes').value=Math.min(24,p);
+  document.getElementById('rAlt').value=a;
+  document.getElementById('rInc').value=i;
+  update();
+}
+
+function update(){
+  nSats=+document.getElementById('rSats').value;
+  nPlanes=+document.getElementById('rPlanes').value;
+  alt=+document.getElementById('rAlt').value;
+  inc=+document.getElementById('rInc').value;
+  
+  document.getElementById('vSats').textContent=nSats;
+  document.getElementById('vPlanes').textContent=nPlanes;
+  document.getElementById('vAlt').textContent=alt.toLocaleString()+' km';
+  document.getElementById('vInc').textContent=inc+'°';
+  
+  const v=speed(alt);
+  const T=period(alt);
+  const fp=footprint(alt);
+  const satsPerPlane=Math.ceil(nSats/nPlanes);
+  const coverage=Math.min(100,nSats*fp*fp*Math.PI/(4*Math.PI*Re*Re)*100*.3);
+  const orbitsDay=1440/T;
+  const costPerSat=alt>30000?200:alt>5000?100:alt>1000?15:5;
+  const totalCost=nSats*costPerSat;
+  const launchCost=Math.ceil(nSats/(alt>30000?1:alt>1000?20:60))*67;
+  
+  const name=document.getElementById('cName').value||'Constellation';
+  
+  document.getElementById('results').innerHTML=`
+    <div class="res"><span class="rl">Name</span><span class="rv" style="color:var(--purple)">${name}</span></div>
+    <div class="res"><span class="rl">Sats per plane</span><span class="rv" style="color:var(--cyan)">${satsPerPlane}</span></div>
+    <div class="res"><span class="rl">Orbital speed</span><span class="rv" style="color:var(--cyan)">${v.toFixed(2)} km/s</span></div>
+    <div class="res"><span class="rl">Period</span><span class="rv" style="color:var(--blue)">${T.toFixed(1)} min</span></div>
+    <div class="res"><span class="rl">Orbits/day</span><span class="rv" style="color:var(--green)">${orbitsDay.toFixed(1)}</span></div>
+    <div class="res"><span class="rl">Footprint ⌀</span><span class="rv" style="color:var(--orange)">${Math.round(fp).toLocaleString()} km</span></div>
+    <div class="res"><span class="rl">Coverage (est.)</span><span class="rv" style="color:${coverage>80?'var(--green)':coverage>40?'var(--orange)':'var(--red)'}">${coverage.toFixed(0)}%</span></div>
+    <div class="res"><span class="rl">Sat cost (est.)</span><span class="rv" style="color:var(--gold)">$${totalCost}M</span></div>
+    <div class="res"><span class="rl">Launch cost (est.)</span><span class="rv" style="color:var(--gold)">$${launchCost}M</span></div>
+    <div class="res"><span class="rl">Total (est.)</span><span class="rv" style="color:var(--gold)">$${(totalCost+launchCost).toLocaleString()}M</span></div>
+  `;
+}
+
+function project3D(x,y,z){
+  // Rotate
+  const cosX=Math.cos(rotX),sinX=Math.sin(rotX);
+  const cosY=Math.cos(rotY),sinY=Math.sin(rotY);
+  let nx=x*cosY-z*sinY;
+  let nz=x*sinY+z*cosY;
+  let ny=y*cosX-nz*sinX;
+  nz=y*sinX+nz*cosX;
+  const scale=200*zoom/(nz+400);
+  return{x:CX+nx*scale,y:CY+ny*scale,z:nz,scale};
+}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle='#060a18';cx.fillRect(0,0,W,H);
+  
+  // Stars
+  if(!render.st){render.st=[];for(let i=0;i<80;i++)render.st.push({x:Math.random()*W,y:Math.random()*H,b:.05+Math.random()*.1})}
+  for(const s of render.st){cx.beginPath();cx.arc(s.x,s.y,.4,0,T2);cx.fillStyle=`rgba(180,190,220,${s.b})`;cx.fill()}
+  
+  const ER=80;// Earth radius in view units
+  const now=Date.now()*.0001;
+  
+  // Earth
+  const ep=project3D(0,0,0);
+  const eR=ER*ep.scale;
+  const eg=cx.createRadialGradient(ep.x-eR*.15,ep.y-eR*.15,0,ep.x,ep.y,eR);
+  eg.addColorStop(0,'#1a4a6c');eg.addColorStop(.6,'#0d2a48');eg.addColorStop(1,'#061428');
+  cx.beginPath();cx.arc(ep.x,ep.y,eR,0,T2);cx.fillStyle=eg;cx.fill();
+  
+  // Atmosphere
+  cx.beginPath();cx.arc(ep.x,ep.y,eR+3,0,T2);
+  const ag=cx.createRadialGradient(ep.x,ep.y,eR-2,ep.x,ep.y,eR+6);
+  ag.addColorStop(0,'rgba(92,224,214,0.05)');ag.addColorStop(1,'transparent');
+  cx.fillStyle=ag;cx.fill();
+  
+  // Orbit scale
+  const orbitScale=ER*(1+alt/Re*.15);
+  const planeColors=['#5ce0d6','#6e8cff','#b794f4','#f6ad55','#6fcf97','#fc8181','#f687b3','#e8c170'];
+  
+  // Draw orbital planes and satellites
+  const satsPerPlane=Math.ceil(nSats/nPlanes);
+  const displaySats=Math.min(nSats,200);
+  const displayPlanes=Math.min(nPlanes,24);
+  const dSatsPerPlane=Math.ceil(displaySats/displayPlanes);
+  
+  const allSats=[];
+  
+  for(let p=0;p<displayPlanes;p++){
+    const raan=(p/displayPlanes)*T2;// Right ascension
+    const col=planeColors[p%planeColors.length];
+    
+    // Draw orbit ring
+    const pts=[];
+    for(let a=0;a<=T2;a+=.05){
+      const x=orbitScale*Math.cos(a);
+      const y=orbitScale*Math.sin(a)*Math.cos(inc*D);
+      const z=orbitScale*Math.sin(a)*Math.sin(inc*D);
+      // Rotate by RAAN
+      const rx=x*Math.cos(raan)-z*Math.sin(raan);
+      const rz=x*Math.sin(raan)+z*Math.cos(raan);
+      pts.push(project3D(rx,y,rz));
+    }
+    cx.beginPath();
+    pts.forEach((pt,i)=>{i===0?cx.moveTo(pt.x,pt.y):cx.lineTo(pt.x,pt.y)});
+    cx.strokeStyle=col+'20';cx.lineWidth=.5;cx.stroke();
+    
+    // Satellites in this plane
+    for(let s=0;s<dSatsPerPlane&&p*dSatsPerPlane+s<displaySats;s++){
+      const a=(s/dSatsPerPlane)*T2+now*(1/(1+alt*.001));
+      const x=orbitScale*Math.cos(a);
+      const y=orbitScale*Math.sin(a)*Math.cos(inc*D);
+      const z=orbitScale*Math.sin(a)*Math.sin(inc*D);
+      const rx=x*Math.cos(raan)-z*Math.sin(raan);
+      const rz=x*Math.sin(raan)+z*Math.cos(raan);
+      const pt=project3D(rx,y,rz);
+      allSats.push({...pt,col});
+    }
+  }
+  
+  // Sort by z and draw
+  allSats.sort((a,b)=>a.z-b.z);
+  for(const s of allSats){
+    const sz=Math.max(1,2.5*s.scale);
+    const behind=s.z<-30;
+    cx.beginPath();cx.arc(s.x,s.y,sz,0,T2);
+    cx.fillStyle=s.col+(behind?'30':'90');cx.fill();
+    if(!behind&&sz>1.5){
+      cx.beginPath();cx.arc(s.x,s.y,sz*3,0,T2);
+      const gl=cx.createRadialGradient(s.x,s.y,0,s.x,s.y,sz*3);
+      gl.addColorStop(0,s.col+'15');gl.addColorStop(1,'transparent');
+      cx.fillStyle=gl;cx.fill();
+    }
+  }
+  
+  // Labels
+  cx.font='600 8px "JetBrains Mono"';cx.fillStyle='rgba(200,210,230,0.1)';cx.textAlign='center';
+  cx.fillText('EARTH',ep.x,ep.y+3);
+  
+  requestAnimationFrame(render);
+}
+
+// Controls
+['rSats','rPlanes','rAlt','rInc'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',update);
+});
+document.getElementById('cName').addEventListener('input',update);
+
+// Drag rotation
+cv.addEventListener('pointerdown',e=>{dragging=true;dragX=e.clientX;dragY=e.clientY});
+cv.addEventListener('pointermove',e=>{if(!dragging)return;rotY+=(e.clientX-dragX)*.005;rotX+=(e.clientY-dragY)*.005;dragX=e.clientX;dragY=e.clientY});
+cv.addEventListener('pointerup',()=>dragging=false);
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.4,Math.min(3,zoom-e.deltaY*.001))},{passive:false});
+
+update();render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Constellation Designer',project:'Satellites in the Sky'},fr:{title:'Concepteur de Constellations',project:'Satellites dans le Ciel'},ar:{title:'مصمم الكوكبات',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

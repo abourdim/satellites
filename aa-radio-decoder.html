@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radio Decoder — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(111,207,151,0.06);border:1px solid rgba(111,207,151,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--green);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--green)}
+header p{font-size:.82rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.6}
+
+.radio{max-width:700px;margin:0 auto}
+/* Frequency display */
+.freq-display{background:var(--card);border:1px solid rgba(111,207,151,0.08);border-radius:14px;padding:16px 20px;margin-bottom:12px;text-align:center}
+.freq-num{font-family:var(--mono);font-size:2.2rem;font-weight:500;color:var(--green);letter-spacing:.05em}
+.freq-unit{font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+.freq-name{font-size:.82rem;font-weight:600;color:#fff;margin-top:4px}
+.freq-desc{font-size:.68rem;color:var(--dim)}
+
+/* Waterfall */
+canvas#waterfall{width:100%;height:120px;border-radius:10px;border:1px solid rgba(110,140,255,0.06);display:block;margin-bottom:12px}
+
+/* Signal info */
+canvas#spectrum{width:100%;height:80px;border-radius:10px;border:1px solid rgba(110,140,255,0.06);display:block;margin-bottom:12px}
+
+/* Tuning */
+.tuning{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.tune-btn{font-family:var(--mono);font-size:.48rem;padding:6px 12px;border-radius:6px;border:1px solid rgba(111,207,151,0.1);background:transparent;color:var(--dim);cursor:pointer;transition:all .2s}
+.tune-btn:hover{border-color:rgba(111,207,151,0.2);color:var(--green)}
+.tune-btn.active{background:rgba(111,207,151,0.08);border-color:var(--green);color:var(--green)}
+
+/* Decoded data */
+.decoded{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:12px;padding:14px 18px;margin-bottom:12px}
+.decoded h3{font-family:var(--mono);font-size:.46rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.decoded-data{font-family:var(--mono);font-size:.6rem;color:var(--green);line-height:1.6;background:rgba(0,0,0,.2);border-radius:6px;padding:10px;overflow-x:auto;white-space:pre}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.cards{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid rgba(110,140,255,0.04);border-radius:10px;padding:12px 14px}
+.card h4{font-size:.76rem;font-weight:700;color:#fff;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.card p{font-size:.68rem;color:var(--dim);line-height:1.5}
+.card strong{font-weight:600}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge"><span data-en="📻 Signal Processing" data-fr="📻 Traitement du signal" data-ar="📻 معالجة الإشارة">📻 Signal Processing</span></div>
+  <h1>Radio <span><span data-en="Decoder" data-fr="Décodeur" data-ar="فك التشفير">Decoder</span></span></h1>
+  <p>Satellites broadcast on specific frequencies. With the right antenna and software, you can receive their signals. Here's what satellite data looks and sounds like — raw from space.</p>
+</header>
+<div class="radio">
+  <div class="freq-display">
+    <div class="freq-num" id="freqNum">137.620</div>
+    <div class="freq-unit">MHz</div>
+    <div class="freq-name" id="freqName">NOAA-18 APT</div>
+    <div class="freq-desc" id="freqDesc">Automatic Picture Transmission — live weather imagery</div>
+  </div>
+
+  <canvas id="spectrum"></canvas>
+  <canvas id="waterfall"></canvas>
+
+  <div class="tuning">
+    <button class="tune-btn active" onclick="tune(0)">📡 137.620 NOAA-18</button>
+    <button class="tune-btn" onclick="tune(1)">📡 145.800 ISS Voice</button>
+    <button class="tune-btn" onclick="tune(2)">📡 437.365 CubeSat</button>
+    <button class="tune-btn" onclick="tune(3)">📡 1575.42 GPS L1</button>
+    <button class="tune-btn" onclick="tune(4)">📡 8420.0 Voyager</button>
+  </div>
+
+  <div class="decoded">
+    <h3><span data-en="📜 Decoded Data Stream" data-fr="📜 Flux de données décodé" data-ar="📜 تدفق البيانات المفكوك">📜 Decoded Data Stream</span></h3>
+    <div class="decoded-data" id="decodedData">Tuning...</div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><h4><span data-en="📡 How to Receive" data-fr="📡 Comment recevoir" data-ar="📡 كيفية الاستقبال">📡 How to Receive</span></h4><p>NOAA weather satellites broadcast at 137 MHz. A <strong>$20 RTL-SDR dongle</strong> + V-dipole antenna + WXtoImg software = live satellite images from your backyard. No license needed to listen.</p></div>
+    <div class="card"><h4><span data-en="🔊 What It Sounds Like" data-fr="🔊 À quoi ça ressemble" data-ar="🔊 كيف يبدو الصوت">🔊 What It Sounds Like</span></h4><p>NOAA APT sounds like a <strong>rhythmic ticking/whooshing</strong> — each line of the image encoded as audio tones. ISS voice is normal FM radio. CubeSat beacons are short digital bursts.</p></div>
+    <div class="card"><h4><span data-en="📊 Signal Strength" data-fr="📊 Force du signal" data-ar="📊 قوة الإشارة">📊 Signal Strength</span></h4><p>At 137 MHz, NOAA signals arrive at about <strong>-100 dBm</strong>. GPS signals at Earth's surface: -130 dBm. That's 0.000000000000001 watts. Below thermal noise. Incredible engineering.</p></div>
+    <div class="card"><h4>☽ Heritage</h4><p>Receiving satellite signals is <strong>modern astronomy</strong>. Like al-Sufi cataloging stars by eye, amateur operators catalog satellite passes by ear. The tools changed; the act of watching the sky didn't.</p></div>
+  </div>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+const SATS=[
+  {freq:'137.620',name:'NOAA-18 APT',name_fr:'NOAA-18 APT',name_ar:'NOAA-18 APT',desc:'Weather satellite — live cloud imagery via AM subcarrier',desc_fr:'Satellite météo — imagerie nuageuse en direct par sous-porteuse AM',desc_ar:'قمر أرصاد — صور سحب مباشرة عبر حامل AM',
+    data:'SYNC: 11100111... LINE 001: [cloud data 0x4F 0x52 0x48 0x50 0x55 0x5A 0x60...]\nSYNC: 11100111... LINE 002: [cloud data 0x51 0x54 0x4A 0x4E 0x53 0x58 0x5D...]\nTELEMETRY: Wedge 1=0x00 Wedge 2=0xFF IR_Temp=242K Vis_Gain=0.82',
+    specCol:'rgba(111,207,151,',bw:40},
+  {freq:'145.800',name:'ISS Voice (FM)',name_fr:'Voix ISS (FM)',name_ar:'صوت م.ف.د (FM)',desc:'Crew voice downlink — FM modulation, amateur radio',desc_fr:'Liaison voix de l\'équipage — modulation FM, radio amateur',desc_ar:'رابط صوت الطاقم — تعديل FM، راديو هواة',
+    data:'[FM CARRIER DETECTED] Signal: -92 dBm  SNR: 22 dB\nAudio: Voice modulation detected\nFreq offset: +1.2 kHz (Doppler)\nModulation: NFM  Bandwidth: 12.5 kHz\n[Callsign: NA1SS — International Space Station]',
+    specCol:'rgba(110,140,255,',bw:15},
+  {freq:'437.365',name:'CubeSat Beacon',name_fr:'Balise CubeSat',name_ar:'منارة قمر مكعب',desc:'University satellite — periodic digital telemetry burst',desc_fr:'Satellite universitaire — rafale de télémétrie numérique périodique',desc_ar:'قمر جامعي — نبضة بيانات رقمية دورية',
+    data:'BEACON PKT #4821  RSSI:-108dBm\nCALLSIGN: XX1SAT  MODE: GMSK 9600bps\nBATT: 3.92V  TEMP_BUS: 22.4°C  TEMP_SOLAR: 45.1°C\nSOLAR_I: 0.31A  EPS_MODE: NOMINAL\nATTITUDE: [0.12, -0.04, 0.98, 0.15] (quaternion)\nUPTIME: 47d 12h 33m  REBOOT_CNT: 3',
+    specCol:'rgba(183,148,244,',bw:20},
+  {freq:'1575.42',name:'GPS L1 C/A',name_fr:'GPS L1 C/A',name_ar:'GPS L1 C/A',desc:'Navigation signal — BPSK modulation, 50 bps nav message',desc_fr:'Signal de navigation — modulation BPSK, message nav 50 bps',desc_ar:'إشارة ملاحة — تعديل BPSK، رسالة ملاحة 50 bps',
+    data:'SUBFRAME 1: TLM=0x8B HOW=0x2C4F TOW=124567\n  WN=2347  SV_HEALTH=000000  TGD=-5.12e-09\n  af0=+2.384e-04  af1=-3.637e-12  af2=0\nSUBFRAME 2: EPHEMERIS\n  M0=+1.2847rad  e=0.00523  sqrtA=5153.67\n  Omega0=+0.3847rad  i0=0.9614rad  omega=-1.284rad',
+    specCol:'rgba(246,173,85,',bw:2},
+  {freq:'8420.0',name:'Voyager 1 X-Band',name_fr:'Voyager 1 Bande X',name_ar:'فوياجر ١ نطاق X',desc:'Deep space — 160 bps from 24 billion km',desc_fr:'Espace profond — 160 bps depuis 24 milliards de km',desc_ar:'فضاء عميق — ١٦٠ bps من ٢٤ مليار كم',
+    data:'[SIGNAL LOCK: MARGINAL]  Dish: DSS-43 (70m Canberra)\nRX Power: -185.2 dBm  SNR: 2.1 dB  BER: 1.2e-5\nData Rate: 160 bps  Encoding: Reed-Solomon + Conv.\nDist: 24,467,621,000 km  OWLT: 22h 44m 03s\nSCID: VGR1  CMD_CNT: 47,291  PWR: 249.3W (RTG)',
+    specCol:'rgba(252,129,129,',bw:1},
+];
+
+let current=0;
+
+const specCv=document.getElementById('spectrum'),specCx=specCv.getContext('2d');
+const wfCv=document.getElementById('waterfall'),wfCx=wfCv.getContext('2d');
+let wfData=[];
+
+function tune(i){
+  current=i;
+  document.querySelectorAll('.tune-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  const s=SATS[i];
+  document.getElementById('freqNum').textContent=s.freq;
+  document.getElementById('freqName').textContent=s.name;
+  document.getElementById('freqDesc').textContent=s.desc;
+  document.getElementById('decodedData').textContent=s.data;
+  wfData=[];
+}
+
+function rs(cv2){const d=devicePixelRatio||1;const w=cv2.clientWidth,h=cv2.clientHeight;cv2.width=w*d;cv2.height=h*d;cv2.getContext('2d').setTransform(d,0,0,d,0,0);return{w,h}}
+
+function render(){
+  const{w:sw,h:sh}=rs(specCv);
+  const{w:ww,h:wh}=rs(wfCv);
+  const s=SATS[current];
+  const t=Date.now()*.001;
+  
+  // Spectrum
+  specCx.fillStyle='#060a18';specCx.fillRect(0,0,sw,sh);
+  specCx.beginPath();
+  const line=[];
+  for(let x=0;x<sw;x++){
+    const f=(x/sw-.5)*100;// Frequency offset
+    const sig=Math.exp(-f*f/(s.bw*s.bw))*(.5+.2*Math.sin(t*3+f*.1));
+    const noise=(Math.random()-.5)*.08;
+    const y=sh-10-(sig+noise+.1)*(sh-20);
+    line.push(y);
+    x===0?specCx.moveTo(x,y):specCx.lineTo(x,y);
+  }
+  specCx.strokeStyle=s.specCol+'0.6)';specCx.lineWidth=1;specCx.stroke();
+  
+  // Fill under
+  specCx.lineTo(sw,sh);specCx.lineTo(0,sh);specCx.closePath();
+  specCx.fillStyle=s.specCol+'0.05)';specCx.fill();
+  
+  // Noise floor
+  specCx.beginPath();specCx.moveTo(0,sh-15);specCx.lineTo(sw,sh-15);
+  specCx.strokeStyle='rgba(252,129,129,0.1)';specCx.lineWidth=.5;specCx.setLineDash([3,4]);specCx.stroke();specCx.setLineDash([]);
+  specCx.font='400 6px "JetBrains Mono"';specCx.fillStyle='rgba(252,129,129,0.2)';specCx.fillText('noise floor',4,sh-18);
+  
+  // Center marker
+  specCx.beginPath();specCx.moveTo(sw/2,0);specCx.lineTo(sw/2,sh);
+  specCx.strokeStyle='rgba(111,207,151,0.1)';specCx.lineWidth=.5;specCx.stroke();
+  
+  // Waterfall
+  const row=new Array(Math.round(ww)).fill(0);
+  for(let x=0;x<row.length;x++){
+    const f=(x/ww-.5)*100;
+    row[x]=Math.exp(-f*f/(s.bw*s.bw))*(.3+.3*Math.sin(t*5+f*.2+x*.01))+Math.random()*.05;
+  }
+  wfData.unshift(row);
+  if(wfData.length>Math.round(wh))wfData.pop();
+  
+  for(let y=0;y<wfData.length;y++){
+    for(let x=0;x<wfData[y].length;x++){
+      const v=wfData[y][x];
+      const r=Math.round(v*100),g=Math.round(v*200+50),b=Math.round(v*80);
+      wfCx.fillStyle=`rgb(${r},${g},${b})`;
+      wfCx.fillRect(x,y,1,1);
+    }
+  }
+  
+  requestAnimationFrame(render);
+}
+tune(0);render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Radio Decoder',project:'Satellites in the Sky'},fr:{title:'Décodeur Radio',project:'Satellites dans le Ciel'},ar:{title:'فك تشفير الراديو',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

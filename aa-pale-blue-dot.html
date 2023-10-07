@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pale Blue Dot — A Journey of Perspective</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400&family=Outfit:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#010208;color:#c8d0e0;font-family:'Outfit',sans-serif;overflow:hidden;width:100vw;height:100vh}
+canvas{position:fixed;inset:0}
+.quote{position:fixed;bottom:10%;left:50%;transform:translateX(-50%);text-align:center;z-index:10;max-width:560px;width:calc(100% - 40px);pointer-events:none}
+.qt{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(.85rem,2vw,1.2rem);color:rgba(200,208,224,0.55);line-height:1.7;margin-bottom:6px}
+.qa{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(232,193,112,0.35);letter-spacing:.06em}
+.prog{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.36rem;color:rgba(200,208,224,0.15)}
+.prog .bar{width:100px;height:2px;border-radius:1px;background:rgba(255,255,255,0.04);overflow:hidden}
+.prog .fill{height:100%;background:rgba(200,208,224,0.12);transition:width .3s}
+.hint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;font-family:'Playfair Display',serif;font-style:italic;font-size:.75rem;color:rgba(200,208,224,0.18);pointer-events:none;animation:hfade 5s ease forwards}
+@keyframes hfade{0%,70%{opacity:1}100%{opacity:0}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="cv"></canvas>
+<div class="hint" data-en="Scroll slowly to journey outward…" data-fr="Faites défiler pour voyager vers l'extérieur…" data-ar="مرر ببطء للسفر نحو الخارج…">Scroll slowly to journey outward…</div>
+<div class="quote"><div class="qt" id="qt"></div><div class="qa" id="qa"></div></div>
+<div class="prog"><span id="lbl" data-en="Earth" data-fr="Terre" data-ar="الأرض">Earth</span><div class="bar"><div class="fill" id="fill"></div></div><span id="dst" data-en="0 km" data-fr="0 km" data-ar="٠ كم">0 km</span></div>
+<script>
+const cv=document.getElementById('cv'),c=cv.getContext('2d'),P=Math.PI*2;
+let W,H;
+function rs(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0)}
+rs();addEventListener('resize',rs);
+
+const L=[
+  {d:0,r:300,l:'Home',l_fr:'Chez soi',l_ar:'الوطن',q:'Every person you\'ve ever known lives here. Every sunrise, every song, every act of love — all on this one world.',a:''},
+  {d:400,r:250,l:'ISS',l_fr:'ISS',l_ar:'م.ف.د',q:'From 400 km up, you cannot see borders. You see one world, wrapped in a paper-thin atmosphere. Astronauts call it the "overview effect."',a:''},
+  {d:2e3,r:180,l:'LEO',l_fr:'LEO',l_ar:'المدار المنخفض',q:'Thousands of satellites circle here — the thinnest shell of human technology around our world.',a:''},
+  {d:2e4,r:100,l:'GPS',l_fr:'GPS',l_ar:'GPS',q:'GPS satellites orbit here. Earth still dominates the view, but you see its curvature as a sphere, not a horizon.',a:''},
+  {d:3.6e4,r:70,l:'GEO',l_fr:'GEO',l_ar:'المدار الثابت',q:'From geostationary orbit, satellites hover motionless. The Earth turns beneath them like a living thing.',a:''},
+  {d:3.8e5,r:12,l:'Moon',l_fr:'Lune',l_ar:'القمر',q:'This is where astronauts looked back and saw Earth as a marble. "We came to explore the Moon and discovered the Earth."',a:'— William Anders, Apollo 8'},
+  {d:1.5e6,r:4,l:'Deep Space',l_fr:'Espace profond',l_ar:'الفضاء العميق',q:'Earth and Moon together — two dots in the dark. All of human civilization between them.',a:''},
+  {d:6e9,r:.8,l:'Pale Blue Dot',l_fr:'Point Bleu Pâle',l_ar:'النقطة الزرقاء الباهتة',q:'Look again at that dot. That\'s here. That\'s home. That\'s us. Everyone you love, everyone you know — every human being who ever was, lived out their lives on a mote of dust suspended in a sunbeam.',a:'— Carl Sagan, 1990'},
+  {d:5e10,r:.1,l:'The Void',l_fr:'Le Vide',l_ar:'الفراغ',q:'"Whoever measures knowledge only by their own mind goes astray." The universe is vast beyond comprehension. Humility is the beginning of wisdom.',a:'— al-Biruni (973 CE)'},
+];
+
+let sp=0,tp=0;const mx=L.length-1;
+addEventListener('wheel',e=>{e.preventDefault();tp=Math.max(0,Math.min(mx,tp+e.deltaY*.0012))},{passive:false});
+let ty=0;addEventListener('touchstart',e=>ty=e.touches[0].clientY);
+addEventListener('touchmove',e=>{e.preventDefault();const dy=ty-e.touches[0].clientY;tp=Math.max(0,Math.min(mx,tp+dy*.004));ty=e.touches[0].clientY},{passive:false});
+
+const st=[];for(let i=0;i<250;i++)st.push({x:Math.random(),y:Math.random(),b:.02+Math.random()*.08,s:.2+Math.random()*.4});
+
+function lerp(a,b,t){return a+(b-a)*t}
+
+function draw(){
+  sp+=(tp-sp)*.04;
+  c.clearRect(0,0,W,H);c.fillStyle='#010208';c.fillRect(0,0,W,H);
+  
+  const i=Math.floor(sp),f=sp-i;
+  const cr=L[Math.min(i,L.length-1)],nx=L[Math.min(i+1,L.length-1)];
+  const er=lerp(cr.r,nx.r,f),dist=lerp(cr.d,nx.d,f);
+  const sb=Math.min(1,(300-er)/200);
+  
+  for(const s of st){c.beginPath();c.arc(s.x*W,s.y*H,s.s,0,P);c.fillStyle=`rgba(200,210,230,${s.b*sb})`;c.fill()}
+  
+  const ex=W/2,ey=H*.42;
+  if(er>.05){
+    if(er>2){c.beginPath();c.arc(ex,ey,er*1.12,0,P);const g=c.createRadialGradient(ex,ey,er*.8,ex,ey,er*1.12);g.addColorStop(0,'rgba(92,224,214,0.06)');g.addColorStop(1,'transparent');c.fillStyle=g;c.fill()}
+    c.beginPath();c.arc(ex,ey,Math.max(.3,er),0,P);
+    if(er>5){const g=c.createRadialGradient(ex-er*.2,ey-er*.2,0,ex,ey,er);g.addColorStop(0,'#2a6a9c');g.addColorStop(.5,'#1a4a7c');g.addColorStop(1,'#061428');c.fillStyle=g}else{c.fillStyle=`rgba(60,140,200,${Math.min(1,er/2)})`}
+    c.fill();
+    if(er>30&&er<250){const n=Math.floor(er/6),t=Date.now()*.0005;for(let j=0;j<n;j++){const a=j/n*P+t,r2=er*(1.05+(j%3)*.07);c.beginPath();c.arc(ex+r2*Math.cos(a),ey+r2*Math.sin(a)*.6,.5,0,P);c.fillStyle='rgba(92,224,214,0.15)';c.fill()}}
+  }
+  if(er>3&&er<80){const mr=er*.27,md=er*3,mt=Date.now()*.0001;c.beginPath();c.arc(ex+md*Math.cos(mt),ey+md*Math.sin(mt)*.3,Math.max(.3,mr),0,P);c.fillStyle='rgba(180,180,190,0.25)';c.fill()}
+  
+  const cl=L.reduce((b,l,j)=>Math.abs(sp-j)<Math.abs(sp-b.j)?{...l,j}:b,{...L[0],j:0});
+  document.getElementById('qt').textContent=cl.q;
+  document.getElementById('qa').textContent=cl.a;
+  document.getElementById('lbl').textContent=cl.l;
+  const ds=dist>1e9?(dist/1e9).toFixed(1)+'B km':dist>1e6?(dist/1e6).toFixed(0)+'M km':dist>1e3?Math.round(dist/1e3)+'K km':Math.round(dist)+' km';
+  document.getElementById('dst').textContent=ds;
+  document.getElementById('fill').style.width=(sp/mx*100)+'%';
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Pale Blue Dot',project:'Satellites in the Sky'},fr:{title:'Point Bleu Pâle',project:'Satellites dans le Ciel'},ar:{title:'النقطة الزرقاء الباهتة',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

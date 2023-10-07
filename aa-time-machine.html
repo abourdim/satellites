@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Machine — Watch Space Fill Up (1957–2025)</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020408;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#5a6a7e;--text-muted:#2a3a4e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;width:100vw;height:100vh}
+canvas#sim{position:fixed;inset:0}
+
+.hud{position:fixed;z-index:10;pointer-events:none}.hud>*{pointer-events:auto}
+.top-bar{top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(to bottom,rgba(2,4,8,0.88),transparent)}
+.logo{font-family:var(--serif);font-size:.82rem;font-weight:700;color:var(--blue)}
+.year-display{text-align:center}
+.year-display .yr{font-family:var(--mono);font-size:2.4rem;font-weight:500;color:var(--cyan);line-height:1}
+.year-display .era{font-size:.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.obj-count{text-align:right}
+.obj-count .oc{font-family:var(--mono);font-size:1.6rem;font-weight:500;color:var(--orange);line-height:1}
+.obj-count .ol{font-size:.48rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+
+.bottom-panel{bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(2,4,8,0.92),transparent);padding:16px 20px 24px}
+.slider-wrap{position:relative;margin-bottom:10px}
+.year-slider{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,0.06);outline:none;cursor:pointer}
+.year-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 12px rgba(92,224,214,0.4)}
+.milestones{display:flex;justify-content:space-between;margin-top:4px;position:relative}
+.ms{font-family:var(--mono);font-size:.4rem;color:var(--text-muted);text-align:center;cursor:pointer;transition:color .2s}
+.ms:hover{color:var(--cyan)}
+
+.ctrl-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px}
+.ctrl-btn{font-family:var(--mono);font-size:.52rem;padding:5px 12px;border-radius:5px;border:1px solid rgba(110,140,255,0.15);background:transparent;color:var(--blue);cursor:pointer;transition:all .3s}
+.ctrl-btn:hover{background:rgba(110,140,255,0.08)}
+.ctrl-btn.active{background:rgba(110,140,255,0.12);border-color:var(--blue)}
+
+.info-card{position:fixed;top:60px;left:16px;z-index:10;max-width:280px;background:rgba(6,10,22,0.92);border:1px solid rgba(110,140,255,0.08);border-radius:10px;padding:12px 16px;backdrop-filter:blur(14px);transition:opacity .4s;pointer-events:none}
+.info-card .ic-year{font-family:var(--mono);font-size:.7rem;color:var(--cyan);margin-bottom:2px}
+.info-card h3{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:4px}
+.info-card p{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+.info-card .ic-stat{font-family:var(--mono);font-size:.56rem;color:var(--orange);margin-top:6px}
+
+.legend{position:fixed;top:60px;right:16px;z-index:10;background:rgba(6,10,22,0.88);border:1px solid rgba(110,140,255,0.06);border-radius:8px;padding:8px 12px;backdrop-filter:blur(10px);pointer-events:none}
+.leg-row{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:.52rem;color:var(--text-dim)}
+.leg-dot{width:6px;height:6px;border-radius:50%}
+
+@media(max-width:600px){.info-card{max-width:200px;font-size:.9em}.legend{display:none}.year-display .yr{font-size:1.6rem}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="sim"></canvas>
+
+<div class="hud top-bar">
+  <div class="logo"><span data-en="⏳ Time Machine" data-fr="⏳ Machine à Remonter le Temps" data-ar="⏳ آلة الزمن">⏳ Time Machine</span></div>
+  <div class="year-display"><div class="yr" id="yearLbl">1957</div><div class="era" id="eraLbl"><span data-en="Dawn of Space Age" data-fr="L'aube de l'ère spatiale" data-ar="فجر عصر الفضاء">Dawn of Space Age</span></div></div>
+  <div class="obj-count"><div class="oc" id="objLbl">1</div><div class="ol"><span data-en="Objects in Orbit" data-fr="Objets en orbite" data-ar="أجسام في المدار">Objects in Orbit</span></div></div>
+</div>
+
+<div class="info-card" id="infoCard">
+  <div class="ic-year" id="icYear">1957</div>
+  <h3 id="icTitle">Sputnik 1</h3>
+  <p id="icDesc">The Soviet Union launches the first artificial satellite. 83 kg, beeping at 20 MHz. The space age begins.</p>
+  <div class="ic-stat" id="icStat">1 object in orbit</div>
+</div>
+
+<div class="legend">
+  <div class="leg-row"><div class="leg-dot" style="background:var(--cyan)"></div><span data-en="Active satellites" data-fr="Satellites actifs" data-ar="أقمار نشطة">Active satellites</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--orange)"></div><span data-en="Rocket bodies" data-fr="Corps de fusées" data-ar="هياكل صواريخ">Rocket bodies</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--red)"></div><span data-en="Debris" data-fr="Débris" data-ar="حطام">Debris</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--gold)"></div><span data-en="Stations" data-fr="Stations" data-ar="المحطات">Stations</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--green)"></div><span data-en="Navigation" data-fr="Navigation" data-ar="الملاحة">Navigation</span></div>
+</div>
+
+<div class="hud bottom-panel">
+  <div class="slider-wrap">
+    <input type="range" class="year-slider" id="yearSlider" min="1957" max="2025" value="1957" step="1">
+    <div class="milestones">
+      <span class="ms" data-y="1957">1957</span><span class="ms" data-y="1961">1961</span><span class="ms" data-y="1969">1969</span>
+      <span class="ms" data-y="1978">1978</span><span class="ms" data-y="1990">1990</span><span class="ms" data-y="1998">1998</span>
+      <span class="ms" data-y="2007">2007</span><span class="ms" data-y="2019">2019</span><span class="ms" data-y="2025">2025</span>
+    </div>
+  </div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn" id="playBtn"><span data-en="▶ Play" data-fr="▶ Lecture" data-ar="▶ تشغيل">▶ Play</span></button>
+    <button class="ctrl-btn" id="ffBtn"><span data-en="⏩ Fast" data-fr="⏩ Rapide" data-ar="⏩ سريع">⏩ Fast</span></button>
+    <button class="ctrl-btn" id="resetBtn"><span data-en="⏮ 1957" data-fr="⏮ 1957" data-ar="⏮ ١٩٥٧">⏮ 1957</span></button>
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('sim'),cx=cv.getContext('2d');
+const T2=Math.PI*2;
+let W,H,CX,CY,ER;
+function resize(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0);CX=W/2;CY=H/2;ER=Math.min(W,H)*.1}
+resize();addEventListener('resize',resize);
+
+const ERAS=[
+{y:1957,title:'Sputnik 1',title_fr:'Spoutnik 1',title_ar:'سبوتنيك ١',desc:'The Soviet Union launches the first artificial satellite. 83 kg. The space age begins with a beep.',desc_fr:'L\'Union soviétique lance le premier satellite artificiel. 83 kg. L\'ère spatiale commence.',desc_ar:'الاتحاد السوفيتي يطلق أول قمر صناعي. ٨٣ كغ. عصر الفضاء يبدأ بصافرة.',era:'Dawn of Space Age',era_fr:'L\'aube de l\'ère spatiale',era_ar:'فجر عصر الفضاء',sats:1,debris:0,rockets:1},
+{y:1958,title:'Explorer 1 (USA)',title_fr:'Explorer 1 (USA)',title_ar:'إكسبلورر ١ (أمريكا)',desc:'America responds. Discovers the Van Allen radiation belts.',desc_fr:'L\'Amérique répond. Découverte des ceintures de Van Allen.',desc_ar:'أمريكا ترد. اكتشاف أحزمة فان ألن الإشعاعية.',era:'Space Race',era_fr:'Course spatiale',era_ar:'سباق الفضاء',era_fr:'Course spatiale',era_ar:'سباق الفضاء',era_fr:'Course spatiale',era_ar:'سباق الفضاء',sats:5,debris:2,rockets:4},
+{y:1961,title:'Gagarin Orbits Earth',title_fr:'Gagarine en orbite',title_ar:'غاغارين يدور حول الأرض',desc:'First human in space. 108 minutes. "I see Earth! It is so beautiful!"',desc_fr:'Premier humain dans l\'espace. 108 minutes. « Je vois la Terre ! Comme elle est belle ! »',desc_ar:'أول إنسان في الفضاء. ١٠٨ دقائق. «أرى الأرض! ما أجملها!»',era:'Space Race',sats:50,debris:20,rockets:30},
+{y:1964,title:'First Geostationary Sat',title_fr:'Premier satellite géostationnaire',title_ar:'أول قمر ثابت',desc:'Syncom 3 achieves GEO. Broadcasts the Tokyo Olympics from 35,786 km.',desc_fr:'Syncom 3 atteint l\'orbite GEO. Diffuse les JO de Tokyo depuis 35 786 km.',desc_ar:'سينكوم ٣ يصل المدار الثابت. يبث أولمبياد طوكيو من ٣٥,٧٨٦ كم.',era:'Space Race',sats:150,debris:80,rockets:60},
+{y:1969,title:'Moon Landing',title_fr:'Alunissage',title_ar:'الهبوط على القمر',desc:'Apollo 11. Armstrong walks on the Moon. 600 million watch.',desc_fr:'Apollo 11. Armstrong marche sur la Lune. 600 millions de téléspectateurs.',desc_ar:'أبولو ١١. أرمسترونغ يمشي على القمر. ٦٠٠ مليون مشاهد.',era:'Apollo Era',era_fr:'Ère Apollo',era_ar:'عصر أبولو',sats:300,debris:200,rockets:100},
+{y:1973,title:'GPS Development Begins',title_fr:'Début du développement GPS',title_ar:'بدء تطوير GPS',desc:'The US starts building the Global Positioning System. 31 satellites planned.',desc_fr:'Les États-Unis commencent à construire le GPS. 31 satellites prévus.',desc_ar:'أمريكا تبدأ بناء نظام تحديد المواقع. ٣١ قمراً مخططاً.',era:'Military Space',era_fr:'Espace militaire',era_ar:'الفضاء العسكري',sats:600,debris:500,rockets:200},
+{y:1978,title:'Kessler Syndrome Predicted',title_fr:'Syndrome de Kessler prédit',title_ar:'التنبؤ بمتلازمة كيسلر',desc:'NASA scientist Donald Kessler warns: debris cascades could close space.',desc_fr:'Le scientifique Donald Kessler avertit : les débris pourraient fermer l\'espace.',desc_ar:'العالم دونالد كيسلر يحذر: تسلسل الحطام قد يغلق الفضاء.',era:'Growing Concern',era_fr:'Inquiétude croissante',era_ar:'قلق متزايد',sats:800,debris:900,rockets:300},
+{y:1981,title:'Space Shuttle Era',title_fr:'Ère de la navette spatiale',title_ar:'عصر المكوك الفضائي',desc:'Columbia launches. Reusable spacecraft. 135 missions over 30 years.',desc_fr:'Columbia décolle. Vaisseau réutilisable. 135 missions en 30 ans.',desc_ar:'كولومبيا تنطلق. مركبة قابلة لإعادة الاستخدام. ١٣٥ مهمة في ٣٠ عاماً.',era:'Shuttle Era',era_fr:'Ère navette',era_ar:'عصر المكوك',sats:1200,debris:1500,rockets:400},
+{y:1990,title:'Hubble Launched',title_fr:'Lancement de Hubble',title_ar:'إطلاق هابل',desc:'Space telescope at 547 km. Photos galaxies 13.4 billion light-years away.',desc_fr:'Télescope spatial à 547 km. Photographie des galaxies à 13,4 milliards d\'années-lumière.',desc_ar:'تلسكوب فضائي على ٥٤٧ كم. يصور مجرات على بُعد ١٣٫٤ مليار سنة ضوئية.',era:'Science in Orbit',era_fr:'Science en orbite',era_ar:'العلم في المدار',sats:2000,debris:3000,rockets:600},
+{y:1995,title:'GPS Fully Operational',title_fr:'GPS pleinement opérationnel',title_ar:'GPS يعمل بالكامل',desc:'31 satellites. Your phone can now find you within 3 meters anywhere on Earth.',desc_fr:'31 satellites. Votre téléphone vous localise à 3 mètres près, partout sur Terre.',desc_ar:'٣١ قمراً. هاتفك يجدك بدقة ٣ أمتار في أي مكان على الأرض.',era:'GPS Revolution',era_fr:'Révolution GPS',era_ar:'ثورة GPS',sats:2500,debris:4000,rockets:700},
+{y:1998,title:'ISS Construction Begins',title_fr:'Début de la construction de l'ISS',title_ar:'بدء بناء محطة الفضاء',desc:'International Space Station: 109m wide, crew of 6-7. Humanity\'s home in space.',era:'International Cooperation',era_fr:'Coopération internationale',era_ar:'تعاون دولي',sats:3000,debris:5000,rockets:800},
+{y:2007,title:'China ASAT Test',title_fr:'Test ASAT chinois',title_ar:'اختبار صيني مضاد للأقمار',desc:'China destroys a satellite. Creates 3,500+ debris pieces. Space gets dangerous.',desc_fr:'La Chine détruit un satellite. 3 500+ débris créés. L\'espace devient dangereux.',desc_ar:'الصين تدمر قمراً صناعياً. ٣,٥٠٠+ قطعة حطام. الفضاء يصبح خطيراً.',era:'Debris Crisis',era_fr:'Crise des débris',era_ar:'أزمة الحطام',era_fr:'Crise des débris',era_ar:'أزمة الحطام',sats:3500,debris:8000,rockets:900},
+{y:2009,title:'First Orbital Collision',title_fr:'Première collision orbitale',title_ar:'أول تصادم مداري',desc:'Iridium 33 and Cosmos 2251 collide at 42,000 km/h. 2,000+ new debris pieces.',desc_fr:'Iridium 33 et Cosmos 2251 entrent en collision à 42 000 km/h. 2 000+ nouveaux débris.',desc_ar:'إيريديوم ٣٣ وكوسموس ٢٢٥١ يتصادمان بسرعة ٤٢,٠٠٠ كم/س. ٢,٠٠٠+ قطعة حطام جديدة.',era:'Debris Crisis',sats:3800,debris:12000,rockets:950},
+{y:2013,title:'Cubesat Revolution',title_fr:'Révolution CubeSat',title_ar:'ثورة الأقمار المكعبة',desc:'Miniaturized satellites. Universities launch their own. Democratizing space.',desc_fr:'Satellites miniaturisés. Les universités lancent les leurs. Démocratisation de l\'espace.',desc_ar:'أقمار مصغرة. الجامعات تطلق أقمارها. ديمقراطية الفضاء.',era:'New Space',era_fr:'Nouvel espace',era_ar:'فضاء جديد',sats:4500,debris:14000,rockets:1000},
+{y:2019,title:'Starlink Begins',title_fr:'Début de Starlink',title_ar:'بداية ستارلينك',desc:'SpaceX launches first 60 Starlink sats. The mega-constellation era begins.',desc_fr:'SpaceX lance les 60 premiers Starlinks. L\'ère des méga-constellations commence.',desc_ar:'سبيس إكس تطلق أول ٦٠ قمر ستارلينك. عصر الكوكبات العملاقة يبدأ.',era:'Mega-Constellations',era_fr:'Méga-constellations',era_ar:'الكوكبات العملاقة',sats:6000,debris:16000,rockets:1100},
+{y:2021,title:'UAE Hope Reaches Mars',title_fr:'La sonde Hope des EAU atteint Mars',title_ar:'مسبار الأمل الإماراتي يصل المريخ',desc:'First Arab interplanetary mission. From al-Khwarizmi to Mars orbit.',desc_fr:'Première mission interplanétaire arabe. D\'al-Khwarizmi à l\'orbite de Mars.',desc_ar:'أول مهمة عربية بين الكواكب. من الخوارزمي إلى مدار المريخ.',era:'New Players',era_fr:'Nouveaux acteurs',era_ar:'لاعبون جدد',sats:8000,debris:20000,rockets:1200},
+{y:2023,title:'5,000+ Starlinks',title_fr:'5 000+ Starlinks',title_ar:'٥,٠٠٠+ ستارلينك',desc:'Starlink becomes the largest constellation in history. Night sky forever changed.',desc_fr:'Starlink devient la plus grande constellation de l\'histoire. Le ciel nocturne change à jamais.',desc_ar:'ستارلينك تصبح أكبر كوكبة في التاريخ. السماء الليلية تتغير إلى الأبد.',era:'Crowded Skies',era_fr:'Ciel encombré',era_ar:'سماء مزدحمة',sats:12000,debris:25000,rockets:1300},
+{y:2025,title:'36,500+ Tracked Objects',title_fr:'36 500+ objets suivis',title_ar:'٣٦,٥٠٠+ جسم متتبع',desc:'NORAD tracks 36,500+ objects. Millions more untracked. Space is getting crowded.',desc_fr:'Le NORAD suit 36 500+ objets. Des millions non suivis. L\'espace se remplit.',desc_ar:'نوراد يتتبع ٣٦,٥٠٠+ جسم. ملايين غير متتبعة. الفضاء يزدحم.',era:'Today',era_fr:'Aujourd\'hui',era_ar:'اليوم',sats:15000,debris:18000,rockets:3500},
+];
+
+let particles=[];let currentYear=1957;let playing=false;let playSpeed=1;
+
+function getEraData(year){
+  let prev=ERAS[0],next=ERAS[0];
+  for(let i=0;i<ERAS.length;i++){
+    if(ERAS[i].y<=year)prev=ERAS[i];
+    if(ERAS[i].y>=year){next=ERAS[i];break}
+  }
+  if(prev===next)return prev;
+  const t=(year-prev.y)/(next.y-prev.y);
+  return{
+    y:year,title:prev.title,desc:prev.desc,era:prev.era,
+    sats:Math.round(prev.sats+(next.sats-prev.sats)*t),
+    debris:Math.round(prev.debris+(next.debris-prev.debris)*t),
+    rockets:Math.round(prev.rockets+(next.rockets-prev.rockets)*t),
+  };
+}
+
+function syncParticles(data){
+  const total=Math.min(800,Math.round((data.sats+data.debris+data.rockets)/50));
+  const satR=data.sats/(data.sats+data.debris+data.rockets);
+  const debR=data.debris/(data.sats+data.debris+data.rockets);
+  
+  while(particles.length<total){
+    const r=Math.random();
+    const type=r<satR?'sat':r<satR+debR?'deb':'rock';
+    const shell=type==='sat'?(1+Math.random()*3):type==='deb'?(0.5+Math.random()*2.5):(1.5+Math.random()*2);
+    const orbitR=ER*shell;
+    const angle=Math.random()*T2;
+    const speed=(.15+Math.random()*.3)/(shell*.7)*(Math.random()>.5?1:-1);
+    particles.push({type,r:orbitR,angle,speed,wobble:Math.random()*T2,incl:(Math.random()-.5)*.2,
+      size:type==='sat'?(1+Math.random()):type==='deb'?(.3+Math.random()*.5):(.5+Math.random()*.6)});
+  }
+  while(particles.length>total)particles.pop();
+}
+
+function setYear(y){
+  currentYear=Math.round(y);
+  const data=getEraData(currentYear);
+  syncParticles(data);
+  document.getElementById('yearLbl').textContent=currentYear;
+  document.getElementById('eraLbl').textContent=tl(data,'era');
+  document.getElementById('objLbl').textContent=(data.sats+data.debris+data.rockets).toLocaleString();
+  document.getElementById('yearSlider').value=currentYear;
+  
+  const exact=ERAS.find(e=>e.y===currentYear);
+  if(exact||currentYear===1957){
+    const d=exact||ERAS[0];
+    document.getElementById('icYear').textContent=d.y;
+    document.getElementById('icTitle').textContent=tl(d,'title');
+    document.getElementById('icDesc').textContent=tl(d,'desc');
+    document.getElementById('icStat').textContent=`${d.sats.toLocaleString()} active · ${d.debris.toLocaleString()} debris · ${d.rockets.toLocaleString()} rockets`;
+    document.getElementById('infoCard').style.opacity='1';
+  }
+}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle='#020408';cx.fillRect(0,0,W,H);
+  const now=Date.now();
+  
+  // BG stars
+  if(!render.st){render.st=[];for(let i=0;i<120;i++)render.st.push({x:Math.random()*W,y:Math.random()*H,b:.1+Math.random()*.2})}
+  for(const s of render.st){cx.beginPath();cx.arc(s.x,s.y,.4,0,T2);cx.fillStyle=`rgba(180,190,220,${s.b})`;cx.fill()}
+  
+  // Earth
+  const eg=cx.createRadialGradient(CX-ER*.2,CY-ER*.2,0,CX,CY,ER);
+  eg.addColorStop(0,'#1a3a5c');eg.addColorStop(.6,'#0d2240');eg.addColorStop(1,'#061428');
+  cx.beginPath();cx.arc(CX,CY,ER,0,T2);cx.fillStyle=eg;cx.fill();
+  cx.beginPath();cx.arc(CX,CY,ER+4,0,T2);
+  const ag=cx.createRadialGradient(CX,CY,ER-2,CX,CY,ER+10);
+  ag.addColorStop(0,'rgba(92,224,214,0.06)');ag.addColorStop(1,'transparent');cx.fillStyle=ag;cx.fill();
+  
+  // Orbital shells (faint)
+  [1.5,2.5,3.5].forEach(m=>{cx.beginPath();cx.arc(CX,CY,ER*m,0,T2);cx.strokeStyle='rgba(110,140,255,0.02)';cx.lineWidth=.5;cx.stroke()});
+  
+  // Particles
+  for(const p of particles){
+    p.angle+=p.speed*.008*playSpeed;
+    const wobble=Math.sin(p.wobble+now*.0005)*p.incl*15;
+    const x=CX+p.r*Math.cos(p.angle);
+    const y=CY+p.r*Math.sin(p.angle)+wobble;
+    
+    const colors={sat:'rgba(92,224,214,',deb:'rgba(252,129,129,',rock:'rgba(246,173,85,'};
+    const col=colors[p.type]||colors.sat;
+    
+    cx.beginPath();cx.arc(x,y,p.size,0,T2);cx.fillStyle=col+(p.type==='deb'?'0.4)':'0.6)');cx.fill();
+    if(p.size>1.2){cx.beginPath();cx.arc(x,y,p.size*2.5,0,T2);const gl=cx.createRadialGradient(x,y,0,x,y,p.size*2.5);gl.addColorStop(0,col+'0.06)');gl.addColorStop(1,'transparent');cx.fillStyle=gl;cx.fill()}
+  }
+  
+  // Year overlay
+  cx.font='600 8px "JetBrains Mono"';cx.fillStyle='rgba(92,224,214,0.15)';cx.textAlign='center';
+  cx.fillText('EARTH',CX,CY+3);
+  
+  if(playing){
+    currentYear+=playSpeed===1?.05:.2;
+    if(currentYear>2025){currentYear=2025;playing=false}
+    setYear(currentYear);
+  }
+  
+  requestAnimationFrame(render);
+}
+
+document.getElementById('yearSlider').addEventListener('input',e=>{playing=false;setYear(+e.target.value)});
+document.querySelectorAll('.ms').forEach(m=>m.addEventListener('click',()=>{playing=false;setYear(+m.dataset.y)}));
+document.getElementById('playBtn').addEventListener('click',()=>{playing=!playing;playSpeed=1;document.getElementById('playBtn').textContent=playing?'⏸ Pause':'▶ Play'});
+document.getElementById('ffBtn').addEventListener('click',()=>{playing=true;playSpeed=4;document.getElementById('playBtn').textContent='⏸ Pause'});
+document.getElementById('resetBtn').addEventListener('click',()=>{playing=false;setYear(1957);document.getElementById('playBtn').textContent='▶ Play'});
+
+setYear(1957);render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Time Machine',project:'Satellites in the Sky'},fr:{title:'Machine à Remonter le Temps',project:'Satellites dans le Ciel'},ar:{title:'آلة الزمن',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){};if(typeof render==='function')try{render()}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

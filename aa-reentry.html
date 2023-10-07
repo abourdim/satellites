@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Re-entry — Watch Satellites Burn</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+canvas#sim{width:100%;height:55vh;display:block}
+
+.hud{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:center;gap:12px;padding:12px;background:linear-gradient(to bottom,rgba(3,5,16,0.9),transparent);flex-wrap:wrap}
+.hud-item{text-align:center;min-width:70px}
+.hud-item .hv{font-family:var(--mono);font-size:1rem;font-weight:500;line-height:1}
+.hud-item .hl{font-size:.38rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+
+.ctrl-bar{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;justify-content:center;gap:8px;padding:12px;background:linear-gradient(to top,rgba(3,5,16,0.95),transparent)}
+.ctrl-btn{font-family:var(--mono);font-size:.55rem;padding:7px 16px;border-radius:6px;border:1px solid rgba(252,129,129,0.2);background:rgba(252,129,129,0.06);color:var(--red);cursor:pointer;transition:all .2s}
+.ctrl-btn:hover{background:rgba(252,129,129,0.12)}
+
+.info-panel{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:10;max-width:420px;width:calc(100% - 32px);background:rgba(6,10,22,0.92);border:1px solid rgba(252,129,129,0.08);border-radius:12px;padding:12px 16px;backdrop-filter:blur(12px);transition:opacity .4s}
+.ip-phase{font-family:var(--mono);font-size:.42rem;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.ip-title{font-family:var(--serif);font-size:.88rem;font-weight:700;color:#fff;margin-bottom:4px}
+.ip-desc{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+.ip-desc strong{font-weight:600}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="sim"></canvas>
+
+<div class="hud">
+  <div class="hud-item"><div class="hv" id="hAlt" style="color:var(--cyan)">120</div><div class="hl"><span data-en="Altitude (km)" data-fr="Altitude (km)" data-ar="الارتفاع (كم)">Altitude (km)</span></div></div>
+  <div class="hud-item"><div class="hv" id="hVel" style="color:var(--orange)">7.8</div><div class="hl"><span data-en="Speed (km/s)" data-fr="Vitesse (km/s)" data-ar="السرعة (كم/ث)">Speed (km/s)</span></div></div>
+  <div class="hud-item"><div class="hv" id="hTemp" style="color:var(--red)">20</div><div class="hl">Temp (°C)</div></div>
+  <div class="hud-item"><div class="hv" id="hMach" style="color:var(--purple)">25</div><div class="hl">Mach</div></div>
+  <div class="hud-item"><div class="hv" id="hGforce" style="color:var(--gold)">0.0</div><div class="hl"><span data-en="G-Force" data-fr="Force G" data-ar="قوة الجاذبية">G-Force</span></div></div>
+</div>
+
+<div class="info-panel" id="infoPanel">
+  <div class="ip-phase" id="ipPhase">Phase 1</div>
+  <div class="ip-title" id="ipTitle"><span data-en="Orbital Decay" data-fr="Décroissance orbitale" data-ar="انحلال المدار">Orbital Decay</span></div>
+  <div class="ip-desc" id="ipDesc">The satellite's orbit has been decaying for weeks. At 120 km, it enters the sensible atmosphere. Drag begins to slow it.</div>
+</div>
+
+<div class="ctrl-bar">
+  <button class="ctrl-btn" onclick="startReentry('small')">📦 CubeSat (4 kg)</button>
+  <button class="ctrl-btn" onclick="startReentry('medium')">🛰️ Satellite (2 ton)</button>
+  <button class="ctrl-btn" onclick="startReentry('large')">🏗️ Station (120 ton)</button>
+  <button class="ctrl-btn" onclick="startReentry('medium')"><span data-en="🔄 Restart" data-fr="🔄 Redémarrer" data-ar="🔄 إعادة التشغيل">🔄 Restart</span></button>
+</div>
+
+<script>
+const cv=document.getElementById('sim'),cx=cv.getContext('2d');
+const T2=Math.PI*2;
+let W,H;
+function resize(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0)}
+resize();addEventListener('resize',resize);
+
+let alt=120,vel=7.8,temp=20,mass=2000,time=0,fragments=[],particles=[],phase=0,running=true;
+
+const PHASES=[
+  {alt:120,title:'Orbital Decay',title_fr:'Décroissance orbitale',title_ar:'انحلال المدار',desc:'Atmospheric density at 120 km: 10⁻¹⁰ kg/m³. Almost nothing — but at <strong>28,000 km/h</strong>, even this thin air creates drag. The satellite begins to slow.'},
+  {alt:100,title:'Entry Interface',title_fr:'Interface d\'entrée',title_ar:'واجهة الدخول',desc:'The <strong>Kármán Line</strong>. Officially in the atmosphere. Air molecules compress ahead of the satellite, heating to <strong>1,000°C</strong>. A faint plasma sheath begins forming.'},
+  {alt:80,title:'Heating Intensifies',title_fr:'Échauffement intense',title_ar:'اشتداد الحرارة',desc:'<strong>3,000°C+</strong>. The satellite glows orange-white. External components — solar panels, antennas — begin to melt and tear away. Communications are lost (plasma blackout).'},
+  {alt:60,title:'Breakup',title_fr:'Rupture',title_ar:'التفكك',desc:'Aerodynamic forces exceed structural strength. The satellite <strong>shatters into fragments</strong>. Each piece creates its own fireball. Dense components (tanks, engines) survive longer.'},
+  {alt:40,title:'Fragment Rain',title_fr:'Pluie de fragments',title_ar:'مطر الشظايا',desc:'Surviving fragments decelerate rapidly. Smaller pieces <strong>vaporize completely</strong>. Larger ones (steel, titanium) survive, cooling as they slow to terminal velocity.'},
+  {alt:10,title:'Terminal Descent',title_fr:'Descente finale',title_ar:'الهبوط النهائي',desc:'Surviving debris falls at <strong>terminal velocity</strong> (200-400 km/h). No longer glowing. These are the pieces that may reach the ground — ideally at Point Nemo.'},
+  {alt:0,title:'Impact',title_fr:'Impact',title_ar:'الاصطدام',desc:'<strong>Splashdown</strong> (hopefully). Most of the satellite has vaporized. 20-40% of mass may survive as scattered fragments across a 500+ km footprint.'}
+];
+
+function startReentry(type){
+  if(type==='small'){mass=4;alt=120;vel=7.8}
+  else if(type==='medium'){mass=2000;alt=120;vel=7.8}
+  else{mass=120000;alt=120;vel=7.8}
+  temp=20;time=0;fragments=[];particles=[];phase=0;running=true;
+}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  
+  // Sky gradient based on altitude
+  const skyBrightness=Math.max(0,1-alt/120);
+  const bg=cx.createLinearGradient(0,0,0,H);
+  if(alt>80){bg.addColorStop(0,'#000208');bg.addColorStop(1,'#030510')}
+  else if(alt>40){bg.addColorStop(0,'#0a0510');bg.addColorStop(1,'#1a0a10')}
+  else{bg.addColorStop(0,'#0a1020');bg.addColorStop(1,'#1a2a40')}
+  cx.fillStyle=bg;cx.fillRect(0,0,W,H);
+  
+  // Stars (fade as altitude decreases)
+  if(!render.st){render.st=[];for(let i=0;i<100;i++)render.st.push({x:Math.random()*W,y:Math.random()*H*.6,b:.05+Math.random()*.15})}
+  const starAlpha=Math.max(0,(alt-30)/90);
+  for(const s of render.st){cx.beginPath();cx.arc(s.x,s.y,.5,0,T2);cx.fillStyle=`rgba(200,210,230,${s.b*starAlpha})`;cx.fill()}
+  
+  // Atmosphere layers
+  const groundY=H*.85;
+  if(alt<100){
+    const atmoH=Math.min(groundY,(100-alt)/100*groundY*.3);
+    const atmo=cx.createLinearGradient(0,groundY-atmoH,0,groundY);
+    atmo.addColorStop(0,'transparent');atmo.addColorStop(1,`rgba(30,60,120,${.05*(1-alt/100)})`);
+    cx.fillStyle=atmo;cx.fillRect(0,groundY-atmoH,W,atmoH);
+  }
+  
+  // Ground (if close)
+  if(alt<30){
+    cx.fillStyle=`rgba(10,20,40,${(30-alt)/30*0.3})`;
+    cx.fillRect(0,groundY,W,H-groundY);
+  }
+  
+  const objX=W*.4,objY=H*.35;
+  
+  if(running){
+    // Physics
+    const density=1.225*Math.exp(-alt/8.5);// Simplified exponential atmosphere
+    const drag=0.5*density*vel*vel*1000*1000*(mass>10000?50:mass>100?5:0.5)*2.2;
+    const decel=drag/mass;
+    
+    vel=Math.max(0.05,vel-decel*0.0001);
+    alt=Math.max(0,alt-vel*0.008*(alt>60?1:0.3));
+    temp=20+0.5*density*vel*vel*1000000*0.01;
+    temp=Math.min(temp,alt>50?15000:3000);
+    
+    time+=0.016;
+    
+    // Phase detection
+    for(let i=PHASES.length-1;i>=0;i--){
+      if(alt<=PHASES[i].alt){phase=i;break}
+    }
+    
+    // Breakup at phase 3
+    if(phase>=3&&fragments.length===0){
+      const nFrag=mass>10000?30:mass>100?12:3;
+      for(let i=0;i<nFrag;i++){
+        fragments.push({
+          x:objX,y:objY,
+          vx:(Math.random()-.5)*3,vy:(Math.random()-.5)*2-1,
+          size:2+Math.random()*(mass>10000?6:3),
+          life:1,decay:.002+Math.random()*.005
+        });
+      }
+    }
+    
+    // Plasma/heat particles
+    if(temp>500&&Math.random()>.3){
+      particles.push({
+        x:objX+(Math.random()-.5)*10,y:objY+(Math.random()-.5)*10,
+        vx:(Math.random()-.5)*2+1,vy:(Math.random()-.5)*2,
+        life:1,decay:.02+Math.random()*.03,
+        size:1+Math.random()*3
+      });
+    }
+    
+    if(alt<=0)running=false;
+  }
+  
+  // Draw particles (heat trail)
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;
+    if(p.life<=0){particles.splice(i,1);continue}
+    cx.beginPath();cx.arc(p.x,p.y,p.size*p.life,0,T2);
+    const hot=temp>3000;
+    cx.fillStyle=hot?`rgba(255,${150+Math.random()*100},50,${p.life*.4})`:`rgba(255,200,100,${p.life*.3})`;
+    cx.fill();
+  }
+  
+  // Draw fragments
+  for(let i=fragments.length-1;i>=0;i--){
+    const f=fragments[i];
+    f.x+=f.vx;f.y+=f.vy;f.vy+=.02;f.life-=f.decay;
+    if(f.life<=0){fragments.splice(i,1);continue}
+    // Fragment trail
+    if(Math.random()>.5){
+      particles.push({x:f.x,y:f.y,vx:f.vx*.5+(Math.random()-.5),vy:f.vy*.5,life:.5,decay:.03,size:f.size*.5});
+    }
+    cx.beginPath();cx.arc(f.x,f.y,f.size*f.life,0,T2);
+    cx.fillStyle=`rgba(255,${100+Math.random()*80},50,${f.life*.7})`;cx.fill();
+  }
+  
+  // Main object (before breakup)
+  if(phase<3){
+    // Heat glow
+    if(temp>200){
+      const glowR=15+temp/500;
+      cx.beginPath();cx.arc(objX,objY,glowR,0,T2);
+      const gl=cx.createRadialGradient(objX,objY,0,objX,objY,glowR);
+      const r=Math.min(255,temp/30),g=Math.max(0,255-temp/20),b=Math.max(0,100-temp/30);
+      gl.addColorStop(0,`rgba(${r},${g},${b},.4)`);gl.addColorStop(1,'transparent');
+      cx.fillStyle=gl;cx.fill();
+    }
+    
+    // Object
+    cx.beginPath();cx.arc(objX,objY,5,0,T2);
+    const objCol=temp>1500?'rgba(255,200,100,0.9)':temp>500?'rgba(255,150,80,0.8)':'rgba(200,210,230,0.7)';
+    cx.fillStyle=objCol;cx.fill();
+    
+    // Trail
+    cx.beginPath();cx.moveTo(objX,objY);cx.lineTo(objX+40+temp/100,objY-5);
+    cx.strokeStyle=`rgba(255,180,80,${Math.min(.3,temp/5000)})`;cx.lineWidth=3;cx.stroke();
+  }
+  
+  // Update HUD
+  document.getElementById('hAlt').textContent=alt.toFixed(1);
+  document.getElementById('hAlt').style.color=alt<30?'var(--red)':alt<60?'var(--orange)':'var(--cyan)';
+  document.getElementById('hVel').textContent=vel.toFixed(2);
+  document.getElementById('hTemp').textContent=temp>1000?(temp/1000).toFixed(1)+'k':Math.round(temp);
+  document.getElementById('hTemp').style.color=temp>3000?'var(--red)':temp>500?'var(--orange)':'var(--green)';
+  document.getElementById('hMach').textContent=(vel/0.343).toFixed(0);
+  document.getElementById('hGforce').textContent=Math.min(20,(vel>1?temp/2000:0)).toFixed(1);
+  
+  // Update info panel
+  const p=PHASES[Math.min(phase,PHASES.length-1)];
+  document.getElementById('ipPhase').textContent=`Phase ${phase+1} of ${PHASES.length}`;
+  document.getElementById('ipTitle').textContent=p.title;
+  document.getElementById('ipDesc').innerHTML=p.desc;
+  
+  requestAnimationFrame(render);
+}
+
+startReentry('medium');
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Re-entry Simulator',project:'Satellites in the Sky'},fr:{title:'Simulateur de Rentrée',project:'Satellites dans le Ciel'},ar:{title:'محاكي العودة للغلاف الجوي',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

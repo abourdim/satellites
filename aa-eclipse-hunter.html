@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eclipse Hunter — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020408;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#5a6a7e;--text-muted:#2a3a4e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden}
+
+canvas#sim{width:100%;height:50vh;display:block}
+
+header{text-align:center;padding:50px 20px 20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(232,193,112,0.06);border:1px solid rgba(232,193,112,0.1);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:8px}
+header h1 span{color:var(--gold)}
+header p{font-size:.85rem;color:var(--text-dim);max-width:520px;margin:0 auto;line-height:1.6}
+
+.countdown-strip{display:flex;justify-content:center;gap:16px;padding:24px 20px;flex-wrap:wrap}
+.cd-item{text-align:center;background:rgba(6,10,22,0.8);border:1px solid rgba(232,193,112,0.08);border-radius:10px;padding:14px 20px;min-width:100px}
+.cd-item .cdv{font-family:var(--mono);font-size:1.5rem;font-weight:500;color:var(--gold);line-height:1}
+.cd-item .cdl{font-size:.48rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+
+.status-bar{text-align:center;padding:10px;font-family:var(--mono);font-size:.6rem}
+#statusText{transition:color .3s}
+
+.content{max-width:800px;margin:0 auto;padding:20px 20px 60px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.content{grid-template-columns:1fr}canvas#sim{height:35vh}}
+
+.card{background:rgba(6,10,22,0.8);border:1px solid rgba(110,140,255,0.06);border-radius:14px;padding:20px}
+.card h3{font-family:var(--serif);font-size:.92rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.card p{font-size:.76rem;color:var(--text-dim);line-height:1.55;margin-bottom:8px}
+.card strong{font-weight:600}
+.card.wide{grid-column:span 2}
+@media(max-width:600px){.card.wide{grid-column:span 1}}
+
+.steps{display:flex;flex-direction:column;gap:6px}
+.step{display:flex;gap:8px;align-items:flex-start}
+.step-num{font-family:var(--mono);font-size:.5rem;color:var(--gold);min-width:16px;height:16px;border:1px solid rgba(232,193,112,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-text{font-size:.74rem;color:var(--text-dim);line-height:1.5}
+
+.predict-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.pred{background:rgba(255,255,255,0.02);border-radius:6px;padding:8px 10px;text-align:center}
+.pred .pt{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);margin-bottom:2px}
+.pred .pv{font-family:var(--mono);font-size:.7rem;font-weight:500}
+
+.heritage{background:rgba(232,193,112,0.03);border:1px solid rgba(232,193,112,0.08);border-radius:10px;padding:14px}
+.heritage h4{font-family:var(--mono);font-size:.46rem;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.heritage p{font-size:.72rem;color:var(--text-dim);line-height:1.55}
+.heritage strong{color:var(--gold)}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🌑 Shadow Prediction" data-fr="🌑 Prédiction d'ombre" data-ar="🌑 توقع الظل">🌑 Shadow Prediction</span></div>
+  <h1>Eclipse <span><span data-en="Hunter" data-fr="Chasseur" data-ar="الصائد">Hunter</span></span></h1>
+  <p>Every orbit, satellites plunge into Earth's shadow and vanish. Predict the exact second a satellite disappears — then watch it flash back into sunlight.</p>
+</header>
+
+<div class="countdown-strip">
+  <div class="cd-item"><div class="cdv" id="cdMin">--</div><div class="cdl"><span data-en="Minutes" data-fr="Minutes" data-ar="دقائق">Minutes</span></div></div>
+  <div class="cd-item"><div class="cdv" id="cdSec">--</div><div class="cdl"><span data-en="Seconds" data-fr="Secondes" data-ar="ثوانٍ">Seconds</span></div></div>
+  <div class="cd-item"><div class="cdv" id="cdEvent">—</div><div class="cdl"><span data-en="Next Event" data-fr="Prochain événement" data-ar="الحدث التالي">Next Event</span></div></div>
+</div>
+
+<div class="status-bar"><span id="statusText" style="color:var(--gold)">ISS is sunlit ☀️ — shadow entry in...</span></div>
+
+<canvas id="sim"></canvas>
+
+<div class="content">
+  <div class="card">
+    <h3><span data-en="🌑 How It Works" data-fr="🌑 Comment ça marche" data-ar="🌑 كيف يعمل">🌑 How It Works</span></h3>
+    <div class="steps">
+      <div class="step"><span class="step-num">1</span><div class="step-text">Satellites shine by <strong>reflecting sunlight</strong> — they don't produce their own light.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-text">Every orbit, the satellite passes behind Earth relative to the Sun, entering the <strong>shadow cone</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-text">At shadow entry, the satellite <strong>vanishes instantly</strong> — as if someone turned off a switch.</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-text">At shadow exit, it <strong>reappears with a bright flash</strong> as sunlight hits the solar panels.</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-text">The ISS spends about <strong>36 minutes in shadow</strong> per 92-minute orbit — 39% of each orbit is dark.</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span data-en="🔭 What to Watch For" data-fr="🔭 À surveiller" data-ar="🔭 ما يجب مراقبته">🔭 What to Watch For</span></h3>
+    <p>The most dramatic satellite eclipses happen during <strong>evening passes</strong> when you're in darkness but the satellite is still sunlit. As the ISS crosses your sky, it will suddenly <strong>fade and disappear mid-pass</strong> — the exact moment it enters Earth's shadow.</p>
+    <p>The reverse is even more spectacular: during dawn passes, a bright dot <strong>appears from nothing</strong> as the satellite exits the shadow. It's called a <strong>"shadow exit flash"</strong>.</p>
+    <div class="predict-grid" style="margin-top:10px">
+      <div class="pred"><div class="pt">ISS shadow time</div><div class="pv" style="color:var(--gold)">~36 min</div></div>
+      <div class="pred"><div class="pt">Shadow entry speed</div><div class="pv" style="color:var(--red)">Instant</div></div>
+      <div class="pred"><div class="pt">Flash brightness</div><div class="pv" style="color:var(--orange)">mag -4</div></div>
+    </div>
+  </div>
+
+  <div class="card wide">
+    <h3><span data-en="📐 The Geometry of Shadows" data-fr="📐 Géométrie des ombres" data-ar="📐 هندسة الظلال">📐 The Geometry of Shadows</span></h3>
+    <p>Earth casts a shadow cone extending <strong>1.4 million km</strong> into space (3.6× the Moon's distance). The <strong>umbra</strong> (total shadow) is a cone about 42,000 km wide at the Moon's distance. Every LEO satellite passes through this shadow every orbit.</p>
+    <p>The shadow isn't sharp — there's a <strong>penumbral zone</strong> where the satellite is partially lit. During penumbral transition, the satellite dims gradually over ~5 seconds before going completely dark. This gradual dimming is the signal to watch for.</p>
+    <div class="predict-grid" style="margin-top:10px">
+      <div class="pred"><div class="pt">Shadow cone length</div><div class="pv" style="color:var(--blue)">1.4M km</div></div>
+      <div class="pred"><div class="pt">Penumbra duration</div><div class="pv" style="color:var(--purple)">~5 sec</div></div>
+      <div class="pred"><div class="pt">Best viewing</div><div class="pv" style="color:var(--green)">Dusk passes</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span data-en="⚡ Famous Satellite Eclipses" data-fr="⚡ Éclipses célèbres" data-ar="⚡ كسوفات شهيرة">⚡ Famous Satellite Eclipses</span></h3>
+    <p><strong>Iridium Flares + Shadow:</strong> Old Iridium satellites would produce brilliant mag -8 flares then vanish seconds later as they entered shadow — an unforgettable one-two punch.</p>
+    <p><strong>ISS shadow transits:</strong> The ISS entering shadow during a high-elevation pass is one of the most dramatic naked-eye astronomical events. You can literally see Earth's shadow in the sky.</p>
+  </div>
+
+  <div class="card">
+    <div class="heritage">
+      <h4>☽ Heritage</h4>
+      <p><strong>Ibn al-Haytham</strong> (965 CE) was the first to correctly explain how shadows work — light travels in straight lines, and opaque objects block it. His <strong>Book of Optics</strong> laid the foundation for understanding every shadow cone, every eclipse, every satellite vanishing into Earth's darkness.</p>
+      <p style="margin-top:6px">The geometry of satellite eclipses is pure Ibn al-Haytham — <strong>applied at orbital scale</strong>.</p>
+    </div>
+  </div>
+</div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const cv=document.getElementById('sim'),cctx=cv.getContext('2d');
+const T2=Math.PI*2;
+let W,H,CX,CY;
+function resize(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;cctx.setTransform(d,0,0,d,0,0);CX=W/2;CY=H/2}
+resize();addEventListener('resize',resize);
+
+const ER=Math.min(50,H*.12);// Earth radius
+let satAngle=0;
+const orbitR=ER*3;
+const shadowAngle=Math.PI*.15;// Sun direction offset
+
+// Simulate ISS eclipse timing
+let eclipsePhase=0;// 0-1 through orbit, shadow from ~0.35 to ~0.65
+const shadowStart=0.38,shadowEnd=0.62;
+let timeInOrbit=0;
+const orbitPeriod=92*60;// 92 min in seconds
+
+function updateCountdown(){
+  const phase=(timeInOrbit%orbitPeriod)/orbitPeriod;
+  const inShadow=phase>=shadowStart&&phase<=shadowEnd;
+  
+  let nextEvent,nextTime;
+  if(inShadow){
+    nextEvent='Shadow Exit';
+    nextTime=(shadowEnd-phase)*orbitPeriod;
+  } else if(phase<shadowStart){
+    nextEvent='Shadow Entry';
+    nextTime=(shadowStart-phase)*orbitPeriod;
+  } else {
+    nextEvent='Shadow Entry';
+    nextTime=((1-phase)+shadowStart)*orbitPeriod;
+  }
+  
+  const m=Math.floor(nextTime/60),s=Math.floor(nextTime%60);
+  document.getElementById('cdMin').textContent=m.toString().padStart(2,'0');
+  document.getElementById('cdSec').textContent=s.toString().padStart(2,'0');
+  document.getElementById('cdEvent').textContent=nextEvent;
+  
+  const st=document.getElementById('statusText');
+  if(inShadow){st.textContent='ISS is in shadow 🌑 — waiting for flash...';st.style.color='var(--red)'}
+  else{st.textContent='ISS is sunlit ☀️ — shadow entry approaching';st.style.color='var(--gold)'}
+}
+
+function render(){
+  cctx.clearRect(0,0,W,H);
+  const now=Date.now();
+  timeInOrbit+=0.05;// Speed up time
+  
+  // BG
+  cctx.fillStyle='#020408';cctx.fillRect(0,0,W,H);
+  
+  // Stars
+  if(!render.st){render.st=[];for(let i=0;i<80;i++)render.st.push({x:Math.random()*W,y:Math.random()*H,b:.08+Math.random()*.15})}
+  for(const s of render.st){cctx.beginPath();cctx.arc(s.x,s.y,.4,0,T2);cctx.fillStyle=`rgba(200,210,230,${s.b})`;cctx.fill()}
+  
+  // Sun direction (from right)
+  const sunX=W+100,sunY=CY-50;
+  
+  // Shadow cone
+  const sAngle=Math.atan2(CY-sunY,CX-sunX);
+  const coneLen=W*.8;
+  const coneHalf=ER*1.1;
+  
+  cctx.save();
+  cctx.beginPath();
+  cctx.moveTo(CX+Math.cos(sAngle+Math.PI/2)*coneHalf,CY+Math.sin(sAngle+Math.PI/2)*coneHalf);
+  cctx.lineTo(CX+Math.cos(sAngle)*coneLen,CY+Math.sin(sAngle)*coneLen);
+  cctx.lineTo(CX+Math.cos(sAngle-Math.PI/2)*coneHalf,CY+Math.sin(sAngle-Math.PI/2)*coneHalf);
+  const sg=cctx.createLinearGradient(CX,CY,CX+Math.cos(sAngle)*coneLen,CY+Math.sin(sAngle)*coneLen);
+  sg.addColorStop(0,'rgba(0,0,0,0.4)');sg.addColorStop(.3,'rgba(0,0,0,0.25)');sg.addColorStop(1,'transparent');
+  cctx.fillStyle=sg;cctx.fill();
+  cctx.restore();
+  
+  // Shadow label
+  cctx.font='italic 500 9px "Playfair Display"';cctx.fillStyle='rgba(252,129,129,0.15)';cctx.textAlign='center';
+  cctx.fillText('Shadow Cone',CX+Math.cos(sAngle)*orbitR*1.2,CY+Math.sin(sAngle)*orbitR*1.2);
+  
+  // Sun glow (right side)
+  const sGlow=cctx.createRadialGradient(W+30,CY-30,0,W+30,CY-30,200);
+  sGlow.addColorStop(0,'rgba(232,193,112,0.06)');sGlow.addColorStop(1,'transparent');
+  cctx.fillStyle=sGlow;cctx.fillRect(0,0,W,H);
+  cctx.font='600 8px "JetBrains Mono"';cctx.fillStyle='rgba(232,193,112,0.2)';cctx.textAlign='right';
+  cctx.fillText('☀ SUN',W-10,CY-30);
+  
+  // Earth
+  // Sunlit side (right) vs dark side (left)
+  const eg=cctx.createLinearGradient(CX-ER,CY,CX+ER,CY);
+  eg.addColorStop(0,'#040810');eg.addColorStop(.4,'#0a1828');eg.addColorStop(.7,'#1a3a5c');eg.addColorStop(1,'#2a5a7c');
+  cctx.beginPath();cctx.arc(CX,CY,ER,0,T2);cctx.fillStyle=eg;cctx.fill();
+  
+  // Atmosphere
+  cctx.beginPath();cctx.arc(CX,CY,ER+4,0,T2);
+  const ag=cctx.createRadialGradient(CX,CY,ER-2,CX,CY,ER+8);
+  ag.addColorStop(0,'rgba(92,224,214,0.06)');ag.addColorStop(1,'transparent');
+  cctx.fillStyle=ag;cctx.fill();
+  
+  // Orbit ring
+  cctx.beginPath();cctx.arc(CX,CY,orbitR,0,T2);
+  cctx.strokeStyle='rgba(110,140,255,0.06)';cctx.lineWidth=.5;cctx.setLineDash([3,5]);cctx.stroke();cctx.setLineDash([]);
+  
+  // Satellite
+  const phase=(timeInOrbit%orbitPeriod)/orbitPeriod;
+  const angle=phase*T2-Math.PI/2;
+  const sx=CX+orbitR*Math.cos(angle);
+  const sy=CY+orbitR*Math.sin(angle);
+  
+  const inShadow=phase>=shadowStart&&phase<=shadowEnd;
+  const nearShadow=Math.abs(phase-shadowStart)<0.02||Math.abs(phase-shadowEnd)<0.02;
+  
+  // Satellite trail
+  for(let i=1;i<30;i++){
+    const tp=((phase-i*.003)+1)%1;
+    const ta=tp*T2-Math.PI/2;
+    const tx=CX+orbitR*Math.cos(ta),ty=CY+orbitR*Math.sin(ta);
+    const tInShadow=tp>=shadowStart&&tp<=shadowEnd;
+    const alpha=tInShadow?0:(1-i/30)*.15;
+    cctx.beginPath();cctx.arc(tx,ty,1,0,T2);
+    cctx.fillStyle=`rgba(232,193,112,${alpha})`;cctx.fill();
+  }
+  
+  if(!inShadow){
+    // Visible satellite
+    const sz=3;
+    cctx.beginPath();cctx.arc(sx,sy,sz*4,0,T2);
+    const gl=cctx.createRadialGradient(sx,sy,0,sx,sy,sz*4);
+    gl.addColorStop(0,'rgba(232,193,112,0.2)');gl.addColorStop(1,'transparent');
+    cctx.fillStyle=gl;cctx.fill();
+    
+    cctx.beginPath();cctx.arc(sx,sy,sz,0,T2);
+    cctx.fillStyle='rgba(232,193,112,0.9)';cctx.fill();
+    
+    // Flash at shadow exit
+    if(nearShadow&&phase>shadowEnd-0.02){
+      const flashR=8+Math.sin(now*.01)*3;
+      cctx.beginPath();cctx.arc(sx,sy,flashR,0,T2);
+      const fg=cctx.createRadialGradient(sx,sy,0,sx,sy,flashR);
+      fg.addColorStop(0,'rgba(232,193,112,0.4)');fg.addColorStop(1,'transparent');
+      cctx.fillStyle=fg;cctx.fill();
+    }
+    
+    cctx.font='600 7px "JetBrains Mono"';cctx.fillStyle='rgba(232,193,112,0.4)';cctx.textAlign='center';
+    cctx.fillText('ISS ☀️',sx,sy-10);
+  } else {
+    // In shadow — nearly invisible
+    cctx.beginPath();cctx.arc(sx,sy,2,0,T2);
+    cctx.fillStyle='rgba(100,100,120,0.15)';cctx.fill();
+    cctx.font='600 7px "JetBrains Mono"';cctx.fillStyle='rgba(252,129,129,0.25)';cctx.textAlign='center';
+    cctx.fillText('ISS 🌑',sx,sy-8);
+  }
+  
+  // Shadow entry/exit markers
+  const seA=shadowStart*T2-Math.PI/2;
+  const sxA=CX+orbitR*Math.cos(seA),syA=CY+orbitR*Math.sin(seA);
+  cctx.beginPath();cctx.arc(sxA,syA,3,0,T2);cctx.strokeStyle='rgba(252,129,129,0.3)';cctx.lineWidth=1;cctx.stroke();
+  cctx.font='400 6px "JetBrains Mono"';cctx.fillStyle='rgba(252,129,129,0.2)';cctx.fillText('ENTRY',sxA,syA+10);
+  
+  const exA=shadowEnd*T2-Math.PI/2;
+  const exX=CX+orbitR*Math.cos(exA),exY=CY+orbitR*Math.sin(exA);
+  cctx.beginPath();cctx.arc(exX,exY,3,0,T2);cctx.strokeStyle='rgba(111,207,151,0.3)';cctx.lineWidth=1;cctx.stroke();
+  cctx.font='400 6px "JetBrains Mono"';cctx.fillStyle='rgba(111,207,151,0.2)';cctx.fillText('EXIT',exX,exY+10);
+  
+  updateCountdown();
+  requestAnimationFrame(render);
+}
+
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Eclipse Hunter',project:'Satellites in the Sky'},fr:{title:'Eclipse Hunter',project:'Satellites dans le Ciel'},ar:{title:'Eclipse Hunter',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

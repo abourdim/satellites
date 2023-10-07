@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heritage Scholars — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(232,193,112,0.06);border:1px solid rgba(232,193,112,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--gold)}
+header p{font-size:.85rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.6}
+
+.scholars{max-width:750px;margin:0 auto}
+.scholar{background:var(--card);border:1px solid rgba(232,193,112,0.06);border-radius:16px;padding:20px 24px;margin-bottom:14px;cursor:pointer;transition:all .3s}
+.scholar:hover{border-color:rgba(232,193,112,0.12)}
+.scholar.open{border-color:rgba(232,193,112,0.15)}
+.s-head{display:flex;align-items:center;gap:14px}
+.s-avatar{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+.s-info{flex:1}
+.s-name{font-family:var(--serif);font-size:1rem;font-weight:700;color:#fff}
+.s-arabic{font-size:.8rem;color:var(--gold);opacity:.6;margin-left:6px}
+.s-dates{font-family:var(--mono);font-size:.48rem;color:var(--muted);margin-top:1px}
+.s-title{font-size:.7rem;color:var(--dim)}
+.s-tag{font-family:var(--mono);font-size:.38rem;padding:2px 6px;border-radius:3px;background:rgba(232,193,112,0.08);color:var(--gold);margin-left:auto;flex-shrink:0}
+
+.s-body{display:none;margin-top:14px;border-top:1px solid rgba(232,193,112,0.06);padding-top:14px}
+.scholar.open .s-body{display:block}
+.s-bio{font-size:.76rem;color:var(--dim);line-height:1.65;margin-bottom:10px}
+.s-bio strong{font-weight:600}
+.s-work{background:rgba(232,193,112,0.02);border:1px solid rgba(232,193,112,0.06);border-radius:8px;padding:10px 14px;margin-bottom:10px}
+.s-work h4{font-family:var(--mono);font-size:.42rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.s-work p{font-size:.72rem;color:var(--dim);line-height:1.5}
+.s-legacy{background:rgba(92,224,214,0.02);border:1px solid rgba(92,224,214,0.06);border-radius:8px;padding:10px 14px}
+.s-legacy h4{font-family:var(--mono);font-size:.42rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.s-legacy p{font-size:.72rem;color:var(--dim);line-height:1.5}
+
+.timeline-bar{max-width:750px;margin:20px auto;background:var(--card);border:1px solid rgba(232,193,112,0.06);border-radius:12px;padding:16px 20px}
+.timeline-bar h3{font-family:var(--serif);font-size:.9rem;font-weight:700;color:var(--gold);text-align:center;margin-bottom:10px}
+.tl-track{position:relative;height:30px;margin:0 30px}
+.tl-line{position:absolute;top:14px;left:0;right:0;height:2px;background:rgba(232,193,112,0.1);border-radius:1px}
+.tl-dot{position:absolute;top:8px;width:12px;height:12px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);cursor:pointer;transform:translateX(-6px)}
+.tl-dot:hover::after{content:attr(data-name);position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.4rem;color:var(--gold);white-space:nowrap;background:var(--bg);padding:2px 6px;border-radius:3px}
+.tl-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.38rem;color:var(--muted);margin-top:4px;padding:0 26px}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted);max-width:750px;margin:0 auto}
+.ft{font-family:var(--serif);font-style:italic;color:var(--gold);opacity:.3;font-size:.72rem;margin-bottom:4px}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge" data-en="☽ Heritage" data-fr="☽ Patrimoine" data-ar="☽ التراث">☽ Heritage</div>
+  <h1>The <span><span data-en="Scholars" data-fr="Savants" data-ar="العلماء">Scholars</span></span></h1>
+  <p>For 800 years, Islamic civilization led the world in astronomy, optics, mathematics, and geography. These scholars built the intellectual foundation that makes modern satellite technology possible.</p>
+</header>
+
+<div class="scholars" id="scholars"></div>
+
+<div class="timeline-bar">
+  <h3><span data-en="☽ Timeline: 800–1450 CE" data-fr="☽ Chronologie : 800–1450 EC" data-ar="☽ الجدول الزمني: 800–1450 م">☽ Timeline: 800–1450 CE</span></h3>
+  <div class="tl-track"><div class="tl-line"></div><div id="tlDots"></div></div>
+  <div class="tl-labels"><span>800 CE</span><span>1000</span><span>1200</span><span>1400</span></div>
+</div>
+
+<footer>
+  <div class="ft">"The ink of scholars is more precious than the blood of martyrs."</div>
+  Part of the Satellites in the Sky project
+</footer>
+
+<script>
+const S=[
+  {name:'al-Khwarizmi',name_fr:'al-Khwarizmi',name_ar:'الخوارزمي',arabic:'الخوارزمي',born:780,died:850,place:'Khwarezm (Uzbekistan)',
+    avatar:'🧮',tag:'Mathematics',title:'Father of Algebra',
+    bio:'<strong>Muhammad ibn Musa al-Khwarizmi</strong> wrote "The Compendious Book on Calculation by Completion and Balancing" — the book that gave us the word <strong>"algebra"</strong> (al-jabr). His name gives us the word <strong>"algorithm."</strong> He compiled astronomical tables, introduced Hindu-Arabic numerals to the Islamic world, and created methods for solving equations.',
+    work:'His <strong>Zij al-Sindhind</strong> astronomical tables gave positions of the Sun, Moon, and planets. His algebraic methods for solving quadratic equations remained standard for 500 years.',
+    legacy:'Every GPS receiver solves positioning equations using <strong>algorithms</strong> — named after him. The algebra he formalized is the language satellites speak. Without al-Khwarizmi, there is no computation.'},
+  {name:'al-Battani',name_fr:'al-Battani',name_ar:'البتاني',arabic:'البتاني',born:858,died:929,place:'Harran (Turkey)',
+    avatar:'📐',tag:'Precision',title:'The Ptolemy of the Arabs',
+    bio:'<strong>Abu Abdullah al-Battani</strong> refined Ptolemy\'s astronomical observations with unprecedented accuracy. He measured the <strong>solar year as 365 days, 5 hours, 46 minutes, 24 seconds</strong> — only 2 minutes off the modern value. Copernicus cited him repeatedly.',
+    work:'His <strong>Kitab az-Zij</strong> (Astronomical Tables) improved values for the obliquity of the ecliptic, precession, and the Sun\'s orbit. Introduced trigonometric methods to astronomy.',
+    legacy:'Satellite orbit prediction requires knowing Earth\'s exact orbital parameters. Al-Battani\'s measurements of the <strong>solar year and obliquity</strong> were the first precise values — the starting data for everything that followed.'},
+  {name:'al-Sufi',name_fr:'al-Soufi',name_ar:'الصوفي',arabic:'الصوفي',born:903,died:986,place:'Ray (Iran)',
+    avatar:'⭐',tag:'Star Catalog',title:'The Book of Fixed Stars',
+    bio:'<strong>Abd al-Rahman al-Sufi</strong> created the most detailed star catalog of the medieval world. He observed each of the 48 Ptolemaic constellations, corrected magnitudes, and added Arabic names. He was the first to describe the <strong>Andromeda Galaxy</strong> (as a "small cloud").',
+    work:'<strong>Kitab suwar al-kawakib</strong> (Book of Fixed Stars, 964 CE). 1,018 stars with positions, magnitudes, and Arabic names. Included artistic illustrations of each constellation.',
+    legacy:'<strong>25+ star names</strong> in modern use come from al-Sufi: Aldebaran, Betelgeuse, Rigel, Fomalhaut, Algol, and more. When star trackers on satellites match star patterns, they use positions refined from al-Sufi\'s catalog.'},
+  {name:'al-Biruni',name_fr:'al-Biruni',name_ar:'البيروني',arabic:'البيروني',born:973,died:1048,place:'Khwarezm (Uzbekistan)',
+    avatar:'🌍',tag:'Geodesy',title:'Measured the Earth',
+    bio:'<strong>Abu Rayhan al-Biruni</strong> — polymath, genius, restless mind. He calculated <strong>Earth\'s radius using a mountain and trigonometry</strong>, getting 6,340 km (modern: 6,371 km — within 0.5%). He described the concept of specific gravity, studied India\'s astronomy, and wrote on dozens of subjects.',
+    work:'<strong>Kitab Tahdid al-Amakin</strong> (Determination of Coordinates of Cities). Used trigonometric methods to find latitude/longitude. Proposed Earth might rotate on its axis.',
+    legacy:'Every GPS position fix uses Earth\'s radius. Al-Biruni measured it 1,000 years ago with <strong>0.5% accuracy using only his eyes, a mountain, and mathematics</strong>. His geodetic methods are the ancestors of satellite geodesy.'},
+  {name:'Ibn al-Haytham',name_fr:'Ibn al-Haytham',name_ar:'ابن الهيثم',arabic:'ابن الهيثم',born:965,died:1040,place:'Basra (Iraq)',
+    avatar:'💡',tag:'Optics',title:'Father of Optics',
+    bio:'<strong>Abu Ali al-Hasan ibn al-Haytham</strong> — the first true physicist. He proved light travels in straight lines, explained vision as light entering the eye (not emitting from it), and established the <strong>scientific method</strong> of hypothesis and experiment.',
+    work:'<strong>Kitab al-Manazir</strong> (Book of Optics). 7 volumes. Described reflection, refraction, lenses, the camera obscura. Influenced Kepler, Descartes, and Newton.',
+    legacy:'<strong>Every satellite radio link</strong> depends on electromagnetic wave propagation — light at different frequencies. Ibn al-Haytham established that light follows mathematical laws. GPS signals, radar, laser ranging — all applications of his optics at wavelengths he never imagined.'},
+  {name:'al-Tusi',name_fr:'al-Tusi',name_ar:'الطوسي',arabic:'الطوسي',born:1201,died:1274,place:'Tus (Iran)',
+    avatar:'🔭',tag:'Observatory',title:'The Tusi Couple',
+    bio:'<strong>Nasir al-Din al-Tusi</strong> built the <strong>Maragheh Observatory</strong> — the most advanced in the world, with 400+ staff. He invented the "Tusi couple" — a mathematical device that generates linear motion from circular. Copernicus used this same device 300 years later.',
+    work:'<strong>Zij-i Ilkhani</strong> (Astronomical Tables) and the Maragheh Observatory. Also wrote on ethics, logic, and theology. Saved thousands of books from Mongol destruction.',
+    legacy:'The <strong>Tusi couple</strong> — composing circular motions to describe orbits — is fundamental to orbital mechanics. His observatory established the model of <strong>institutional science</strong> that leads directly to NASA, ESA, and modern space agencies.'},
+  {name:'Ulugh Beg',name_fr:'Oulough Beg',name_ar:'ألغ بيك',arabic:'أولغ بيك',born:1394,died:1449,place:'Samarkand (Uzbekistan)',
+    avatar:'👑',tag:'Star Catalog',title:'The Astronomer King',
+    bio:'<strong>Ulugh Beg</strong> was a Timurid ruler who preferred stars to politics. He built a <strong>40-meter sextant</strong> carved into a hillside in Samarkand — the largest astronomical instrument ever built. His star catalog of <strong>1,018 stars</strong> was the most accurate before the telescope.',
+    work:'<strong>Zij-i-Sultani</strong> (1437). Star positions accurate to arcminutes — not exceeded until Tycho Brahe 150 years later. Measured the sidereal year to within 25 seconds.',
+    legacy:'Precision star positions are the foundation of <strong>celestial navigation and satellite attitude determination</strong>. Star trackers on every satellite use catalogs whose accuracy tradition began with Ulugh Beg\'s naked-eye observations.'},
+  {name:'al-Idrisi',name_fr:'al-Idrisi',name_ar:'الإدريسي',arabic:'الإدريسي',born:1100,died:1165,place:'Ceuta (Morocco)',
+    avatar:'🗺️',tag:'Geography',title:'The World Map',
+    bio:'<strong>Muhammad al-Idrisi</strong> created the most advanced world map of the medieval era — the <strong>Tabula Rogeriana</strong> (1154) for King Roger II of Sicily. It remained the most accurate world map for 300 years.',
+    work:'<strong>Nuzhat al-Mushtaq</strong> (Entertainment for the Longing) — a geographic encyclopedia with 70 maps. Showed Earth as a sphere, described climatic zones, trade routes, and cities from Scandinavia to Southeast Asia.',
+    legacy:'<strong>Earth observation satellites</strong> continue al-Idrisi\'s dream of mapping the entire world from above. Landsat, Sentinel, and Google Earth are his work continued by technology.'},
+];
+
+const sc=document.getElementById('scholars');
+S.forEach(s=>{
+  sc.innerHTML+=`<div class="scholar" onclick="this.classList.toggle('open')">
+    <div class="s-head">
+      <div class="s-avatar" style="background:rgba(232,193,112,0.06)">${s.avatar}</div>
+      <div class="s-info"><div class="s-name">${s.name} <span class="s-arabic">${s.arabic}</span></div>
+        <div class="s-dates">${s.born}–${s.died} CE · ${s.place}</div>
+        <div class="s-title">${s.title}</div></div>
+      <div class="s-tag">${s.tag}</div>
+    </div>
+    <div class="s-body">
+      <div class="s-bio">${s.bio}</div>
+      <div class="s-work"><h4>📜 Key Work</h4><p>${s.work}</p></div>
+      <div class="s-legacy"><h4>🛰️ Connection to Satellites</h4><p>${s.legacy}</p></div>
+    </div>
+  </div>`;
+});
+
+// Timeline dots
+const dots=document.getElementById('tlDots');
+const minY=780,maxY=1449;
+S.forEach(s=>{
+  const pct=((s.born-minY)/(maxY-minY))*100;
+  dots.innerHTML+=`<div class="tl-dot" style="left:${pct}%" data-name="${s.name} (${s.born})"></div>`;
+});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Heritage Scholars',project:'Satellites in the Sky'},fr:{title:'Savants du Patrimoine',project:'Satellites dans le Ciel'},ar:{title:'علماء التراث',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

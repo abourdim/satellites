@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Astrolabe — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0710;--gold:#e8c170;--gold2:#d4a84b;--gold-dim:rgba(232,193,112,0.1);--brass:#c9a84c;--dark-brass:#8a6d2f;--cyan:#5ce0d6;--blue:#6e8cff;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4558;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh}
+
+/* Hero */
+.hero{text-align:center;padding:60px 30px 40px;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(232,193,112,0.04),transparent);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(232,193,112,0.06);border:1px solid rgba(232,193,112,0.12);border-radius:50px;padding:7px 18px;font-size:.68rem;font-weight:500;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-family:var(--serif);font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.1;margin-bottom:14px}
+.hero h1 span{color:var(--gold)}
+.hero p{font-size:.92rem;color:var(--text-dim);max-width:540px;margin:0 auto 10px;line-height:1.6}
+.hero .ded{font-family:var(--serif);font-size:.8rem;color:var(--gold);opacity:.6;font-style:italic}
+
+/* Main layout */
+.main{display:flex;gap:20px;max-width:1200px;margin:0 auto;padding:20px 30px 60px;align-items:flex-start}
+@media(max-width:900px){.main{flex-direction:column;align-items:center}}
+
+/* Astrolabe */
+.astrolabe-wrap{flex:0 0 auto;position:relative;display:flex;flex-direction:column;align-items:center}
+.astrolabe-label{font-family:var(--serif);font-size:.8rem;color:var(--gold);margin-bottom:8px;text-align:center}
+.astrolabe-sub{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);margin-bottom:12px;text-align:center}
+canvas#astrolabe{border-radius:50%;cursor:grab;touch-action:none;box-shadow:0 0 60px rgba(232,193,112,0.08),0 0 120px rgba(232,193,112,0.03),inset 0 0 40px rgba(232,193,112,0.02)}
+canvas#astrolabe:active{cursor:grabbing}
+.astro-controls{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+.ac-btn{font-family:var(--mono);font-size:.52rem;padding:5px 12px;border-radius:6px;border:1px solid rgba(232,193,112,0.15);background:rgba(232,193,112,0.04);color:var(--gold);cursor:pointer;transition:all .3s;letter-spacing:.04em}
+.ac-btn:hover,.ac-btn.active{background:rgba(232,193,112,0.1);border-color:rgba(232,193,112,0.3)}
+.astro-readout{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px;width:100%;max-width:380px}
+.ar-item{background:rgba(232,193,112,0.03);border:1px solid rgba(232,193,112,0.06);border-radius:6px;padding:6px 10px;text-align:center}
+.ar-item .ar-label{font-family:var(--mono);font-size:.42rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+.ar-item .ar-value{font-family:var(--mono);font-size:.72rem;color:var(--gold);font-weight:500}
+
+/* Side panels */
+.side{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+.panel{background:rgba(6,10,22,0.8);border:1px solid rgba(232,193,112,0.08);border-radius:12px;padding:18px;backdrop-filter:blur(8px)}
+.panel h3{font-family:var(--serif);font-size:.9rem;font-weight:700;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.panel h3 .pi{font-size:1rem}
+
+/* Comparison */
+.cmp-table{width:100%}
+.cmp-row{display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;padding:8px 0;border-bottom:1px solid rgba(232,193,112,0.04);align-items:center}
+.cmp-row:last-child{border:none}
+.cmp-fn{font-family:var(--mono);font-size:.52rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.cmp-old,.cmp-new{font-size:.72rem;padding:6px 10px;border-radius:6px;line-height:1.4}
+.cmp-old{background:rgba(232,193,112,0.04);border:1px solid rgba(232,193,112,0.08);color:var(--gold)}
+.cmp-new{background:rgba(92,224,214,0.04);border:1px solid rgba(92,224,214,0.08);color:var(--cyan)}
+.cmp-head{font-family:var(--mono);font-size:.46rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;padding-bottom:4px}
+
+/* Scholar */
+.scholar-bio{font-size:.78rem;color:var(--text-dim);line-height:1.6}
+.scholar-bio strong{color:var(--gold);font-weight:600}
+.scholar-quote{font-family:var(--serif);font-style:italic;color:var(--gold);opacity:.7;font-size:.82rem;margin-top:10px;padding-left:12px;border-left:2px solid rgba(232,193,112,0.2)}
+.scholar-works{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.sw{font-family:var(--mono);font-size:.46rem;padding:3px 8px;background:rgba(232,193,112,0.05);border:1px solid rgba(232,193,112,0.1);border-radius:4px;color:var(--gold)}
+
+/* Stars list */
+.star-list{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.star-item{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;transition:background .2s}
+.star-item:hover{background:rgba(232,193,112,0.04)}
+.star-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.star-name{font-family:var(--serif);font-size:.7rem;color:var(--gold)}
+.star-arabic{font-size:.55rem;color:rgba(232,193,112,0.4);direction:rtl}
+
+/* How it works */
+.hw-steps{display:flex;flex-direction:column;gap:8px}
+.hw-step{display:flex;gap:10px;align-items:flex-start}
+.hw-num{font-family:var(--mono);font-size:.6rem;color:var(--gold);min-width:18px;height:18px;border:1px solid rgba(232,193,112,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.hw-text{font-size:.74rem;color:var(--text-dim);line-height:1.5}
+.hw-text strong{color:var(--gold)}
+
+/* Footer */
+footer{text-align:center;padding:40px 30px;font-size:.65rem;color:var(--text-muted)}
+footer .ft{font-family:var(--serif);font-style:italic;color:var(--gold);opacity:.5;font-size:.78rem;margin-bottom:6px}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<div class="hero">
+  <div class="hero-badge"><span data-en="⚙️ Interactive Experience" data-fr="⚙️ Expérience interactive" data-ar="⚙️ تجربة تفاعلية">⚙️ Interactive Experience</span></div>
+  <h1>The <span><span data-en="Astrolabe" data-fr="Astrolabe" data-ar="الإسطرلاب">Astrolabe</span></span></h1>
+  <p>The most important astronomical instrument for a thousand years — and the direct ancestor of every satellite tracker, GPS receiver, and sky-mapping app you use today.</p>
+  <p class="ded">Dedicated to Al-Zarqali (الزرقالي) of Toledo, 1029–1087 CE</p>
+</div>
+
+<div class="main">
+  <!-- LEFT: Astrolabe Canvas -->
+  <div class="astrolabe-wrap">
+    <div class="astrolabe-label"><span data-en="☽ Virtual Astrolabe" data-fr="☽ Astrolabe virtuel" data-ar="☽ الإسطرلاب الافتراضي">☽ Virtual Astrolabe</span></div>
+    <div class="astrolabe-sub">Drag to rotate the rete · Stars move with sidereal time</div>
+    <canvas id="astrolabe" width="760" height="760"></canvas>
+    <div class="astro-controls">
+      <button class="ac-btn active" data-action="auto"><span data-en="Auto Rotate" data-fr="Rotation auto" data-ar="دوران تلقائي">Auto Rotate</span></button>
+      <button class="ac-btn" data-action="now"><span data-en="Set to Now" data-fr="Régler à maintenant" data-ar="ضبط للآن">Set to Now</span></button>
+      <button class="ac-btn" data-action="noon"><span data-en="Solar Noon" data-fr="Midi solaire" data-ar="الظهر الشمسي">Solar Noon</span></button>
+      <button class="ac-btn" data-action="stars"><span data-en="Show Names" data-fr="Afficher noms" data-ar="إظهار الأسماء">Show Names</span></button>
+    </div>
+    <div class="astro-readout">
+      <div class="ar-item"><div class="ar-label"><span data-en="Local Sidereal Time" data-fr="Temps sidéral local" data-ar="التوقيت النجمي المحلي">Local Sidereal Time</span></div><div class="ar-value" id="arLST">—</div></div>
+      <div class="ar-item"><div class="ar-label"><span data-en="Rete Angle" data-fr="Angle du rete" data-ar="زاوية الشبكة">Rete Angle</span></div><div class="ar-value" id="arAngle">0°</div></div>
+      <div class="ar-item"><div class="ar-label"><span data-en="Polaris Altitude" data-fr="Altitude de Polaris" data-ar="ارتفاع النجم القطبي">Polaris Altitude</span></div><div class="ar-value" id="arLat">—</div></div>
+      <div class="ar-item"><div class="ar-label"><span data-en="Solar Hour Angle" data-fr="Angle horaire solaire" data-ar="الزاوية الساعية">Solar Hour Angle</span></div><div class="ar-value" id="arHA">—</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Info panels -->
+  <div class="side">
+    <div class="panel">
+      <h3><span class="pi">⚙️</span> Astrolabe ↔ Satellite Tracker</h3>
+      <div class="cmp-table">
+        <div class="cmp-row"><div class="cmp-head"><span data-en="Function" data-fr="Fonction" data-ar="الوظيفة">Function</span></div><div class="cmp-head"><span data-en="☽ Astrolabe (1000 CE)" data-fr="☽ Astrolabe (1000 EC)" data-ar="☽ الإسطرلاب (1000 م)">☽ Astrolabe (1000 CE)</span></div><div class="cmp-head"><span data-en="🛰️ Satellite Tracker (2025)" data-fr="🛰️ Traqueur satellite (2025)" data-ar="🛰️ متتبع الأقمار (2025)">🛰️ Satellite Tracker (2025)</span></div></div>
+        <div class="cmp-row"><div class="cmp-fn"><span data-en="Find Stars" data-fr="Trouver les étoiles" data-ar="البحث عن النجوم">Find Stars</span></div><div class="cmp-old">Rotate rete plate overlay to match the sky</div><div class="cmp-new">Star tracker camera matches against digital catalog</div></div>
+        <div class="cmp-row"><div class="cmp-fn"><span data-en="Tell Time" data-fr="Lire l'heure" data-ar="معرفة الوقت">Tell Time</span></div><div class="cmp-old">Align alidade with sun or star altitude</div><div class="cmp-new">GPS atomic clock: 1 nanosecond accuracy</div></div>
+        <div class="cmp-row"><div class="cmp-fn"><span data-en="Find Direction" data-fr="Trouver la direction" data-ar="تحديد الاتجاه">Find Direction</span></div><div class="cmp-old">Suspend by ring, align with known star</div><div class="cmp-new">Gyroscope + magnetometer + accelerometer</div></div>
+        <div class="cmp-row"><div class="cmp-fn">Predict Passes</div><div class="cmp-old">Rotate rete forward to simulate sky motion</div><div class="cmp-new">SGP4 algorithm propagates TLE forward in time</div></div>
+        <div class="cmp-row"><div class="cmp-fn"><span data-en="Prayer Times" data-fr="Heures de prière" data-ar="أوقات الصلاة">Prayer Times</span></div><div class="cmp-old">Solar altitude markings on tympan plate</div><div class="cmp-new">GPS position + solar ephemeris calculation</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3><span class="pi">📜</span> Al-Zarqali — Master of the Astrolabe</h3>
+      <div class="scholar-bio">
+        <strong>Abū Isḥāq Ibrāhīm al-Zarqālī</strong> (1029–1087 CE) of Toledo, Al-Andalus. He invented the <strong>universal astrolabe</strong> — the first to work at any latitude, not just one. Previous astrolabes had a separate tympan plate for each city. Al-Zarqali's innovation made a single instrument universal.<br><br>
+        He also corrected the orbit of Mercury — determining it was an ellipse, not a circle — <strong>500 years before Kepler</strong>. His <strong>Toledo Tables</strong> were the most accurate astronomical tables for two centuries and were used across Europe.
+      </div>
+      <div class="scholar-quote">"The astrolabe was the smartphone of the medieval world — calculator, clock, compass, calendar, and star chart in one brass disc."</div>
+      <div class="scholar-works">
+        <span class="sw">Universal Astrolabe</span>
+        <span class="sw">Toledo Tables (1080)</span>
+        <span class="sw">Treatise on the Astrolabe</span>
+        <span class="sw">Mercury orbit correction</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3><span class="pi">⭐</span> Stars on the Rete</h3>
+      <div class="star-list" id="starList"></div>
+    </div>
+
+    <div class="panel">
+      <h3><span class="pi">🔧</span> How the Astrolabe Works</h3>
+      <div class="hw-steps">
+        <div class="hw-step"><span class="hw-num">1</span><div class="hw-text">The <strong>tympan</strong> (back plate) shows altitude and azimuth circles for your latitude — the fixed coordinate grid of your sky.</div></div>
+        <div class="hw-step"><span class="hw-num">2</span><div class="hw-text">The <strong>rete</strong> (star map overlay) is a cutwork brass plate showing major stars. It rotates to represent the sky turning throughout the day.</div></div>
+        <div class="hw-step"><span class="hw-num">3</span><div class="hw-text">The <strong>alidade</strong> (ruler on the back) measures the altitude of a star or the Sun by sighting along it.</div></div>
+        <div class="hw-step"><span class="hw-num">4</span><div class="hw-text">Rotate the rete until the measured star sits on the correct altitude circle. The <strong>rule</strong> then reads the time from the hour scale.</div></div>
+        <div class="hw-step"><span class="hw-num">5</span><div class="hw-text">To predict when a star rises or sets, rotate the rete until it touches the <strong>horizon line</strong> — the same principle as SGP4 pass prediction.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="ft">"The astrolabe is the original satellite tracker."</div>
+  Part of the Satellites in the Sky project
+</footer>
+
+<script>
+const cv=document.getElementById('astrolabe'),cx=cv.getContext('2d');
+const W=cv.width,H=cv.height,CX=W/2,CY=H/2,R=W/2-20;
+const D=Math.PI/180,T2=Math.PI*2;
+
+// Stars for the rete (bright stars visible from ~30°N)
+const STARS=[
+  {name:'Aldebaran',name_fr:'Aldébaran',name_ar:'الدبران',arabic:'الدبران',ra:68.98,dec:16.51,mag:0.85},
+  {name:'Altair',name_fr:'Altaïr',name_ar:'الطائر',arabic:'النسر الطائر',ra:297.70,dec:8.87,mag:0.76},
+  {name:'Betelgeuse',name_fr:'Bételgeuse',name_ar:'يد الجوزاء',arabic:'يد الجوزاء',ra:88.79,dec:7.41,mag:0.42},
+  {name:'Rigel',name_fr:'Rigel',name_ar:'رجل الجوزاء',arabic:'رجل الجوزاء',ra:78.63,dec:-8.20,mag:0.13},
+  {name:'Vega',name_fr:'Véga',name_ar:'النسر الواقع',arabic:'النسر الواقع',ra:279.23,dec:38.78,mag:0.03},
+  {name:'Sirius',name_fr:'Sirius',name_ar:'الشعرى اليمانية',arabic:'الشعرى',ra:101.29,dec:-16.72,mag:-1.46},
+  {name:'Capella',name_fr:'Capella',name_ar:'العيوق',arabic:'العيوق',ra:79.17,dec:46.0,mag:0.08},
+  {name:'Procyon',name_fr:'Procyon',name_ar:'الشعرى الشامية',arabic:'الشعرى الشامية',ra:114.83,dec:5.22,mag:0.34},
+  {name:'Spica',name_fr:'Spica',name_ar:'السماك الأعزل',arabic:'السماك',ra:201.30,dec:-11.16,mag:0.97},
+  {name:'Arcturus',name_fr:'Arcturus',name_ar:'السماك الرامح',arabic:'السماك الرامح',ra:213.92,dec:19.18,mag:-0.05},
+  {name:'Fomalhaut',name_fr:'Fomalhaut',name_ar:'فم الحوت',arabic:'فم الحوت',ra:344.41,dec:-29.62,mag:1.16},
+  {name:'Deneb',name_fr:'Déneb',name_ar:'ذنب الدجاجة',arabic:'ذنب الدجاجة',ra:310.36,dec:45.28,mag:1.25},
+  {name:'Polaris',arabic:'الجدي',ra:37.95,dec:89.26,mag:1.98},
+  {name:'Regulus',name_fr:'Régulus',name_ar:'قلب الأسد',arabic:'قلب الأسد',ra:152.09,dec:11.97,mag:1.35},
+  {name:'Algol',arabic:'رأس الغول',ra:47.04,dec:40.96,mag:2.12},
+  {name:'Antares',name_fr:'Antarès',name_ar:'قلب العقرب',arabic:'قلب العقرب',ra:247.35,dec:-26.43,mag:0.96},
+];
+
+// Populate star list
+const sl=document.getElementById('starList');
+STARS.filter(s=>s.mag<1.5).forEach(s=>{
+  sl.innerHTML+=`<div class="star-item"><div class="star-dot"></div><div><div class="star-name">${s.name}</div><div class="star-arabic">${s.arabic}</div></div></div>`;
+});
+
+// State
+let reteAngle=0,autoRotate=true,showNames=true,lat=30,dragging=false,lastAngle=0;
+
+// Stereographic projection for astrolabe (south pole projection)
+function stereo(dec){
+  // Project from celestial sphere to astrolabe plane
+  // Standard stereographic from south pole
+  const r=R*Math.cos(dec*D)/(1+Math.sin(dec*D));
+  return Math.min(r,R*.95);
+}
+
+function drawTympan(){
+  // Background - aged brass
+  const bg=cx.createRadialGradient(CX,CY,0,CX,CY,R);
+  bg.addColorStop(0,'#1a1408');bg.addColorStop(.7,'#0f0c06');bg.addColorStop(1,'#080604');
+  cx.beginPath();cx.arc(CX,CY,R,0,T2);cx.fillStyle=bg;cx.fill();
+  
+  // Outer ring
+  cx.beginPath();cx.arc(CX,CY,R,0,T2);cx.strokeStyle='rgba(232,193,112,0.35)';cx.lineWidth=3;cx.stroke();
+  cx.beginPath();cx.arc(CX,CY,R-8,0,T2);cx.strokeStyle='rgba(232,193,112,0.15)';cx.lineWidth=1;cx.stroke();
+  
+  // Hour markings (24h around the rim)
+  for(let h=0;h<24;h++){
+    const a=(h/24)*T2-Math.PI/2;
+    const x1=CX+Math.cos(a)*(R-8),y1=CY+Math.sin(a)*(R-8);
+    const x2=CX+Math.cos(a)*(R-20),y2=CY+Math.sin(a)*(R-20);
+    cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x2,y2);
+    cx.strokeStyle='rgba(232,193,112,0.2)';cx.lineWidth=h%6===0?1.5:.5;cx.stroke();
+    if(h%2===0){
+      cx.font='500 10px "JetBrains Mono"';cx.fillStyle='rgba(232,193,112,0.3)';cx.textAlign='center';cx.textBaseline='middle';
+      const tx=CX+Math.cos(a)*(R-30),ty=CY+Math.sin(a)*(R-30);
+      cx.fillText(h.toString(),tx,ty);
+    }
+    // Minute ticks
+    for(let m=1;m<6;m++){
+      const am=(h/24+m/144)*T2-Math.PI/2;
+      const mx1=CX+Math.cos(am)*(R-8),my1=CY+Math.sin(am)*(R-8);
+      const mx2=CX+Math.cos(am)*(R-13),my2=CY+Math.sin(am)*(R-13);
+      cx.beginPath();cx.moveTo(mx1,my1);cx.lineTo(mx2,my2);
+      cx.strokeStyle='rgba(232,193,112,0.08)';cx.lineWidth=.3;cx.stroke();
+    }
+  }
+  
+  // Altitude circles (tympan) for lat ~30°N
+  cx.save();cx.beginPath();cx.arc(CX,CY,R-8,0,T2);cx.clip();
+  for(let alt=0;alt<=80;alt+=10){
+    // The altitude circle center and radius on stereographic projection
+    const cDec=90-lat-alt;// approximate
+    const r=stereo(alt)*0.92;
+    cx.beginPath();cx.arc(CX,CY-r*.15,r,0,T2);
+    cx.strokeStyle=alt===0?'rgba(232,193,112,0.18)':'rgba(232,193,112,0.06)';
+    cx.lineWidth=alt===0?1.2:.4;cx.stroke();
+    if(alt%20===0&&alt>0){
+      cx.font='400 8px "JetBrains Mono"';cx.fillStyle='rgba(232,193,112,0.15)';
+      cx.fillText(alt+'°',CX+r-14,CY-r*.15+3);
+    }
+  }
+  
+  // Horizon line (alt=0) emphasized
+  const hr=stereo(0)*0.92;
+  cx.beginPath();cx.arc(CX,CY-hr*.15,hr,0,T2);
+  cx.strokeStyle='rgba(232,193,112,0.2)';cx.lineWidth=1.5;cx.setLineDash([4,4]);cx.stroke();cx.setLineDash([]);
+  cx.font='italic 500 9px "Playfair Display"';cx.fillStyle='rgba(232,193,112,0.2)';cx.fillText('Horizon',CX+hr-28,CY-hr*.15-6);
+  
+  // Azimuth lines
+  for(let az=0;az<360;az+=30){
+    const a=az*D;
+    cx.beginPath();cx.moveTo(CX,CY);
+    cx.lineTo(CX+Math.sin(a)*R*.85,CY-Math.cos(a)*R*.85);
+    cx.strokeStyle='rgba(232,193,112,0.03)';cx.lineWidth=.3;cx.stroke();
+  }
+  cx.restore();
+  
+  // Center pin
+  cx.beginPath();cx.arc(CX,CY,4,0,T2);cx.fillStyle='rgba(232,193,112,0.4)';cx.fill();
+}
+
+function drawRete(angle){
+  cx.save();
+  cx.beginPath();cx.arc(CX,CY,R-8,0,T2);cx.clip();
+  cx.translate(CX,CY);
+  cx.rotate(angle);
+  
+  // Ecliptic ring (off-center circle)
+  const eR=R*.55,eOff=R*.22;
+  cx.beginPath();cx.arc(eOff,0,eR,0,T2);
+  cx.strokeStyle='rgba(232,193,112,0.12)';cx.lineWidth=1;cx.stroke();
+  
+  // Zodiac markings on ecliptic
+  const zodiac=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  for(let i=0;i<12;i++){
+    const a=(i/12)*T2;
+    const zx=eOff+Math.cos(a)*eR,zy=Math.sin(a)*eR;
+    cx.font='10px serif';cx.fillStyle='rgba(232,193,112,0.15)';cx.textAlign='center';cx.textBaseline='middle';
+    cx.fillText(zodiac[i],zx,zy);
+  }
+  
+  // Star pointers (the rete cutwork)
+  for(const s of STARS){
+    const ra=s.ra*D,dec=s.dec*D;
+    const r=R*.85*Math.cos(dec)/(1+Math.sin(dec));
+    const x=r*Math.cos(ra-Math.PI/2),y=r*Math.sin(ra-Math.PI/2);
+    
+    // Pointer arm
+    const dist=Math.sqrt(x*x+y*y);
+    if(dist>10){
+      cx.beginPath();cx.moveTo(x*.3,y*.3);cx.lineTo(x,y);
+      cx.strokeStyle='rgba(232,193,112,0.12)';cx.lineWidth=.5;cx.stroke();
+    }
+    
+    // Star point
+    const sz=s.mag<0?3.5:s.mag<0.5?3:s.mag<1?2.5:2;
+    cx.beginPath();cx.arc(x,y,sz,0,T2);
+    cx.fillStyle='rgba(232,193,112,0.7)';cx.fill();
+    
+    // Glow
+    if(s.mag<1){
+      cx.beginPath();cx.arc(x,y,sz*3,0,T2);
+      const gl=cx.createRadialGradient(x,y,0,x,y,sz*3);
+      gl.addColorStop(0,'rgba(232,193,112,0.1)');gl.addColorStop(1,'transparent');
+      cx.fillStyle=gl;cx.fill();
+    }
+    
+    // Name
+    if(showNames&&s.mag<1.3){
+      cx.save();cx.rotate(-angle);// Unrotate for readable text
+      const tx2=CX+x*Math.cos(angle)-y*Math.sin(angle);
+      const ty2=CY+x*Math.sin(angle)+y*Math.cos(angle);
+      // We're in translated space, so adjust
+      cx.restore();cx.save();cx.translate(CX,CY);cx.rotate(angle);
+      // Just draw rotated text small
+      cx.font='italic 500 7px "Playfair Display"';cx.fillStyle='rgba(232,193,112,0.4)';
+      cx.textAlign='left';cx.fillText(s.name,x+sz+3,y-1);
+      cx.font='400 5px "JetBrains Mono"';cx.fillStyle='rgba(232,193,112,0.2)';
+      cx.fillText(s.arabic,x+sz+3,y+7);
+      cx.restore();cx.save();cx.beginPath();cx.arc(0,0,R-8,0,T2);cx.clip();cx.translate(CX,CY);cx.rotate(angle);
+    }
+  }
+  
+  // Rule (alidade line)
+  cx.beginPath();cx.moveTo(-R*.9,0);cx.lineTo(R*.9,0);
+  cx.strokeStyle='rgba(232,193,112,0.2)';cx.lineWidth=.8;cx.stroke();
+  
+  cx.restore();
+}
+
+function drawOverlay(){
+  // North marker
+  cx.font='bold 12px "JetBrains Mono"';cx.fillStyle='rgba(232,193,112,0.5)';cx.textAlign='center';
+  cx.fillText('N',CX,26);
+  cx.font='bold 10px "JetBrains Mono"';cx.fillStyle='rgba(232,193,112,0.2)';
+  cx.fillText('E',W-16,CY+4);cx.fillText('S',CX,H-14);cx.fillText('W',16,CY+4);
+  
+  // Throne (top decoration)
+  cx.beginPath();cx.arc(CX,20-R,R+14,Math.PI*.35,Math.PI*.65);
+  cx.strokeStyle='rgba(232,193,112,0.15)';cx.lineWidth=2;cx.stroke();
+  
+  // Suspension ring
+  cx.beginPath();cx.arc(CX,10,8,0,T2);cx.strokeStyle='rgba(232,193,112,0.25)';cx.lineWidth=1.5;cx.stroke();
+}
+
+function updateReadouts(){
+  const now=new Date();
+  const jd=367*now.getUTCFullYear()-Math.floor(7*(now.getUTCFullYear()+Math.floor((now.getUTCMonth()+10)/12))/4)+Math.floor(275*(now.getUTCMonth()+1)/9)+now.getUTCDate()+1721013.5+(now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600)/24;
+  const T=(jd-2451545)/36525;
+  let gst=280.46061837+360.98564736629*(jd-2451545)+.000387933*T*T;
+  const lst=((gst+2.35)%360+360)%360;// Approx longitude 2.35 (Paris)
+  
+  document.getElementById('arLST').textContent=
+    Math.floor(lst/15).toString().padStart(2,'0')+'h '+
+    Math.floor((lst%15)/15*60).toString().padStart(2,'0')+'m';
+  
+  const deg=((reteAngle/D)%360+360)%360;
+  document.getElementById('arAngle').textContent=deg.toFixed(1)+'°';
+  document.getElementById('arLat').textContent=lat+'°N';
+  
+  const ha=((deg+180)%360).toFixed(1);
+  document.getElementById('arHA').textContent=ha+'°';
+}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  
+  // Outer background
+  cx.fillStyle='#080604';cx.fillRect(0,0,W,H);
+  
+  drawTympan();
+  drawRete(reteAngle);
+  drawOverlay();
+  updateReadouts();
+  
+  if(autoRotate)reteAngle+=0.0008;// Slow sidereal rotation
+  
+  requestAnimationFrame(render);
+}
+
+// Interaction
+let startAngle=0,startRete=0;
+cv.addEventListener('pointerdown',e=>{
+  dragging=true;autoRotate=false;
+  document.querySelectorAll('.ac-btn').forEach(b=>b.classList.remove('active'));
+  const rect=cv.getBoundingClientRect();
+  startAngle=Math.atan2(e.clientY-rect.top-rect.height/2,e.clientX-rect.left-rect.width/2);
+  startRete=reteAngle;
+});
+addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  const rect=cv.getBoundingClientRect();
+  const a=Math.atan2(e.clientY-rect.top-rect.height/2,e.clientX-rect.left-rect.width/2);
+  reteAngle=startRete+(a-startAngle);
+});
+addEventListener('pointerup',()=>dragging=false);
+
+// Controls
+document.querySelectorAll('.ac-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const a=btn.dataset.action;
+    if(a==='auto'){autoRotate=!autoRotate;btn.classList.toggle('active',autoRotate)}
+    else if(a==='now'){
+      const now=new Date();const h=now.getHours()+now.getMinutes()/60;
+      reteAngle=(h/24)*T2;autoRotate=false;
+      document.querySelectorAll('.ac-btn').forEach(b=>b.classList.remove('active'));
+    }
+    else if(a==='noon'){reteAngle=Math.PI;autoRotate=false;document.querySelectorAll('.ac-btn').forEach(b=>b.classList.remove('active'))}
+    else if(a==='stars'){showNames=!showNames;btn.classList.toggle('active',showNames)}
+  });
+});
+
+// Make canvas responsive
+function resizeCanvas(){
+  const maxW=Math.min(380,window.innerWidth-60);
+  cv.style.width=maxW+'px';cv.style.height=maxW+'px';
+}
+resizeCanvas();
+addEventListener('resize',resizeCanvas);
+
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Interactive Astrolabe',project:'Satellites in the Sky'},fr:{title:'Astrolabe Interactif',project:'Satellites dans le Ciel'},ar:{title:'الإسطرلاب التفاعلي',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

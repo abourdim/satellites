@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbit Decay — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(252,129,129,0.06);border:1px solid rgba(252,129,129,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--red)}
+header p{font-size:.82rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.6}
+.layout{max-width:900px;margin:0 auto;display:grid;grid-template-columns:240px 1fr;gap:14px}
+@media(max-width:650px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:14px;padding:14px}
+.panel h3{font-family:var(--mono);font-size:.46rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.ctrl{margin-bottom:10px}
+.ctrl label{font-size:.66rem;color:var(--dim);display:flex;justify-content:space-between;margin-bottom:2px}
+.ctrl label span{font-family:var(--mono);color:var(--cyan);font-weight:500}
+.ctrl input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,0.06);outline:none}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--cyan);cursor:pointer}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
+.pre{font-family:var(--mono);font-size:.42rem;padding:5px;border-radius:5px;border:1px solid rgba(110,140,255,0.08);background:transparent;color:var(--dim);cursor:pointer;text-align:center}
+.pre:hover{border-color:rgba(252,129,129,0.15);color:var(--red)}
+.res{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:.66rem}
+.res .rl{color:var(--dim)}.res .rv{font-family:var(--mono);font-weight:500}
+canvas{width:100%;height:350px;border-radius:10px;background:#060a18;display:block}
+.play-row{display:flex;gap:6px;margin-top:8px;justify-content:center}
+.pbtn{font-family:var(--mono);font-size:.52rem;padding:6px 14px;border-radius:6px;border:1px solid rgba(252,129,129,0.15);background:rgba(252,129,129,0.04);color:var(--red);cursor:pointer}
+.pbtn:hover{background:rgba(252,129,129,0.1)}
+.insight{max-width:900px;margin:16px auto 0;background:var(--card);border:1px solid rgba(232,193,112,0.06);border-radius:12px;padding:14px 16px}
+.insight h4{font-size:.75rem;font-weight:700;color:#fff;margin-bottom:4px}.insight p{font-size:.72rem;color:var(--dim);line-height:1.5}
+.insight strong{font-weight:600}
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge"><span data-en="📉 Physics Simulation" data-fr="📉 Simulation physique" data-ar="📉 محاكاة فيزيائية">📉 Physics Simulation</span></div>
+  <h1>Orbit <span>Decay</span></h1>
+  <p>Every low satellite is slowly falling. Atmospheric drag — even at 400 km where air is a trillion times thinner than sea level — constantly steals energy. Watch the slow spiral down.</p>
+</header>
+<div class="layout">
+  <div>
+    <div class="panel">
+      <h3>🎛️ Satellite</h3>
+      <div class="ctrl"><label>Start Altitude <span id="vAlt">400 km</span></label><input type="range" id="rAlt" min="150" max="1200" value="400"></div>
+      <div class="ctrl"><label>Mass <span id="vMass">420,000 kg</span></label><input type="range" id="rMass" min="1" max="500000" value="420000" step="100"></div>
+      <div class="ctrl"><label>Drag Area <span id="vArea">2,500 m²</span></label><input type="range" id="rArea" min="1" max="5000" value="2500"></div>
+      <div class="ctrl"><label>Solar Activity <span id="vSolar"><span data-en="Medium" data-fr="Moyen" data-ar="متوسط">Medium</span></span></label><input type="range" id="rSolar" min="0" max="2" value="1" step="1"></div>
+    </div>
+    <div class="panel" style="margin-top:8px">
+      <h3><span data-en="📋 Presets" data-fr="📋 Préréglages" data-ar="📋 إعدادات مسبقة">📋 Presets</span></h3>
+      <div class="presets">
+        <button class="pre" onclick="pre(408,420000,2500,1)">🏗️ ISS</button>
+        <button class="pre" onclick="pre(550,260,4,1)">📶 Starlink</button>
+        <button class="pre" onclick="pre(547,11110,50,1)">🔭 Hubble</button>
+        <button class="pre" onclick="pre(300,1000,10,2)">⚡ Storm Decay</button>
+        <button class="pre" onclick="pre(200,4,0.1,1)">📦 CubeSat</button>
+        <button class="pre" onclick="pre(550,260,4,2)">💀 Starlink Storm</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:8px">
+      <h3><span data-en="📊 Results" data-fr="📊 Résultats" data-ar="📊 النتائج">📊 Results</span></h3>
+      <div id="results"></div>
+    </div>
+  </div>
+  <div>
+    <canvas id="cv"></canvas>
+    <div class="play-row">
+      <button class="pbtn" onclick="reset()"><span data-en="🔄 Reset" data-fr="🔄 Réinitialiser" data-ar="🔄 إعادة تعيين">🔄 Reset</span></button>
+      <button class="pbtn" id="playBtn" onclick="togglePlay()"><span data-en="▶ Start Decay" data-fr="▶ Démarrer la décroissance" data-ar="▶ بدء الانحلال">▶ Start Decay</span></button>
+      <button class="pbtn" onclick="timeScale=Math.min(timeScale*5,1e6);updateTS()"><span data-en="⏩ Faster" data-fr="⏩ Plus rapide" data-ar="⏩ أسرع">⏩ Faster</span></button>
+      <button class="pbtn" onclick="timeScale=Math.max(timeScale/5,1);updateTS()"><span data-en="⏪ Slower" data-fr="⏪ Plus lent" data-ar="⏪ أبطأ">⏪ Slower</span></button>
+      <span id="tsLabel" style="font-family:var(--mono);font-size:.42rem;color:var(--muted);align-self:center"><span data-en="1× speed" data-fr="1× vitesse" data-ar="1× سرعة">1× speed</span></span>
+    </div>
+  </div>
+</div>
+<div class="insight">
+  <h4>💀 The Starlink Storm (Feb 2022)</h4>
+  <p>A geomagnetic storm increased atmospheric density at 210 km by <strong>50%</strong>. 40 freshly-launched Starlink satellites couldn't raise their orbits fast enough. They <strong>burned up within days</strong>. Cost to SpaceX: ~$10 million. The Sun controls satellite lifetimes — not engineers.</p>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),P=Math.PI*2;
+let W,H;function rs(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0)}
+rs();addEventListener('resize',rs);
+
+let startAlt=408,mass=420000,area=2500,solar=1;
+let alt,vel,elapsed,playing=false,timeScale=1000,history=[];
+const Re=6371,G=6.674e-11,Me=5.972e24;
+const solarNames=['Low','Medium','High'];
+const solarFactor=[0.3,1.0,3.0];
+
+function density(h){return 1.225*Math.exp(-h/8.5)*solarFactor[solar]}
+
+function pre(a,m,ar,s){
+  document.getElementById('rAlt').value=a;document.getElementById('rMass').value=m;
+  document.getElementById('rArea').value=ar;document.getElementById('rSolar').value=s;
+  startAlt=a;mass=m;area=ar;solar=s;reset();
+}
+
+function reset(){
+  startAlt=+document.getElementById('rAlt').value;
+  mass=+document.getElementById('rMass').value;
+  area=+document.getElementById('rArea').value;
+  solar=+document.getElementById('rSolar').value;
+  alt=startAlt;vel=Math.sqrt(G*Me/((Re+alt)*1000))/1000;
+  elapsed=0;history=[{t:0,a:alt}];updateLabels();
+}
+
+function updateLabels(){
+  document.getElementById('vAlt').textContent=startAlt.toLocaleString()+' km';
+  document.getElementById('vMass').textContent=mass.toLocaleString()+' kg';
+  document.getElementById('vArea').textContent=area.toLocaleString()+' m²';
+  document.getElementById('vSolar').textContent=solarNames[solar];
+}
+
+function updateTS(){document.getElementById('tsLabel').textContent=timeScale>=1e6?'1M×':timeScale>=1e3?Math.round(timeScale/1e3)+'K×':timeScale+'×'}
+function togglePlay(){playing=!playing;document.getElementById('playBtn').textContent=playing?'⏸ Pause':'▶ Start'}
+
+['rAlt','rMass','rArea','rSolar'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{updateLabels();reset()}));
+
+function step(){
+  if(!playing||alt<=80)return;
+  const dt=timeScale;// seconds per frame
+  const r=(Re+alt)*1000;
+  const rho=density(alt);
+  const v=vel*1000;
+  const Cd=2.2;
+  const drag=0.5*rho*v*v*Cd*area;
+  const decel=drag/mass;
+  const dv=decel*dt;
+  vel=Math.max(0.1,vel-dv/1000);
+  // Lower orbit: v=sqrt(GM/r), so if v decreases, r decreases
+  const newR=G*Me/(vel*1000*vel*1000);
+  alt=Math.max(80,newR/1000-Re);
+  vel=Math.sqrt(G*Me/((Re+alt)*1000))/1000;
+  elapsed+=dt;
+  if(history.length===0||elapsed-history[history.length-1].t>dt*5){
+    history.push({t:elapsed,a:alt});
+    if(history.length>300)history.shift();
+  }
+}
+
+function render(){
+  step();
+  cx.clearRect(0,0,W,H);cx.fillStyle='#060a18';cx.fillRect(0,0,W,H);
+  
+  const eR=40,ecx=80,ecy=H/2;
+  // Earth
+  cx.beginPath();cx.arc(ecx,ecy,eR,0,P);
+  const eg=cx.createRadialGradient(ecx-5,ecy-5,0,ecx,ecy,eR);
+  eg.addColorStop(0,'#1a4a6c');eg.addColorStop(1,'#061428');cx.fillStyle=eg;cx.fill();
+  
+  // Atmosphere
+  cx.beginPath();cx.arc(ecx,ecy,eR+10,0,P);
+  const ag=cx.createRadialGradient(ecx,ecy,eR,ecx,ecy,eR+10);
+  ag.addColorStop(0,'rgba(92,224,214,0.04)');ag.addColorStop(1,'transparent');cx.fillStyle=ag;cx.fill();
+  
+  // Orbit (current)
+  const orbScale=(startAlt>800?0.06:0.12);
+  const orbR=eR+alt*orbScale;
+  cx.beginPath();cx.arc(ecx,ecy,orbR,0,P);cx.strokeStyle='rgba(252,129,129,0.15)';cx.lineWidth=.5;cx.setLineDash([3,4]);cx.stroke();cx.setLineDash([]);
+  
+  // Start orbit
+  const startR=eR+startAlt*orbScale;
+  cx.beginPath();cx.arc(ecx,ecy,startR,0,P);cx.strokeStyle='rgba(92,224,214,0.06)';cx.lineWidth=.5;cx.setLineDash([2,6]);cx.stroke();cx.setLineDash([]);
+  
+  // Satellite
+  const sAngle=Date.now()*.002;
+  const sx=ecx+orbR*Math.cos(sAngle),sy=ecy+orbR*Math.sin(sAngle);
+  cx.beginPath();cx.arc(sx,sy,3,0,P);cx.fillStyle=alt>150?'rgba(252,129,129,0.8)':'rgba(255,200,100,0.8)';cx.fill();
+  if(alt<=120){// Heating
+    cx.beginPath();cx.arc(sx,sy,6,0,P);
+    const hg=cx.createRadialGradient(sx,sy,0,sx,sy,6);
+    hg.addColorStop(0,'rgba(255,150,50,0.3)');hg.addColorStop(1,'transparent');cx.fillStyle=hg;cx.fill();
+  }
+  
+  // Altitude chart (right side)
+  const chartL=180,chartR=W-20,chartT=20,chartB=H-20;
+  const chartW=chartR-chartL,chartH=chartB-chartT;
+  
+  cx.strokeStyle='rgba(110,140,255,0.04)';cx.lineWidth=.5;
+  for(let h=0;h<=startAlt;h+=Math.ceil(startAlt/5)){
+    const y=chartB-(h/startAlt)*chartH;
+    cx.beginPath();cx.moveTo(chartL,y);cx.lineTo(chartR,y);cx.stroke();
+    cx.font='400 6px "JetBrains Mono"';cx.fillStyle='rgba(200,210,230,0.1)';cx.textAlign='right';
+    cx.fillText(h+' km',chartL-4,y+3);
+  }
+  
+  // History line
+  if(history.length>1){
+    cx.beginPath();
+    const maxT=history[history.length-1].t||1;
+    history.forEach((h,i)=>{
+      const x=chartL+(h.t/maxT)*chartW;
+      const y=chartB-(h.a/startAlt)*chartH;
+      i===0?cx.moveTo(x,y):cx.lineTo(x,y);
+    });
+    cx.strokeStyle='rgba(252,129,129,0.5)';cx.lineWidth=1.5;cx.stroke();
+  }
+  
+  // Current altitude marker
+  const curY=chartB-(alt/startAlt)*chartH;
+  cx.beginPath();cx.arc(chartR,curY,3,0,P);cx.fillStyle='rgba(252,129,129,0.7)';cx.fill();
+  cx.font='500 8px "JetBrains Mono"';cx.textAlign='left';cx.fillStyle='rgba(252,129,129,0.6)';
+  cx.fillText(alt.toFixed(0)+' km',chartR+6,curY+3);
+  
+  // Danger zone
+  if(alt<150){
+    const dangerY=chartB-(150/startAlt)*chartH;
+    cx.fillStyle='rgba(252,129,129,0.02)';cx.fillRect(chartL,dangerY,chartW,chartB-dangerY);
+    cx.font='italic 7px "Playfair Display"';cx.fillStyle='rgba(252,129,129,0.15)';cx.textAlign='center';
+    cx.fillText('DANGER ZONE',chartL+chartW/2,chartB-10);
+  }
+  
+  // Results
+  const days=elapsed/86400;
+  const years=days/365.25;
+  const timeStr=years>1?years.toFixed(1)+' years':days>1?days.toFixed(0)+' days':(elapsed/3600).toFixed(1)+' hours';
+  const dropPct=((startAlt-alt)/startAlt*100);
+  
+  document.getElementById('results').innerHTML=`
+    <div class="res"><span class="rl">Current altitude</span><span class="rv" style="color:${alt<150?'var(--red)':'var(--cyan)'}">${alt.toFixed(1)} km</span></div>
+    <div class="res"><span class="rl">Elapsed</span><span class="rv" style="color:var(--orange)">${timeStr}</span></div>
+    <div class="res"><span class="rl">Dropped</span><span class="rv" style="color:var(--red)">${dropPct.toFixed(1)}%</span></div>
+    <div class="res"><span class="rl"><span data-en="Speed" data-fr="Vitesse" data-ar="السرعة">Speed</span></span><span class="rv" style="color:var(--blue)">${vel.toFixed(3)} km/s</span></div>
+    <div class="res"><span class="rl">Status</span><span class="rv" style="color:${alt<=80?'var(--red)':alt<150?'var(--orange)':'var(--green)'}">${alt<=80?'BURNED UP':alt<150?'CRITICAL':'Orbiting'}</span></div>
+  `;
+  
+  requestAnimationFrame(render);
+}
+reset();render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Orbit Decay',project:'Satellites in the Sky'},fr:{title:'Déclin Orbital',project:'Satellites dans le Ciel'},ar:{title:'انحلال المدار',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

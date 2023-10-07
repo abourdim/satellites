@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help & Getting Started — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:28px}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.3rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--green)}
+header p{font-size:.82rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.6}
+.content{max-width:680px;margin:0 auto}
+.back{display:inline-flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--dim);text-decoration:none;margin-bottom:14px}
+.back:hover{color:var(--cyan)}
+
+.card{background:var(--card);border:1px solid rgba(110,140,255,.06);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.card h3{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.card p{font-size:.76rem;color:var(--dim);line-height:1.6;margin-bottom:6px}
+.card strong{font-weight:600;color:var(--text)}
+.card code{font-family:'JetBrains Mono',monospace;font-size:.68rem;background:rgba(92,224,214,.04);padding:1px 5px;border-radius:3px;color:var(--cyan)}
+.card a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(92,224,214,.2)}
+.card a:hover{border-color:var(--cyan)}
+
+.path{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.path-step{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.01);border-radius:8px;border:1px solid rgba(110,140,255,.04)}
+.path-num{font-family:'JetBrains Mono',monospace;font-size:.55rem;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(92,224,214,.06);color:var(--cyan);flex-shrink:0}
+.path-info{font-size:.72rem;color:var(--dim)}
+.path-info a{color:var(--cyan);text-decoration:none}
+.path-info .pn{font-weight:600;color:var(--text)}
+
+.grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin:8px 0}
+.g3-item{background:rgba(255,255,255,.01);border:1px solid rgba(110,140,255,.04);border-radius:8px;padding:10px;text-align:center}
+.g3-item .gi{font-size:1.3rem;margin-bottom:3px}
+.g3-item .gn{font-size:.72rem;font-weight:600;color:#fff;margin-bottom:2px}
+.g3-item .gd{font-size:.58rem;color:var(--dim);line-height:1.3}
+
+.troubleshoot{margin:8px 0}
+.ts-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.02)}
+.ts-item:last-child{border:none}
+.ts-q{font-size:.72rem;color:var(--orange);min-width:140px;font-weight:600}
+.ts-a{font-size:.72rem;color:var(--dim);line-height:1.5}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted);max-width:680px;margin:0 auto}
+
+/* === BRANDING + i18n === */
+.t-en,.t-fr,.t-ar{display:none}
+[data-lang="en"] .t-en,[data-lang="fr"] .t-fr,[data-lang="ar"] .t-ar{display:inline}
+:not([data-lang]) .t-en{display:inline}
+[data-lang="ar"] .card{text-align:right}
+[data-lang="ar"] .path-step{flex-direction:row-reverse}
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <a class="back" href="aa-portal.html" data-en="← Back to Portal" data-fr="← Retour au Portail" data-ar="← العودة للبوابة">← Back to Portal</a>
+  <h1><span class="t-en">Help & </span><span class="t-fr">Aide & </span><span class="t-ar">المساعدة و</span><span><span class="t-en">Getting Started</span><span class="t-fr">Démarrage</span><span class="t-ar">البدء</span></span></h1>
+  <p><span class="t-en">Your guide to exploring Satellites in the Sky. Suggested paths, tips, and troubleshooting.</span><span class="t-fr">Votre guide pour explorer Satellites dans le Ciel. Parcours suggérés, astuces et dépannage.</span><span class="t-ar">دليلك لاستكشاف أقمار في السماء. مسارات مقترحة، نصائح، واستكشاف الأخطاء.</span></p>
+</header>
+<div class="content">
+
+<div class="card">
+  <h3><span class="t-en">🚀 Quick Start (30 seconds)</span><span class="t-fr">🚀 Démarrage Rapide (30 secondes)</span><span class="t-ar">🚀 بداية سريعة (٣٠ ثانية)</span></h3>
+  <p>Open <code>aa-portal.html</code> in your browser. Everything is linked from there. Click any card to explore. Every file works independently — there's no required order.</p>
+</div>
+
+<div class="card">
+  <h3><span class="t-en">🗺️ Suggested Learning Paths</span><span class="t-fr">🗺️ Parcours d'Apprentissage Suggérés</span><span class="t-ar">🗺️ مسارات تعلم مقترحة</span></h3>
+  <p><strong><span class="t-en">For someone new to satellites:</span><span class="t-fr">Pour les débutants en satellites :</span><span class="t-ar">للمبتدئين في الأقمار الصناعية:</span></strong></p>
+  <div class="path">
+    <div class="path-step"><div class="path-num">1</div><div class="path-info"><span class="pn">Night Sky Window</span> — See satellites in the sky above you</div></div>
+    <div class="path-step"><div class="path-num">2</div><div class="path-info"><span class="pn">Spotter's Guide</span> — Learn to identify what you're seeing</div></div>
+    <div class="path-step"><div class="path-num">3</div><div class="path-info"><span class="pn">Altitude Ladder</span> — Understand orbital heights</div></div>
+    <div class="path-step"><div class="path-num">4</div><div class="path-info"><span class="pn">Satellite Anatomy</span> — What's inside a satellite</div></div>
+    <div class="path-step"><div class="path-num">5</div><div class="path-info"><span class="pn">Signal Journey</span> — How your phone talks to space</div></div>
+  </div>
+
+  <p style="margin-top:10px"><strong><span class="t-en">For someone interested in the physics:</span><span class="t-fr">Pour les passionnés de physique :</span><span class="t-ar">لمحبي الفيزياء:</span></strong></p>
+  <div class="path">
+    <div class="path-step"><div class="path-num">1</div><div class="path-info"><span class="pn">Gravity Well</span> — Feel orbital mechanics intuitively</div></div>
+    <div class="path-step"><div class="path-num">2</div><div class="path-info"><span class="pn">Orbital Playground</span> — Launch your own satellites</div></div>
+    <div class="path-step"><div class="path-num">3</div><div class="path-info"><span class="pn">Math Lab</span> — The equations behind it all</div></div>
+    <div class="path-step"><div class="path-num">4</div><div class="path-info"><span class="pn">Lagrange Points</span> — Where gravity balances</div></div>
+    <div class="path-step"><div class="path-num">5</div><div class="path-info"><span class="pn">Orbit Decay</span> — Watch satellites slowly fall</div></div>
+  </div>
+
+  <p style="margin-top:10px"><strong><span class="t-en">For someone interested in Arab heritage:</span><span class="t-fr">Pour les passionnés de patrimoine arabe :</span><span class="t-ar">لمستكشفي التراث العربي:</span></strong></p>
+  <div class="path">
+    <div class="path-step"><div class="path-num">1</div><div class="path-info"><span class="pn">Arabic Star Map</span> — 200+ star names in Arabic</div></div>
+    <div class="path-step"><div class="path-num">2</div><div class="path-info"><span class="pn">Golden Age Astronomy</span> — 6 scholars who built the foundations</div></div>
+    <div class="path-step"><div class="path-num">3</div><div class="path-info"><span class="pn">Astrolabe Interactive</span> — The medieval "smartphone"</div></div>
+    <div class="path-step"><div class="path-num">4</div><div class="path-info"><span class="pn">Heritage Scholars</span> — Deep profiles with modern connections</div></div>
+    <div class="path-step"><div class="path-num">5</div><div class="path-info"><span class="pn">Culture Cards</span> — Collectible heritage cards</div></div>
+  </div>
+
+  <p style="margin-top:10px"><strong><span class="t-en">For hands-on makers:</span><span class="t-fr">Pour les makers pratiques :</span><span class="t-ar">للصانعين العمليين:</span></strong></p>
+  <div class="path">
+    <div class="path-step"><div class="path-num">1</div><div class="path-info"><span class="pn">micro:bit Space Lab</span> — 6 experiments with real code</div></div>
+    <div class="path-step"><div class="path-num">2</div><div class="path-info"><span class="pn">SDR Satellite Guide</span> — Receive real satellite signals ($30)</div></div>
+    <div class="path-step"><div class="path-num">3</div><div class="path-info"><span class="pn">Photo Guide</span> — Photograph satellites with your camera</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3><span class="t-en">🎮 Interactive Highlights</span><span class="t-fr">🎮 Expériences Phares</span><span class="t-ar">🎮 أبرز التجارب التفاعلية</span></h3>
+  <p>Not sure what to explore? These are crowd favorites:</p>
+  <div class="grid-3">
+    <div class="g3-item"><div class="gi">💥</div><div class="gn">Kessler Syndrome</div><div class="gd">Watch a debris cascade destroy orbit</div></div>
+    <div class="g3-item"><div class="gi">🎮</div><div class="gn">Debris Dodge</div><div class="gd">Flappy-bird meets space junk</div></div>
+    <div class="g3-item"><div class="gi">🔊</div><div class="gn">Doppler Demo</div><div class="gd">Hear satellites shift pitch</div></div>
+    <div class="g3-item"><div class="gi">🔥</div><div class="gn">Re-entry Simulator</div><div class="gd">Watch satellites burn up</div></div>
+    <div class="g3-item"><div class="gi">🌍</div><div class="gn">Pale Blue Dot</div><div class="gd">Zoom from Earth to the void</div></div>
+    <div class="g3-item"><div class="gi">🎵</div><div class="gn">Sky Music</div><div class="gd">Satellites as instruments</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3><span class="t-en">⚙️ Tips</span><span class="t-fr">⚙️ Astuces</span><span class="t-ar">⚙️ نصائح</span></h3>
+  <p><strong>Audio experiences</strong> (Doppler Demo, Radio from Space, Sky Music) — click/tap to enable audio. Browsers require user interaction before playing sound.</p>
+  <p><strong>Canvas simulations</strong> (Kessler, Orbit Decay, Re-entry) — work best on desktop. On mobile, they still function but the controls are more compact.</p>
+  <p><strong>Scrolling experiences</strong> (Pale Blue Dot, Zoom Out) — use mouse wheel or two-finger swipe on mobile. Scroll slowly for the best effect.</p>
+  <p><strong>Portal navigation</strong> — each file has a "back to portal" link or you can use browser back. Files are named <code>aa-[topic].html</code> for easy identification.</p>
+</div>
+
+<div class="card">
+  <h3><span class="t-en">🔧 Troubleshooting</span><span class="t-fr">🔧 Dépannage</span><span class="t-ar">🔧 استكشاف الأخطاء</span></h3>
+  <div class="troubleshoot">
+    <div class="ts-item"><div class="ts-q">Fonts look different</div><div class="ts-a">Google Fonts need internet on first load. After caching, they work offline. Without them, the system falls back to default sans-serif — everything still works.</div></div>
+    <div class="ts-item"><div class="ts-q">No audio in Doppler/Radio</div><div class="ts-a">Click or tap the page first. Browsers block autoplay audio until user interaction. Look for "Listen" or "Play" buttons.</div></div>
+    <div class="ts-item"><div class="ts-q">Canvas looks blurry</div><div class="ts-a">Most simulations handle high-DPI displays. If blurry, try zooming to 100% in browser (Ctrl/Cmd + 0).</div></div>
+    <div class="ts-item"><div class="ts-q">Links between files don't work</div><div class="ts-a">All files must be in the same folder. Don't rename files. The portal links use relative paths like <code>aa-kessler.html</code>.</div></div>
+    <div class="ts-item"><div class="ts-q">File won't open</div><div class="ts-a">Double-click the .html file, or right-click → Open With → your browser. Works with any modern browser.</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3><span class="t-en">📁 File Organization</span><span class="t-fr">📁 Organisation des Fichiers</span><span class="t-ar">📁 تنظيم الملفات</span></h3>
+  <p>All files follow a consistent naming pattern:</p>
+  <p><code>aa-[topic].html</code> — the <code>aa-</code> prefix keeps them sorted together. Key files:</p>
+  <p><code>aa-portal.html</code> — <strong>Start here.</strong> Master hub linking to everything.</p>
+  <p><code>aa-satellites-ultimate.html</code> — All 5 phases in one file.</p>
+  <p><code>aa-faq.html</code> — This FAQ.</p>
+  <p><code>aa-help.html</code> — This help guide.</p>
+  <p><code>README.md</code> — Full documentation (for developers/teachers).</p>
+  <p><code>CHANGELOG.md</code> — Version history.</p>
+</div>
+
+</div>
+<footer>Satellites in the Sky v1.0</footer>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const TITLES={en:'Help & Getting Started',fr:'Aide & Démarrage',ar:'المساعدة والبدء'};
+const FOOTER={en:'Part of the Satellites in the Sky project',fr:'Partie du projet Satellites dans le Ciel',ar:'جزء من مشروع أقمار في السماء'};
+const BACK={en:'← Back to Portal',fr:'← Retour au Portail',ar:'← العودة للبوابة'};
+function setLang(l){
+  const h=document.documentElement;
+  h.setAttribute('data-lang',l);
+  h.dir=l==='ar'?'rtl':'ltr';
+  h.lang=l;
+  document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));
+  const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');
+  const t=TITLES[l]||TITLES.en;
+  document.title=t+' — '+{en:'Satellites in the Sky',fr:'Satellites dans le Ciel',ar:'أقمار في السماء'}[l];
+  document.querySelectorAll('footer p, footer .ft').forEach(el=>{
+    const ft=FOOTER[l];if(ft&&el.textContent.includes('Satellites'))el.textContent=ft;
+  });
+  document.querySelectorAll('.back').forEach(el=>{
+    const bt=BACK[l];if(bt)el.textContent=bt;
+  });
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    const t2=el.getAttribute('data-'+l);
+    if(t2)el.textContent=t2;
+    else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}
+  });
+  try{localStorage.setItem('aa-lang',l)}catch(e){}
+}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

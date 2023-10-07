@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellites in the Sky — Complete Project Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--magenta:#f687b3;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--border:rgba(110,140,255,0.06);--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Starfield */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(1px 1px at 10% 20%,rgba(200,210,230,.15),transparent),radial-gradient(1px 1px at 30% 60%,rgba(200,210,230,.1),transparent),radial-gradient(1px 1px at 50% 10%,rgba(200,210,230,.12),transparent),radial-gradient(1px 1px at 70% 80%,rgba(200,210,230,.08),transparent),radial-gradient(1px 1px at 90% 40%,rgba(200,210,230,.14),transparent);background-size:300px 300px;pointer-events:none;z-index:0}
+
+header{position:relative;z-index:1;text-align:center;padding:60px 30px 30px}
+header::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:900px;height:500px;background:radial-gradient(ellipse,rgba(110,140,255,0.03),transparent);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(110,140,255,0.06);border:1px solid rgba(110,140,255,0.12);border-radius:50px;padding:7px 20px;font-size:.68rem;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px;font-weight:500}
+header h1{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;line-height:1.08;margin-bottom:14px}
+header h1 .g1{color:var(--cyan)}.g2{color:var(--gold)}.g3{color:var(--purple)}
+header p{font-size:.9rem;color:var(--text-dim);max-width:560px;margin:0 auto;line-height:1.6}
+
+/* Stats */
+.stats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;padding:28px 20px;position:relative;z-index:1}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 22px;text-align:center;min-width:100px;transition:all .3s}
+.stat:hover{border-color:rgba(110,140,255,0.12)}
+.stat .sv{font-family:var(--mono);font-size:1.8rem;font-weight:500;line-height:1}
+.stat .sl{font-size:.46rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+
+/* Section */
+.section{max-width:1100px;margin:0 auto;padding:30px 20px;position:relative;z-index:1}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.section-num{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
+.section-title{font-family:var(--serif);font-size:1.3rem;font-weight:800}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.grid.wide{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+
+/* Link Card */
+.lc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;text-decoration:none;color:inherit;display:block;transition:all .4s;position:relative;overflow:hidden}
+.lc:hover{border-color:rgba(110,140,255,0.15);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+.lc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+
+.lc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.lc-icon{font-size:1.4rem}
+.lc-tag{font-family:var(--mono);font-size:.4rem;padding:2px 7px;border-radius:3px;letter-spacing:.05em;text-transform:uppercase}
+.lc-name{font-size:.92rem;font-weight:700;color:#fff;margin-bottom:3px}
+.lc-desc{font-size:.72rem;color:var(--text-dim);line-height:1.5;margin-bottom:8px}
+.lc-meta{display:flex;gap:10px;font-family:var(--mono);font-size:.44rem;color:var(--text-muted)}
+.lc-meta span{display:flex;align-items:center;gap:3px}
+
+/* Phase colors */
+.phase1::before{background:var(--cyan)}.phase2::before{background:var(--green)}.phase3::before{background:var(--orange)}.phase4::before{background:var(--red)}.phase5::before{background:var(--gold)}
+.ultimate::before{background:linear-gradient(90deg,var(--cyan),var(--green),var(--orange),var(--red),var(--gold))}
+.interactive::before{background:var(--purple)}.reference::before{background:var(--blue)}.planning::before{background:var(--text-dim)}
+
+/* Heritage banner */
+.heritage-banner{max-width:800px;margin:40px auto;padding:30px;background:rgba(232,193,112,0.02);border:1px solid rgba(232,193,112,0.08);border-radius:16px;text-align:center;position:relative;z-index:1}
+.heritage-banner h2{font-family:var(--serif);font-size:1.2rem;font-weight:800;color:var(--gold);margin-bottom:10px}
+.heritage-banner p{font-size:.82rem;color:var(--text-dim);line-height:1.6;max-width:550px;margin:0 auto}
+.heritage-banner strong{color:var(--gold)}
+.scholars{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.scholar{font-family:var(--mono);font-size:.48rem;padding:3px 9px;border-radius:4px;background:rgba(232,193,112,0.06);color:var(--gold);border:1px solid rgba(232,193,112,0.1)}
+
+footer{text-align:center;padding:50px 30px;position:relative;z-index:1}
+footer .ft{font-family:var(--serif);font-style:italic;color:var(--gold);opacity:.4;font-size:.82rem;margin-bottom:8px}
+footer p{font-size:.6rem;color:var(--text-muted)}
+
+@media(max-width:600px){.grid{grid-template-columns:1fr}.stats{gap:8px}.stat{min-width:70px;padding:10px 12px}.stat .sv{font-size:1.2rem}}
+
+/* === BRANDING + i18n === */
+
+/* Trilingual content show/hide */
+.t-en,.t-fr,.t-ar{display:none}
+[data-lang="en"] .t-en,[data-lang="fr"] .t-fr,[data-lang="ar"] .t-ar{display:inline}
+:not([data-lang]) .t-en{display:inline}
+.lc-name .t-fr,.lc-name .t-ar{font-family:'Amiri','Outfit',sans-serif}
+[data-lang="ar"] .lc{text-align:right}
+[data-lang="ar"] .grid{direction:rtl}
+
+/* RTL support */
+[data-lang="ar"] body{font-family:'Amiri','Outfit',system-ui,sans-serif}
+[data-lang="ar"] .section-num,[data-lang="ar"] .badge{direction:rtl}
+[data-lang="ar"] header h1{font-family:'Amiri',var(--serif)}
+[data-lang="ar"] .lc{text-align:right}
+[data-lang="ar"] .lc-head{flex-direction:row-reverse}
+[data-lang="ar"] .stat{direction:rtl}
+[data-lang="ar"] .heritage-banner{direction:rtl}
+
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge">🛰️ Complete Project</div>
+  <h1>Satellites in<br>the <span class="g1">Sky</span></h1>
+  <p>23 standalone HTML experiences exploring real-time satellite tracking, orbital mechanics, Islamic astronomical heritage, and the science of space — all in single-file, zero-dependency web apps.</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="sv" style="color:var(--cyan)">59</div><div class="sl"><span class="t-en">HTML Files</span><span class="t-fr">Fichiers HTML</span><span class="t-ar">ملفات HTML</span></div></div>
+  <div class="stat"><div class="sv" style="color:var(--blue)">5</div><div class="sl"><span class="t-en">Core Modes</span><span class="t-fr">Modes Principaux</span><span class="t-ar">أنماط أساسية</span></div></div>
+  <div class="stat"><div class="sv" style="color:var(--purple)">41</div><div class="sl"><span class="t-en">Interactive Exp.</span><span class="t-fr">Exp. Interactives</span><span class="t-ar">تجارب تفاعلية</span></div></div>
+  <div class="stat"><div class="sv" style="color:var(--gold)">25+</div><div class="sl"><span class="t-en">Arabic Star Names</span><span class="t-fr">Noms d'Étoiles</span><span class="t-ar">أسماء نجوم عربية</span></div></div>
+  <div class="stat"><div class="sv" style="color:var(--orange)">1.1 MB</div><div class="sl"><span class="t-en">Total Size</span><span class="t-fr">Taille Totale</span><span class="t-ar">الحجم الكلي</span></div></div>
+  <div class="stat"><div class="sv" style="color:var(--green)">0</div><div class="sl"><span class="t-en">Dependencies</span><span class="t-fr">Dépendances</span><span class="t-ar">اعتماديات</span></div></div>
+</div>
+
+<!-- CORE PHASES -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">01 — Core Phases</div>
+    <div class="section-title">The Five Modes</div>
+  </div>
+  <div class="grid">
+    <a class="lc phase1" href="aa-night-sky-window-phase1.html">
+      <div class="lc-head"><span class="lc-icon">🌌</span><span class="lc-tag" style="background:rgba(92,224,214,0.1);color:var(--cyan)">Phase 1</span></div>
+      <div class="lc-name"><span class="t-en">Night Sky Window</span><span class="t-fr">Fenêtre du Ciel Nocturne</span><span class="t-ar">نافذة السماء الليلية</span></div>
+      <div class="lc-desc"><span class="t-en">Real-time sky view with ~150 live satellites, ISS highlighting, orbit trails, gyroscope support. The foundation.</span><span class="t-fr">Vue du ciel en temps réel avec ~150 satellites, suivi de l'ISS, traînées orbitales, support gyroscope. La base.</span><span class="t-ar">عرض حي للسماء مع ~١٥٠ قمراً صناعياً، تتبع محطة الفضاء، مسارات مدارية، دعم الجيروسكوب. الأساس.</span></div>
+      <div class="lc-meta"><span>38 KB</span><span>aa-night-sky-window-phase1</span></div>
+    </a>
+    <a class="lc phase2" href="aa-explorer-depth-phase2.html">
+      <div class="lc-head"><span class="lc-icon">🔍</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Phase 2</span></div>
+      <div class="lc-name"><span class="t-en">Explorer Depth</span><span class="t-fr">Explorateur en Profondeur</span><span class="t-ar">المستكشف المعمّق</span></div>
+      <div class="lc-desc"><span class="t-en">25+ satellite patterns, mission cards, country flags, size comparisons, mini globe, stats panel, ambient audio.</span><span class="t-fr">25+ modèles de satellites, cartes de mission, drapeaux, comparaisons de taille, mini-globe, panneau de statistiques, audio ambiant.</span><span class="t-ar">٢٥+ نمط أقمار، بطاقات مهام، أعلام، مقارنات حجم، كرة أرضية مصغرة، لوحة إحصائيات، صوت محيطي.</span></div>
+      <div class="lc-meta"><span>51 KB</span><span>aa-explorer-depth-phase2</span></div>
+    </a>
+    <a class="lc phase3" href="aa-mission-control-phase3.html">
+      <div class="lc-head"><span class="lc-icon">📡</span><span class="lc-tag" style="background:rgba(246,173,85,0.1);color:var(--orange)">Phase 3</span></div>
+      <div class="lc-name"><span class="t-en">Mission Control</span><span class="t-fr">Contrôle de Mission</span><span class="t-ar">التحكم بالمهمة</span></div>
+      <div class="lc-desc"><span class="t-en">Pro mode with radar UI, orbital elements, constellation groupings, ground track map, layer bar chart.</span><span class="t-fr">Mode pro avec interface radar, éléments orbitaux, groupes de constellations, carte des traces au sol, graphiques.</span><span class="t-ar">وضع متقدم مع واجهة رادار، عناصر مدارية، تجمعات كوكبات، خريطة مسار أرضي، رسوم بيانية.</span></div>
+      <div class="lc-meta"><span>50 KB</span><span>aa-mission-control-phase3</span></div>
+    </a>
+    <a class="lc phase4" href="aa-orbital-science-phase4.html">
+      <div class="lc-head"><span class="lc-icon">🧪</span><span class="lc-tag" style="background:rgba(252,129,129,0.1);color:var(--red)">Phase 4</span></div>
+      <div class="lc-name"><span class="t-en">Orbital Science</span><span class="t-fr">Sciences Orbitales</span><span class="t-ar">علوم المدارات</span></div>
+      <div class="lc-desc"><span class="t-en">Expert mode: TLE decode, perturbation forces, Doppler shift, Kessler sim, heatmaps, CSV/JSON export.</span><span class="t-fr">Mode expert : décodage TLE, forces de perturbation, effet Doppler, simulation Kessler, cartes thermiques, export CSV/JSON.</span><span class="t-ar">وضع خبير: فك تشفير TLE، قوى الاضطراب، تأثير دوبلر، محاكاة كيسلر، خرائط حرارية، تصدير CSV/JSON.</span></div>
+      <div class="lc-meta"><span>47 KB</span><span>aa-orbital-science-phase4</span></div>
+    </a>
+    <a class="lc phase5" href="aa-islamic-heritage-phase5.html">
+      <div class="lc-head"><span class="lc-icon">☽</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">Phase 5</span></div>
+      <div class="lc-name"><span class="t-en">Islamic Heritage</span><span class="t-fr">Patrimoine Islamique</span><span class="t-ar">التراث الإسلامي</span></div>
+      <div class="lc-desc"><span class="t-en">9 astronomers, Arabic star names, etymology, astrolabe comparison, modern space programs, contextual triggers.</span><span class="t-fr">9 astronomes, noms d'étoiles arabes, étymologie, comparaison d'astrolabes, programmes spatiaux modernes, déclencheurs contextuels.</span><span class="t-ar">٩ فلكيين، أسماء نجوم عربية، اشتقاق لغوي، مقارنة إسطرلابات، برامج فضاء حديثة، محفزات سياقية.</span></div>
+      <div class="lc-meta"><span>52 KB</span><span>aa-islamic-heritage-phase5</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- ULTIMATE -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">02 — The Ultimate Build</div>
+    <div class="section-title">All Five Modes in One</div>
+  </div>
+  <div class="grid">
+    <a class="lc ultimate" href="aa-satellites-ultimate.html">
+      <div class="lc-head"><span class="lc-icon">🌟</span><span class="lc-tag" style="background:linear-gradient(90deg,rgba(92,224,214,0.1),rgba(232,193,112,0.1));color:var(--gold)">Ultimate</span></div>
+      <div class="lc-name"><span class="t-en">Satellites Ultimate</span><span class="t-fr">Satellites Ultime</span><span class="t-ar">الأقمار الشاملة</span></div>
+      <div class="lc-desc"><span class="t-en">All 5 phases merged into a single unified application. Switch between Night Sky, Explorer, Mission Control, Science, and Heritage modes.</span><span class="t-fr">Les 5 phases fusionnées en une seule application unifiée. Basculez entre Ciel Nocturne, Explorateur, Contrôle, Science et Patrimoine.</span><span class="t-ar">الأنماط الخمسة مدمجة في تطبيق واحد موحد. تنقل بين السماء، المستكشف، التحكم، العلوم، والتراث.</span></div>
+      <div class="lc-meta"><span>68 KB</span><span>aa-satellites-ultimate</span><span>⭐ Flagship</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- INTERACTIVE EXPERIENCES -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">03 — Interactive Experiences</div>
+    <div class="section-title">The Genius Ideas — All 8 Built</div>
+  </div>
+  <div class="grid wide">
+    <a class="lc interactive" href="aa-time-machine.html">
+      <div class="lc-head"><span class="lc-icon">⏳</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Time</span></div>
+      <div class="lc-name"><span class="t-en">Time Machine</span><span class="t-fr">Machine à Remonter le Temps</span><span class="t-ar">آلة الزمن</span></div>
+      <div class="lc-desc"><span class="t-en">Watch space fill up from 1957 (Sputnik, 1 object) to 2025 (36,500+). Animated particles, era milestones, Cold War to Starlink.</span><span class="t-fr">Regardez l'espace se remplir de 1957 (Spoutnik, 1 objet) à 2025 (36 500+). Particules animées, jalons historiques.</span><span class="t-ar">شاهد الفضاء يمتلئ من ١٩٥٧ (سبوتنيك، جسم واحد) إلى ٢٠٢٥ (٣٦,٥٠٠+). جسيمات متحركة، معالم تاريخية.</span></div>
+      <div class="lc-meta"><span>15 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-math-lab.html">
+      <div class="lc-head"><span class="lc-icon">🧮</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Math</span></div>
+      <div class="lc-name"><span class="t-en">Orbital Math Lab</span><span class="t-fr">Labo de Maths Orbitales</span><span class="t-ar">مختبر الرياضيات المدارية</span></div>
+      <div class="lc-desc"><span class="t-en">Real orbital math problems from live satellite data. Calculate periods, velocities, signal delays. Three difficulty levels, scoring, heritage connections.</span><span class="t-fr">Vrais problèmes de maths orbitales. Calculez périodes, vitesses, délais de signal. Trois niveaux, score, liens patrimoniaux.</span><span class="t-ar">مسائل رياضيات مدارية حقيقية. احسب الفترات والسرعات وتأخير الإشارات. ثلاثة مستويات، نقاط، روابط تراثية.</span></div>
+      <div class="lc-meta"><span>15 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-zoom-out.html">
+      <div class="lc-head"><span class="lc-icon">🔍</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Scale</span></div>
+      <div class="lc-name"><span class="t-en">Zoom Out to Orbits</span><span class="t-fr">Zoom Arrière vers les Orbites</span><span class="t-ar">تصغير نحو المدارات</span></div>
+      <div class="lc-desc"><span class="t-en">Scroll from eye level → clouds → aircraft → edge of space → LEO → GPS → GEO → Moon. 8 scale levels with satellites at correct distances.</span><span class="t-fr">Défilez du niveau des yeux → nuages → avions → bord de l'espace → LEO → GPS → GEO → Lune. 8 niveaux d'échelle.</span><span class="t-ar">مرر من مستوى العين → السحب → الطائرات → حافة الفضاء → LEO → GPS → GEO → القمر. ٨ مستويات.</span></div>
+      <div class="lc-meta"><span>12 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-culture-cards.html">
+      <div class="lc-head"><span class="lc-icon">🌍</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Geopolitics</span></div>
+      <div class="lc-name"><span class="t-en">Culture Cards</span><span class="t-fr">Cartes Culturelles</span><span class="t-ar">بطاقات ثقافية</span></div>
+      <div class="lc-desc"><span class="t-en">10 launch sites worldwide: Baikonur, Cape Canaveral, Kourou, Jiuquan, Sriharikota, Tanegashima. Why each was chosen. Geography lessons.</span><span class="t-fr">10 sites de lancement : Baïkonour, Cap Canaveral, Kourou, Jiuquan, Sriharikota, Tanegashima. Pourquoi chacun a été choisi.</span><span class="t-ar">١٠ مواقع إطلاق عالمية: بايكونور، كيب كانافيرال، كورو، جيوتشيوان، سريهاريكوتا، تانيغاشيما.</span></div>
+      <div class="lc-meta"><span>14 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-sky-journal.html">
+      <div class="lc-head"><span class="lc-icon">📓</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Personal</span></div>
+      <div class="lc-name"><span class="t-en">My Sky Journal</span><span class="t-fr">Mon Journal du Ciel</span><span class="t-ar">مفكرتي للسماء</span></div>
+      <div class="lc-desc"><span class="t-en">Personal satellite observation log. 14 days of entries, achievement badges, personal records, stats dashboard. Export CSV/JSON for school projects.</span><span class="t-fr">Journal d'observation personnel. 14 jours, badges, records, tableau de bord. Export CSV/JSON pour projets scolaires.</span><span class="t-ar">سجل رصد شخصي للأقمار. ١٤ يوماً، شارات إنجاز، أرقام قياسية، لوحة إحصائيات. تصدير CSV/JSON.</span></div>
+      <div class="lc-meta"><span>14 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-satellite-graveyard.html">
+      <div class="lc-head"><span class="lc-icon">💀</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">End of Life</span></div>
+      <div class="lc-name"><span class="t-en">Satellite Graveyard</span><span class="t-fr">Cimetière de Satellites</span><span class="t-ar">مقبرة الأقمار</span></div>
+      <div class="lc-desc"><span class="t-en">Where old satellites go to die. Graveyard orbit, Point Nemo, de-orbiting, ghost gallery of famous dead satellites. The environmental question.</span><span class="t-fr">Où meurent les vieux satellites. Orbite cimetière, Point Nemo, désorbitation, galerie fantôme. La question environnementale.</span><span class="t-ar">أين تذهب الأقمار القديمة لتموت. مدار المقبرة، نقطة نيمو، الخروج من المدار، معرض الأشباح.</span></div>
+      <div class="lc-meta"><span>12 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-launch-countdown.html">
+      <div class="lc-head"><span class="lc-icon">🚀</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Live</span></div>
+      <div class="lc-name"><span class="t-en">Launch Countdown</span><span class="t-fr">Compte à Rebours</span><span class="t-ar">العد التنازلي</span></div>
+      <div class="lc-desc"><span class="t-en">8 upcoming missions with live countdown timers. Falcon 9, Ariane 6, Long March, GSLV. What each launch means for your sky.</span><span class="t-fr">8 missions avec compte à rebours. Falcon 9, Ariane 6, Longue Marche, GSLV. Ce que chaque lancement signifie pour votre ciel.</span><span class="t-ar">٨ مهام قادمة مع عد تنازلي. فالكون ٩، أريان ٦، المسيرة الطويلة، GSLV. ماذا يعني كل إطلاق لسمائك.</span></div>
+      <div class="lc-meta"><span>10 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-eclipse-hunter.html">
+      <div class="lc-head"><span class="lc-icon">🌑</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Physics</span></div>
+      <div class="lc-name"><span class="t-en">Eclipse Hunter</span><span class="t-fr">Chasseur d'Éclipses</span><span class="t-ar">صائد الكسوف</span></div>
+      <div class="lc-desc"><span class="t-en">Predict when satellites enter Earth's shadow and vanish. Animated shadow cone, countdown timer, penumbra physics. Ibn al-Haytham's optics at orbital scale.</span><span class="t-fr">Prédisez quand les satellites entrent dans l'ombre terrestre. Cône d'ombre animé, physique de la pénombre. L'optique d'Ibn al-Haytham.</span><span class="t-ar">تنبأ بدخول الأقمار في ظل الأرض. مخروط ظل متحرك، فيزياء شبه الظل. بصريات ابن الهيثم بمقياس مداري.</span></div>
+      <div class="lc-meta"><span>16 KB</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- SIMULATIONS & INSTRUMENTS -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">04 — Simulations & Instruments</div>
+    <div class="section-title">Physics Playgrounds</div>
+  </div>
+  <div class="grid">
+    <a class="lc interactive" href="aa-orbital-playground.html">
+      <div class="lc-head"><span class="lc-icon">🎯</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">Physics</span></div>
+      <div class="lc-name"><span class="t-en">Orbital Playground</span><span class="t-fr">Terrain de Jeu Orbital</span><span class="t-ar">ساحة المدارات</span></div>
+      <div class="lc-desc"><span class="t-en">Click + drag to launch satellites. Real Newtonian gravity. Live orbital elements. Adjustable parameters. Kepler's laws in action.</span><span class="t-fr">Cliquez + glissez pour lancer des satellites. Vraie gravité newtonienne. Éléments orbitaux en direct. Lois de Kepler en action.</span><span class="t-ar">انقر واسحب لإطلاق الأقمار. جاذبية نيوتن الحقيقية. عناصر مدارية حية. قوانين كبلر عملياً.</span></div>
+      <div class="lc-meta"><span>17 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-kessler-cascade.html">
+      <div class="lc-head"><span class="lc-icon">💥</span><span class="lc-tag" style="background:rgba(252,129,129,0.1);color:var(--red)">Simulation</span></div>
+      <div class="lc-name"><span class="t-en">Kessler Cascade</span><span class="t-fr">Cascade de Kessler</span><span class="t-ar">تسلسل كيسلر</span></div>
+      <div class="lc-desc"><span class="t-en">Orbital debris chain reaction simulator. Trigger collisions, watch fragments multiply. Live HUD, event timeline, status escalation.</span><span class="t-fr">Simulateur de réaction en chaîne de débris orbitaux. Déclenchez des collisions, observez la multiplication. HUD en direct.</span><span class="t-ar">محاكي تفاعل سلسلي لحطام المدارات. أطلق الاصطدامات وشاهد تكاثر الشظايا. عرض مباشر.</span></div>
+      <div class="lc-meta"><span>18 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-astrolabe-interactive.html">
+      <div class="lc-head"><span class="lc-icon">⚙️</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">Heritage</span></div>
+      <div class="lc-name"><span class="t-en">Interactive Astrolabe</span><span class="t-fr">Astrolabe Interactif</span><span class="t-ar">الإسطرلاب التفاعلي</span></div>
+      <div class="lc-desc"><span class="t-en">Working virtual astrolabe with 16 Arabic-named stars, ecliptic ring, tympan grid, alidade. Drag to rotate. Set to current time. Al-Zarqali dedication.</span><span class="t-fr">Astrolabe virtuel fonctionnel avec 16 étoiles arabes, écliptique, tympan, alidade. Glissez pour tourner. Dédié à al-Zarqali.</span><span class="t-ar">إسطرلاب افتراضي يعمل مع ١٦ نجمة عربية، دائرة البروج، الصفيحة، العضادة. اسحب للدوران. إهداء للزرقالي.</span></div>
+      <div class="lc-meta"><span>23 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-sky-music.html">
+      <div class="lc-head"><span class="lc-icon">🎵</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Audio</span></div>
+      <div class="lc-name"><span class="t-en">Sky Music</span><span class="t-fr">Musique du Ciel</span><span class="t-ar">موسيقى السماء</span></div>
+      <div class="lc-desc"><span class="t-en">Generative ambient soundscape from live satellites. Altitude → pitch, azimuth → pan. ISS golden chord. Four musical scales including Arabic Hijaz.</span><span class="t-fr">Paysage sonore généré par satellites. Altitude → tonalité, azimut → panoramique. Accord doré ISS. Quatre gammes dont le Hijaz arabe.</span><span class="t-ar">منظر صوتي محيطي مولّد من الأقمار. الارتفاع → الطبقة، السمت → التوزيع. وتر ذهبي لمحطة الفضاء. أربعة مقامات منها الحجاز.</span></div>
+      <div class="lc-meta"><span>20 KB</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- REFERENCE -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">05 — Reference & Guides</div>
+    <div class="section-title">Learning Resources</div>
+  </div>
+  <div class="grid">
+    <a class="lc reference" href="aa-altitude-ladder.html">
+      <div class="lc-head"><span class="lc-icon">📏</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">Scale</span></div>
+      <div class="lc-name"><span class="t-en">Altitude Ladder</span><span class="t-fr">Échelle d'Altitudes</span><span class="t-ar">سلم الارتفاعات</span></div>
+      <div class="lc-desc"><span class="t-en">Scrolling scale visualization from ground to Moon. 13 rungs with heritage callouts. Feel how thin the atmosphere is.</span><span class="t-fr">Visualisation par défilement du sol à la Lune. 13 paliers avec repères patrimoniaux. Ressentez la finesse de l'atmosphère.</span><span class="t-ar">عرض تدريجي بالتمرير من الأرض إلى القمر. ١٣ درجة مع إشارات تراثية. اشعر بدقة الغلاف الجوي.</span></div>
+      <div class="lc-meta"><span>25 KB</span></div>
+    </a>
+    <a class="lc reference" href="aa-spotters-guide.html">
+      <div class="lc-head"><span class="lc-icon">🔭</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">Guide</span></div>
+      <div class="lc-name"><span class="t-en">Spotter's Field Guide</span><span class="t-fr">Guide d'Observation</span><span class="t-ar">دليل الراصد الميداني</span></div>
+      <div class="lc-desc"><span class="t-en">14 satellite types: how to identify ISS, Starlink, GPS, Hubble, weather sats, debris. Brightness ratings, orbit specs, "How to Spot" guides.</span><span class="t-fr">14 types de satellites : identifier l'ISS, Starlink, GPS, Hubble, météo, débris. Brillance, specs orbitales, guides d'observation.</span><span class="t-ar">١٤ نوعاً من الأقمار: كيف تحدد المحطة الدولية، ستارلنك، GPS، هابل، الطقس، الحطام. السطوع، المواصفات، أدلة الرصد.</span></div>
+      <div class="lc-meta"><span>20 KB</span></div>
+    </a>
+    <a class="lc reference" href="aa-space-timeline.html">
+      <div class="lc-head"><span class="lc-icon">📜</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">History</span></div>
+      <div class="lc-name"><span class="t-en">5,000 Year Timeline</span><span class="t-fr">Chronologie de 5 000 Ans</span><span class="t-ar">جدول زمني لـ٥٠٠٠ سنة</span></div>
+      <div class="lc-desc"><span class="t-en">40+ milestones from Babylon (3000 BCE) to Starlink (2025). Six color-coded eras. Islamic Golden Age at the center. Heritage connection callouts.</span><span class="t-fr">40+ jalons de Babylone (3000 av. J.-C.) à Starlink (2025). Six ères colorées. L'Âge d'Or islamique au centre. Liens patrimoniaux.</span><span class="t-ar">٤٠+ معلماً من بابل (٣٠٠٠ ق.م) إلى ستارلنك (٢٠٢٥). ست حقب ملونة. العصر الذهبي الإسلامي في المركز.</span></div>
+      <div class="lc-meta"><span>21 KB</span></div>
+    </a>
+    <a class="lc reference" href="aa-showcase-gallery.html">
+      <div class="lc-head"><span class="lc-icon">🖼️</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">Portfolio</span></div>
+      <div class="lc-name"><span class="t-en">Showcase Gallery</span><span class="t-fr">Galerie Vitrine</span><span class="t-ar">معرض العروض</span></div>
+      <div class="lc-desc"><span class="t-en">Cinematic portfolio page for the project. Mode cards, phase timeline, scholar cards, feature highlights, tech stack.</span><span class="t-fr">Page vitrine cinématique du projet. Cartes de mode, chronologie, cartes de savants, fonctionnalités, pile technique.</span><span class="t-ar">صفحة عرض سينمائية للمشروع. بطاقات الأنماط، الجدول الزمني، بطاقات العلماء، المميزات.</span></div>
+      <div class="lc-meta"><span>29 KB</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- PLANNING -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">06 — Planning</div>
+    <div class="section-title">The Roadmap</div>
+  </div>
+  <div class="grid">
+    <a class="lc planning" href="satellites_roadmap.html">
+      <div class="lc-head"><span class="lc-icon">🗺️</span><span class="lc-tag" style="background:rgba(200,210,230,0.08);color:var(--text-dim)">Planning</span></div>
+      <div class="lc-name"><span class="t-en">Project Roadmap</span><span class="t-fr">Feuille de Route</span><span class="t-ar">خارطة المشروع</span></div>
+      <div class="lc-desc"><span class="t-en">The original 5-phase roadmap with feature specifications, tech stack, design system, and all 16 genius ideas that were eventually built.</span><span class="t-fr">La feuille de route originale en 5 phases avec spécifications, pile technique, système de design et les 16 idées construites.</span><span class="t-ar">خارطة الطريق الأصلية من ٥ مراحل مع المواصفات والتصميم و١٦ فكرة تم بناؤها.</span></div>
+      <div class="lc-meta"><span>51 KB</span><span>Where it all began</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- BEYOND THE ROADMAP -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">07 — Beyond the Roadmap</div>
+    <div class="section-title">8 Bonus Experiences</div>
+  </div>
+  <div class="grid wide">
+    <a class="lc interactive" href="aa-arabic-star-map.html">
+      <div class="lc-head"><span class="lc-icon">⭐</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">Heritage</span></div>
+      <div class="lc-name"><span class="t-en">Arabic Star Map</span><span class="t-fr">Carte des Étoiles Arabes</span><span class="t-ar">خريطة النجوم العربية</span></div>
+      <div class="lc-desc"><span class="t-en">Interactive sky chart with 25+ stars bearing Arabic names. Click each for etymology, meaning, Arabic script, and scholar attribution. Rotatable, searchable.</span><span class="t-fr">Carte du ciel avec 25+ étoiles arabes. Cliquez pour l'étymologie, le sens, l'écriture arabe et l'attribution. Rotative, cherchable.</span><span class="t-ar">خريطة سماء تفاعلية مع ٢٥+ نجمة عربية. انقر للاشتقاق والمعنى والخط العربي. قابلة للدوران والبحث.</span></div>
+      <div class="lc-meta"><span>19 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-orbit-compare.html">
+      <div class="lc-head"><span class="lc-icon">⚖️</span><span class="lc-tag" style="background:rgba(92,224,214,0.1);color:var(--cyan)">Tool</span></div>
+      <div class="lc-name"><span class="t-en">Orbit Compare</span><span class="t-fr">Comparaison d'Orbites</span><span class="t-ar">مقارنة المدارات</span></div>
+      <div class="lc-desc"><span class="t-en">Side-by-side comparison of any two satellites. Altitude, speed, period, circumference, signal delay. Visual scale diagrams. 12 satellites including the Moon.</span><span class="t-fr">Comparaison côte à côte. Altitude, vitesse, période, retard signal. Diagrammes d'échelle. 12 satellites dont la Lune.</span><span class="t-ar">مقارنة جنباً إلى جنب. الارتفاع، السرعة، الفترة، تأخير الإشارة. رسوم بيانية. ١٢ قمراً بما فيها القمر.</span></div>
+      <div class="lc-meta"><span>11 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-space-weather.html">
+      <div class="lc-head"><span class="lc-icon">☀️</span><span class="lc-tag" style="background:rgba(246,173,85,0.1);color:var(--orange)">Dashboard</span></div>
+      <div class="lc-name"><span class="t-en">Space Weather</span><span class="t-fr">Météo Spatiale</span><span class="t-ar">طقس الفضاء</span></div>
+      <div class="lc-desc"><span class="t-en">Solar wind, Kp index, X-ray flux, proton storms, aurora forecast. Satellite impact assessment. 24-hour history chart. Real NOAA-style metrics.</span><span class="t-fr">Vent solaire, indice Kp, flux X, tempêtes de protons, prévision d'aurores. Évaluation d'impact satellite. Graphique 24h.</span><span class="t-ar">رياح شمسية، مؤشر Kp، تدفق أشعة X، عواصف بروتونية، توقع الشفق القطبي. تقييم التأثير على الأقمار.</span></div>
+      <div class="lc-meta"><span>13 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-satellite-bingo.html">
+      <div class="lc-head"><span class="lc-icon">🎯</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Game</span></div>
+      <div class="lc-name"><span class="t-en">Satellite Bingo</span><span class="t-fr">Bingo Satellite</span><span class="t-ar">بينغو الأقمار</span></div>
+      <div class="lc-desc"><span class="t-en">Family spotting game! 5×5 bingo cards with satellite events to spot. Easy/Medium/Expert modes. Print-friendly. Click to mark, win with 5 in a row.</span><span class="t-fr">Jeu de repérage familial ! Cartes bingo 5×5 d'événements satellites. Facile/Moyen/Expert. Imprimable. Gagnez avec 5 en ligne.</span><span class="t-ar">لعبة رصد عائلية! بطاقات بينغو ٥×٥ لأحداث الأقمار. سهل/متوسط/خبير. قابلة للطباعة. فُز بخمسة في صف.</span></div>
+      <div class="lc-meta"><span>13 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-signal-journey.html">
+      <div class="lc-head"><span class="lc-icon">📡</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Explainer</span></div>
+      <div class="lc-name"><span class="t-en">Signal Journey</span><span class="t-fr">Voyage du Signal</span><span class="t-ar">رحلة الإشارة</span></div>
+      <div class="lc-desc"><span class="t-en">Trace a GPS signal from atomic clock → transmission → ionosphere → troposphere → multipath → your phone. 8 steps, 67 milliseconds, physics at every stage.</span><span class="t-fr">Tracez un signal GPS : horloge atomique → transmission → ionosphère → troposphère → votre téléphone. 8 étapes, 67 ms.</span><span class="t-ar">تتبع إشارة GPS: ساعة ذرية → إرسال → أيونوسفير → تروبوسفير → هاتفك. ٨ خطوات، ٦٧ ميلي ثانية.</span></div>
+      <div class="lc-meta"><span>15 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-satellite-anatomy.html">
+      <div class="lc-head"><span class="lc-icon">🔧</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">Engineering</span></div>
+      <div class="lc-name"><span class="t-en">Satellite Anatomy</span><span class="t-fr">Anatomie d'un Satellite</span><span class="t-ar">تشريح القمر الصناعي</span></div>
+      <div class="lc-desc"><span class="t-en">Exploded diagram of satellite internals. Solar panels, bus, antenna, thrusters, reaction wheels, star trackers. 4 types: Comms, GPS, Earth Obs, CubeSat.</span><span class="t-fr">Diagramme éclaté d'un satellite. Panneaux solaires, bus, antenne, propulseurs, roues de réaction. 4 types : Comms, GPS, Obs, CubeSat.</span><span class="t-ar">مخطط مفكك للقمر الصناعي. ألواح شمسية، هيكل، هوائي، محركات، عجلات تفاعل. ٤ أنواع: اتصالات، GPS، رصد، CubeSat.</span></div>
+      <div class="lc-meta"><span>22 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-ground-stations.html">
+      <div class="lc-head"><span class="lc-icon">🌐</span><span class="lc-tag" style="background:rgba(92,224,214,0.1);color:var(--cyan)">Infrastructure</span></div>
+      <div class="lc-name"><span class="t-en">Ground Station Network</span><span class="t-fr">Réseau de Stations Terrestres</span><span class="t-ar">شبكة المحطات الأرضية</span></div>
+      <div class="lc-desc"><span class="t-en">12 stations across 6 networks: NASA DSN, ESA ESTRACK, NORAD, SatNOGS amateur, commercial. Plus historic observatories (Maragheh, Samarkand). Map view.</span><span class="t-fr">12 stations sur 6 réseaux : NASA DSN, ESA ESTRACK, NORAD, SatNOGS amateur, commercial. Plus observatoires historiques.</span><span class="t-ar">١٢ محطة عبر ٦ شبكات: ناسا DSN، إيسا ESTRACK، نوراد، SatNOGS هواة، تجاري. مع مراصد تاريخية.</span></div>
+      <div class="lc-meta"><span>14 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-frequency-spectrum.html">
+      <div class="lc-head"><span class="lc-icon">📻</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Radio</span></div>
+      <div class="lc-name"><span class="t-en">Frequency Spectrum</span><span class="t-fr">Spectre de Fréquences</span><span class="t-ar">طيف الترددات</span></div>
+      <div class="lc-desc"><span class="t-en">Interactive radio spectrum from VHF to W-band. GPS L1/L2/L5, Starlink Ku/Ka, deep space X-band, ISS voice. Click each band for details and users.</span><span class="t-fr">Spectre radio interactif du VHF à la bande W. GPS, Starlink Ku/Ka, espace profond. Cliquez chaque bande pour les détails.</span><span class="t-ar">طيف راديو تفاعلي من VHF إلى الموجة W. GPS، ستارلنك Ku/Ka، الفضاء العميق. انقر على كل نطاق للتفاصيل.</span></div>
+      <div class="lc-meta"><span>13 KB</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- DEEP CUTS -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">08 — Deep Cuts</div>
+    <div class="section-title">8 More Experiences</div>
+  </div>
+  <div class="grid wide">
+    <a class="lc interactive" href="aa-constellation-designer.html">
+      <div class="lc-head"><span class="lc-icon">🛰️</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Design</span></div>
+      <div class="lc-name"><span class="t-en">Constellation Designer</span><span class="t-fr">Concepteur de Constellations</span><span class="t-ar">مصمم الكوكبات</span></div>
+      <div class="lc-desc"><span class="t-en">Design your own satellite constellation. Choose sats, planes, altitude, inclination. See 3D visualization, coverage, cost. 8 presets: GPS, Starlink, Iridium, OneWeb.</span><span class="t-fr">Concevez votre constellation. Choisissez satellites, plans, altitude, inclinaison. Visualisation 3D, couverture, coût. 8 préréglages.</span><span class="t-ar">صمم كوكبتك الخاصة. اختر الأقمار، المستويات، الارتفاع، الميل. عرض ثلاثي الأبعاد، تغطية، تكلفة. ٨ إعدادات مسبقة.</span></div>
+      <div class="lc-meta"><span>16 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-doppler-demo.html">
+      <div class="lc-head"><span class="lc-icon">🔊</span><span class="lc-tag" style="background:rgba(246,173,85,0.1);color:var(--orange)">Audio</span></div>
+      <div class="lc-name"><span class="t-en">Doppler Effect</span><span class="t-fr">Effet Doppler</span><span class="t-ar">تأثير دوبلر</span></div>
+      <div class="lc-desc"><span class="t-en">Hear and see the Doppler shift as satellites pass. Audio frequency changes in real time. ISS, GPS, meteor presets. Wavefront compression visualization.</span><span class="t-fr">Écoutez et voyez l'effet Doppler au passage des satellites. Fréquence audio en temps réel. Préréglages ISS, GPS, météore.</span><span class="t-ar">اسمع وشاهد تأثير دوبلر عند مرور الأقمار. تغير التردد الصوتي مباشرة. إعدادات المحطة الدولية، GPS، شهاب.</span></div>
+      <div class="lc-meta"><span>10 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-reentry.html">
+      <div class="lc-head"><span class="lc-icon">🔥</span><span class="lc-tag" style="background:rgba(252,129,129,0.1);color:var(--red)">Simulation</span></div>
+      <div class="lc-name"><span class="t-en">Re-entry Simulator</span><span class="t-fr">Simulateur de Rentrée</span><span class="t-ar">محاكي العودة الجوية</span></div>
+      <div class="lc-desc"><span class="t-en">Watch satellites burn up in the atmosphere. 7 phases from orbital decay to impact. CubeSat, satellite, and station presets. Real heating physics and breakup.</span><span class="t-fr">Regardez les satellites brûler dans l'atmosphère. 7 phases du déclin orbital à l'impact. Physique de chauffage réelle.</span><span class="t-ar">شاهد الأقمار تحترق في الغلاف الجوي. ٧ مراحل من الانحلال المداري إلى الارتطام. فيزياء تسخين حقيقية.</span></div>
+      <div class="lc-meta"><span>9 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-space-law.html">
+      <div class="lc-head"><span class="lc-icon">⚖️</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">Governance</span></div>
+      <div class="lc-name"><span class="t-en">Space Law 101</span><span class="t-fr">Droit Spatial 101</span><span class="t-ar">مدخل لقانون الفضاء</span></div>
+      <div class="lc-desc"><span class="t-en">Interactive guide to space treaties: Outer Space Treaty, Liability Convention, Moon Agreement, Artemis Accords. FAQ + quiz. "Who owns the Moon?"</span><span class="t-fr">Guide interactif des traités spatiaux : Traité de l'Espace, Convention de Responsabilité, Accords Artémis. Quiz + FAQ.</span><span class="t-ar">دليل تفاعلي لمعاهدات الفضاء: معاهدة الفضاء الخارجي، اتفاقية المسؤولية، اتفاقيات أرتميس. اختبار + أسئلة.</span></div>
+      <div class="lc-meta"><span>12 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-pale-blue-dot.html">
+      <div class="lc-head"><span class="lc-icon">🌍</span><span class="lc-tag" style="background:rgba(92,224,214,0.1);color:var(--cyan)">Contemplative</span></div>
+      <div class="lc-name"><span class="t-en">Pale Blue Dot</span><span class="t-fr">Point Bleu Pâle</span><span class="t-ar">النقطة الزرقاء الباهتة</span></div>
+      <div class="lc-desc"><span class="t-en">Scroll-driven zoom from Earth to the void. 10 scale levels with reflections on perspective. Sagan's words at the end. Satellites shrink to nothing.</span><span class="t-fr">Zoom par défilement de la Terre au vide. 10 niveaux d'échelle avec réflexions. Les mots de Sagan à la fin.</span><span class="t-ar">تصغير بالتمرير من الأرض إلى الفراغ. ١٠ مستويات مع تأملات. كلمات ساغان في النهاية.</span></div>
+      <div class="lc-meta"><span>6 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-orbit-decay.html">
+      <div class="lc-head"><span class="lc-icon">📉</span><span class="lc-tag" style="background:rgba(252,129,129,0.1);color:var(--red)">Physics</span></div>
+      <div class="lc-name"><span class="t-en">Orbit Decay</span><span class="t-fr">Déclin Orbital</span><span class="t-ar">انحلال المدار</span></div>
+      <div class="lc-desc"><span class="t-en">Watch atmospheric drag slowly pull satellites down. Adjustable mass, area, solar activity. ISS, Starlink, Hubble, CubeSat presets. Starlink storm scenario.</span><span class="t-fr">La traînée atmosphérique tire lentement les satellites. Masse, surface, activité solaire ajustables. Scénario tempête Starlink.</span><span class="t-ar">شاهد السحب الجوي يسحب الأقمار ببطء. كتلة ومساحة ونشاط شمسي قابلة للتعديل. سيناريو عاصفة ستارلنك.</span></div>
+      <div class="lc-meta"><span>11 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-mission-planner.html">
+      <div class="lc-head"><span class="lc-icon">🚀</span><span class="lc-tag" style="background:rgba(92,224,214,0.1);color:var(--cyan)">Workshop</span></div>
+      <div class="lc-name"><span class="t-en">Mission Planner</span><span class="t-fr">Planificateur de Mission</span><span class="t-ar">مخطط المهمة</span></div>
+      <div class="lc-desc"><span class="t-en">Step-by-step satellite mission designer. Pick mission type, orbit, instruments, launch vehicle. Get mass, power, cost summary. Hit "Launch" when ready.</span><span class="t-fr">Concepteur de mission étape par étape. Choisissez type, orbite, instruments, lanceur. Résumé masse/puissance/coût.</span><span class="t-ar">مصمم مهام فضائية خطوة بخطوة. اختر النوع، المدار، الأدوات، المركبة. ملخص الكتلة/الطاقة/التكلفة.</span></div>
+      <div class="lc-meta"><span>10 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-photo-guide.html">
+      <div class="lc-head"><span class="lc-icon">📸</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">Guide</span></div>
+      <div class="lc-name"><span class="t-en">Night Sky Photo Guide</span><span class="t-fr">Guide Photo du Ciel Nocturne</span><span class="t-ar">دليل تصوير السماء</span></div>
+      <div class="lc-desc"><span class="t-en">Photograph satellites and stars. Phone + DSLR settings. Exposure calculator. Star trails, ISS streaks, Starlink trains. Pre-shoot checklist.</span><span class="t-fr">Photographiez satellites et étoiles. Réglages téléphone + reflex. Calculateur d'exposition. Traînées, ISS, trains Starlink.</span><span class="t-ar">صوّر الأقمار والنجوم. إعدادات الهاتف + الكاميرا الاحترافية. حاسبة التعريض. آثار نجمية، المحطة الدولية، قطارات ستارلنك.</span></div>
+      <div class="lc-meta"><span>11 KB</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- DEEP SPACE -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">09 — Deep Space</div>
+    <div class="section-title">8 More Explorations</div>
+  </div>
+  <div class="grid wide">
+    <a class="lc interactive" href="aa-iss-tour.html">
+      <div class="lc-head"><span class="lc-icon">🏗️</span><span class="lc-tag" style="background:rgba(92,224,214,0.1);color:var(--cyan)">Tour</span></div>
+      <div class="lc-name"><span class="t-en">ISS Interior Tour</span><span class="t-fr">Visite de l'ISS</span><span class="t-ar">جولة داخل المحطة الدولية</span></div>
+      <div class="lc-desc"><span class="t-en">Walk through every module of the space station. Zarya, Destiny, Kibo, Columbus, Cupola. Click modules for specs, history, and fun facts.</span><span class="t-fr">Parcourez chaque module de la station spatiale. Zarya, Destiny, Kibo, Columbus, Cupola. Cliquez pour les specs et anecdotes.</span><span class="t-ar">تجول في كل وحدة من المحطة الفضائية. زاريا، ديستني، كيبو، كولومبوس، كوبولا. انقر للمواصفات والحقائق.</span></div>
+      <div class="lc-meta"><span>12 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-orbital-mechanics.html">
+      <div class="lc-head"><span class="lc-icon">🔬</span><span class="lc-tag" style="background:rgba(246,173,85,0.1);color:var(--orange)">Physics</span></div>
+      <div class="lc-name"><span class="t-en">Orbital Mechanics Lab</span><span class="t-fr">Labo de Mécanique Orbitale</span><span class="t-ar">مختبر ميكانيكا المدارات</span></div>
+      <div class="lc-desc"><span class="t-en">Hohmann transfers, delta-v budgets, animated orbit changes. LEO→GEO, LEO→Moon presets. See why going higher means speeding up.</span><span class="t-fr">Transferts de Hohmann, budgets delta-v, changements d'orbite animés. Préréglages LEO→GEO, LEO→Lune.</span><span class="t-ar">انتقالات هومان، ميزانيات دلتا-v، تغييرات مدار متحركة. إعدادات LEO→GEO، LEO→القمر.</span></div>
+      <div class="lc-meta"><span>10 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-light-pollution.html">
+      <div class="lc-head"><span class="lc-icon">🌃</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">Visual</span></div>
+      <div class="lc-name"><span class="t-en">Light Pollution</span><span class="t-fr">Pollution Lumineuse</span><span class="t-ar">التلوث الضوئي</span></div>
+      <div class="lc-desc"><span class="t-en">Bortle scale 1-9 sky simulator. Drag the slider from pristine dark site to inner city. See stars disappear, Milky Way vanish, satellites fade.</span><span class="t-fr">Simulateur d'échelle Bortle 1-9. Glissez du ciel pristine à la ville. Voyez les étoiles disparaître, la Voie Lactée s'effacer.</span><span class="t-ar">محاكي مقياس بورتل ١-٩. اسحب من سماء نقية إلى المدينة. شاهد النجوم تختفي ودرب التبانة يتلاشى.</span></div>
+      <div class="lc-meta"><span>7 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-satellite-economics.html">
+      <div class="lc-head"><span class="lc-icon">💰</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Data</span></div>
+      <div class="lc-name"><span class="t-en">Satellite Economics</span><span class="t-fr">Économie des Satellites</span><span class="t-ar">اقتصاد الأقمار</span></div>
+      <div class="lc-desc"><span class="t-en">$401B industry visualized. Revenue by sector, cost/kg history ($95K→$2.7K), spectrum auctions, space insurance, GPS economic value.</span><span class="t-fr">Industrie de 401 Md$ visualisée. Revenus par secteur, coût/kg (95K→2,7K$), enchères spectre, assurance spatiale, valeur GPS.</span><span class="t-ar">صناعة بقيمة ٤٠١ مليار دولار. الإيرادات بالقطاع، تكلفة/كغ (٩٥ ألف→٢.٧ ألف$)، مزادات الطيف، تأمين الفضاء.</span></div>
+      <div class="lc-meta"><span>10 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-radio-decoder.html">
+      <div class="lc-head"><span class="lc-icon">📻</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Signal</span></div>
+      <div class="lc-name"><span class="t-en">Radio Decoder</span><span class="t-fr">Décodeur Radio</span><span class="t-ar">فك تشفير الراديو</span></div>
+      <div class="lc-desc"><span class="t-en">Live spectrum + waterfall display. Tune to NOAA weather, ISS voice, CubeSat beacons, GPS L1, Voyager 1. See decoded telemetry streams.</span><span class="t-fr">Spectre en direct + affichage cascade. Syntonisez météo NOAA, voix ISS, balises CubeSat, GPS L1, Voyager 1.</span><span class="t-ar">طيف مباشر + عرض شلالي. اضبط على طقس NOAA، صوت المحطة، منارات CubeSat، GPS L1، فوياجر ١.</span></div>
+      <div class="lc-meta"><span>10 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-heritage-scholars.html">
+      <div class="lc-head"><span class="lc-icon">☽</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">Heritage</span></div>
+      <div class="lc-name"><span class="t-en">Heritage Scholars</span><span class="t-fr">Savants du Patrimoine</span><span class="t-ar">علماء التراث</span></div>
+      <div class="lc-desc"><span class="t-en">Deep profiles of 8 Islamic astronomers. Al-Khwarizmi, al-Biruni, Ibn al-Haytham, al-Sufi, al-Tusi, Ulugh Beg. Key works + satellite connections.</span><span class="t-fr">Profils détaillés de 8 astronomes islamiques. Al-Khwarizmi, al-Biruni, Ibn al-Haytham, al-Sufi, al-Tusi, Ulugh Beg. Liens satellites.</span><span class="t-ar">ملفات معمقة لـ٨ فلكيين مسلمين. الخوارزمي، البيروني، ابن الهيثم، الصوفي، الطوسي، ألغ بك. روابط بالأقمار.</span></div>
+      <div class="lc-meta"><span>14 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-debris-field.html">
+      <div class="lc-head"><span class="lc-icon">💀</span><span class="lc-tag" style="background:rgba(252,129,129,0.1);color:var(--red)">3D</span></div>
+      <div class="lc-name"><span class="t-en">Debris Field 3D</span><span class="t-fr">Champ de Débris 3D</span><span class="t-ar">حقل الحطام ثلاثي الأبعاد</span></div>
+      <div class="lc-desc"><span class="t-en">36,500 tracked objects in 3D. Rotatable Earth with debris clouds from Chinese ASAT, Iridium-Cosmos collision, rocket bodies. Drag to explore.</span><span class="t-fr">36 500 objets suivis en 3D. Terre rotative avec nuages de débris. Collision Iridium-Cosmos, ASAT chinois. Glissez pour explorer.</span><span class="t-ar">٣٦,٥٠٠ جسم متتبع بثلاثة أبعاد. أرض دوارة مع سحب حطام. تصادم إيريديوم-كوزموس، ASAT صيني.</span></div>
+      <div class="lc-meta"><span>8 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-gravity-well.html">
+      <div class="lc-head"><span class="lc-icon">🕳️</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Sandbox</span></div>
+      <div class="lc-name"><span class="t-en">Gravity Well</span><span class="t-fr">Puits de Gravité</span><span class="t-ar">بئر الجاذبية</span></div>
+      <div class="lc-desc"><span class="t-en">Click and drag to launch satellites into a gravity well. Watch them orbit, escape, or crash. Adjustable mass. Presets for circular and elliptical orbits.</span><span class="t-fr">Cliquez et glissez pour lancer dans un puits de gravité. Observez les orbites, échappements ou crashs. Masse ajustable.</span><span class="t-ar">انقر واسحب للإطلاق في بئر جاذبية. شاهد المدارات أو الهروب أو الارتطام. كتلة قابلة للتعديل.</span></div>
+      <div class="lc-meta"><span>7 KB</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- FRONTIER -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">09 — The Frontier</div>
+    <div class="section-title">7 More Explorations</div>
+  </div>
+  <div class="grid wide">
+    <a class="lc interactive" href="aa-kessler.html">
+      <div class="lc-head"><span class="lc-icon">💥</span><span class="lc-tag" style="background:rgba(252,129,129,0.1);color:var(--red)">Simulation</span></div>
+      <div class="lc-name"><span class="t-en">Kessler Syndrome</span><span class="t-fr">Syndrome de Kessler</span><span class="t-ar">متلازمة كيسلر</span></div>
+      <div class="lc-desc"><span class="t-en">Chain-reaction debris cascade. Trigger a collision, watch fragments hit more satellites. 50/200/500 sats. Time controls. See why space debris is an existential threat.</span><span class="t-fr">Cascade de débris en réaction en chaîne. Déclenchez une collision. 50/200/500 satellites. Contrôles temporels. Menace existentielle.</span><span class="t-ar">تسلسل حطام بتفاعل متسلسل. أطلق اصطداماً. ٥٠/٢٠٠/٥٠٠ قمر. تحكم زمني. لماذا الحطام تهديد وجودي.</span></div>
+    </a>
+    <a class="lc interactive" href="aa-lagrange.html">
+      <div class="lc-head"><span class="lc-icon">⚖️</span><span class="lc-tag" style="background:rgba(110,140,255,0.1);color:var(--blue)">Physics</span></div>
+      <div class="lc-name"><span class="t-en">Lagrange Points</span><span class="t-fr">Points de Lagrange</span><span class="t-ar">نقاط لاغرانج</span></div>
+      <div class="lc-desc"><span class="t-en">The 5 gravitational sweet spots. Click each to learn why JWST is at L2, SOHO at L1, and Jupiter's Trojans live at L4/L5. Animated orbital mechanics.</span><span class="t-fr">Les 5 points d'équilibre gravitationnel. Pourquoi JWST est à L2, SOHO à L1, et les Troyens à L4/L5. Mécanique orbitale animée.</span><span class="t-ar">النقاط الخمس للتوازن الثقالي. لماذا JWST في L2، SOHO في L1، وأحصنة طروادة في L4/L5. ميكانيكا مدارية متحركة.</span></div>
+    </a>
+    <a class="lc interactive" href="aa-satellite-timeline.html">
+      <div class="lc-head"><span class="lc-icon">📅</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">History</span></div>
+      <div class="lc-name"><span class="t-en">Satellite Timeline</span><span class="t-fr">Chronologie des Satellites</span><span class="t-ar">الجدول الزمني للأقمار</span></div>
+      <div class="lc-desc"><span class="t-en">Sputnik (1957) to 10,000+ satellites (2025). 12 key milestones. Telstar, GPS, Hubble, ISS, Iridium-Cosmos collision, Starlink, JWST.</span><span class="t-fr">Spoutnik (1957) à 10 000+ satellites (2025). 12 jalons clés. Telstar, GPS, Hubble, ISS, collision Iridium-Cosmos, Starlink, JWST.</span><span class="t-ar">سبوتنيك (١٩٥٧) إلى ١٠,٠٠٠+ قمر (٢٠٢٥). ١٢ معلماً رئيسياً. تلستار، GPS، هابل، المحطة الدولية، ستارلنك، JWST.</span></div>
+    </a>
+    <a class="lc interactive" href="aa-golden-age.html">
+      <div class="lc-head"><span class="lc-icon">✨</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">Heritage</span></div>
+      <div class="lc-name"><span class="t-en">Golden Age Astronomy</span><span class="t-fr">Astronomie de l'Âge d'Or</span><span class="t-ar">فلك العصر الذهبي</span></div>
+      <div class="lc-desc"><span class="t-en">6 scholars who made satellites possible: al-Khwarizmi (algorithms), al-Biruni (geodesy), Ibn al-Haytham (optics), al-Sufi (stars), al-Tusi (orbits), Ibn Majid (navigation).</span><span class="t-fr">6 savants qui ont rendu les satellites possibles : al-Khwarizmi (algorithmes), al-Biruni (géodésie), Ibn al-Haytham (optique), al-Sufi, al-Tusi, Ibn Majid.</span><span class="t-ar">٦ علماء أتاحوا الأقمار الصناعية: الخوارزمي (خوارزميات)، البيروني (جيوديسيا)، ابن الهيثم (بصريات)، الصوفي، الطوسي، ابن ماجد.</span></div>
+    </a>
+    <a class="lc interactive" href="aa-debris-dodge.html">
+      <div class="lc-head"><span class="lc-icon">🎮</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Game</span></div>
+      <div class="lc-name"><span class="t-en">Debris Dodge</span><span class="t-fr">Esquive de Débris</span><span class="t-ar">تفادي الحطام</span></div>
+      <div class="lc-desc"><span class="t-en">You're a satellite operator — tap to thrust, dodge debris fragments. Score = survival time. Educational facts between rounds about real conjunction warnings.</span><span class="t-fr">Vous êtes opérateur satellite — tapez pour pousser, esquivez les débris. Score = temps de survie. Faits éducatifs entre les manches.</span><span class="t-ar">أنت مشغل قمر صناعي — اضغط للدفع، تفادَ الحطام. النقاط = وقت البقاء. حقائق تعليمية بين الجولات.</span></div>
+    </a>
+    <a class="lc interactive" href="aa-radio-space.html">
+      <div class="lc-head"><span class="lc-icon">📻</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">Audio</span></div>
+      <div class="lc-name"><span class="t-en">Radio from Space</span><span class="t-fr">Radio de l'Espace</span><span class="t-ar">راديو من الفضاء</span></div>
+      <div class="lc-desc"><span class="t-en">Tune a virtual dial across the spectrum. Hear NOAA weather fax, ISS voice, GPS noise, hydrogen line, deep space signals. 7 frequencies with audio synthesis.</span><span class="t-fr">Tournez un cadran virtuel à travers le spectre. Écoutez météo NOAA, voix ISS, bruit GPS, hydrogène, espace profond. 7 fréquences.</span><span class="t-ar">أدر قرصاً افتراضياً عبر الطيف. اسمع طقس NOAA، صوت المحطة، ضجيج GPS، خط الهيدروجين، الفضاء العميق.</span></div>
+    </a>
+    <a class="lc interactive" href="aa-launch-window.html">
+      <div class="lc-head"><span class="lc-icon">🚀</span><span class="lc-tag" style="background:rgba(246,173,85,0.1);color:var(--orange)">Mechanics</span></div>
+      <div class="lc-name"><span class="t-en">Launch Windows</span><span class="t-fr">Fenêtres de Lancement</span><span class="t-ar">نوافذ الإطلاق</span></div>
+      <div class="lc-desc"><span class="t-en">Why rockets can only launch at certain times. ISS (10-sec window), GEO (twice daily), Mars (every 26 months), Moon (monthly). Animated orbital plane alignment.</span><span class="t-fr">Pourquoi les fusées ne lancent qu'à certains moments. ISS (10 sec), GEO (2×/jour), Mars (tous les 26 mois), Lune (mensuel).</span><span class="t-ar">لماذا تُطلق الصواريخ في أوقات محددة فقط. المحطة (١٠ ثوانٍ)، GEO (مرتين/يوم)، المريخ (كل ٢٦ شهراً)، القمر (شهرياً).</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- MAKER LAB -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-num">10 — Maker Lab</div>
+    <div class="section-title">Hands-On Hardware</div>
+  </div>
+  <div class="grid wide">
+    <a class="lc interactive" href="aa-microbit-space.html">
+      <div class="lc-head"><span class="lc-icon">🔧</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">micro:bit</span></div>
+      <div class="lc-name"><span class="t-en">micro:bit Space Lab</span><span class="t-fr">Labo Spatial micro:bit</span><span class="t-ar">مختبر الفضاء micro:bit</span></div>
+      <div class="lc-desc"><span class="t-en">6 hands-on experiments: LED satellite tracker, ground-to-satellite radio link (2 micro:bits), solar power simulator, orbit accelerometer, antenna pointer, data downlink speed test. Real Python code.</span><span class="t-fr">6 expériences pratiques : tracker LED, liaison radio sol-satellite (2 micro:bits), simulateur solaire, accéléromètre orbital, pointeur antenne. Code Python.</span><span class="t-ar">٦ تجارب عملية: متتبع LED، وصلة راديو أرض-قمر (٢ micro:bit)، محاكي طاقة شمسية، مقياس تسارع مداري. كود بايثون.</span></div>
+      <div class="lc-meta"><span>15 KB</span></div>
+    </a>
+    <a class="lc interactive" href="aa-sdr-guide.html">
+      <div class="lc-head"><span class="lc-icon">📡</span><span class="lc-tag" style="background:rgba(183,148,244,0.1);color:var(--purple)">SDR</span></div>
+      <div class="lc-name"><span class="t-en">SDR Satellite Guide</span><span class="t-fr">Guide SDR Satellite</span><span class="t-ar">دليل SDR للأقمار</span></div>
+      <div class="lc-desc"><span class="t-en">Receive real satellite signals with a $30 dongle. NOAA weather images, ISS voice, aircraft tracking. Equipment list, antenna builds, frequency table, step-by-step decode pipeline. Live waterfall display.</span><span class="t-fr">Recevez de vrais signaux satellite avec un dongle à 30$. Images météo NOAA, voix ISS, suivi aérien. Liste d'équipement, antennes, pipeline de décodage.</span><span class="t-ar">استقبل إشارات أقمار حقيقية بجهاز ٣٠$. صور طقس NOAA، صوت المحطة، تتبع طائرات. قائمة معدات، هوائيات، خط فك تشفير.</span></div>
+      <div class="lc-meta"><span>16 KB</span></div>
+    </a>
+  </div>
+</div>
+
+<div class="heritage-banner">
+  <h2>☽ Built on Islamic Foundations</h2>
+  <p>Every calculation, every visualization, every prediction in this project traces back to scholars who transformed human understanding of the sky. This project honors their legacy by <strong>weaving their contributions into the experience</strong> — not as footnotes, but as living connections between past and present.</p>
+  <div class="scholars">
+    <span class="scholar">Al-Khwarizmi (780)</span>
+    <span class="scholar">Al-Battani (858)</span>
+    <span class="scholar">Abbas ibn Firnas (875)</span>
+    <span class="scholar">Al-Sufi (903)</span>
+    <span class="scholar">Ibn al-Haytham (965)</span>
+    <span class="scholar">Al-Biruni (973)</span>
+    <span class="scholar">Al-Zarqali (1029)</span>
+    <span class="scholar">Al-Tusi (1201)</span>
+    <span class="scholar">Ulugh Beg (1394)</span>
+  </div>
+</div>
+
+<!-- DOCS -->
+<div class="section" style="max-width:800px;margin:0 auto 30px">
+  <div class="section-head">
+    <div class="section-num">📚 Documentation</div>
+    <div class="section-title">v1.0 Release</div>
+  </div>
+  <div class="grid wide">
+    <a class="lc" href="aa-help.html">
+      <div class="lc-head"><span class="lc-icon">🗺️</span><span class="lc-tag" style="background:rgba(111,207,151,0.1);color:var(--green)">Guide</span></div>
+      <div class="lc-name"><span class="t-en">Help & Getting Started</span><span class="t-fr">Aide & Démarrage</span><span class="t-ar">المساعدة والبدء</span></div>
+      <div class="lc-desc"><span class="t-en">Learning paths for beginners, physics lovers, heritage explorers, makers. Tips, highlights, troubleshooting.</span><span class="t-fr">Parcours pour débutants, passionnés de physique, explorateurs du patrimoine, makers. Astuces, faits marquants, dépannage.</span><span class="t-ar">مسارات تعلم للمبتدئين، محبي الفيزياء، مستكشفي التراث، الصانعين. نصائح، أبرز المحطات، استكشاف الأخطاء.</span></div>
+    </a>
+    <a class="lc" href="aa-faq.html">
+      <div class="lc-head"><span class="lc-icon">❓</span><span class="lc-tag" style="background:rgba(232,193,112,0.1);color:var(--gold)">FAQ</span></div>
+      <div class="lc-name"><span class="t-en">Frequently Asked Questions</span><span class="t-fr">Questions Fréquentes</span><span class="t-ar">الأسئلة الشائعة</span></div>
+      <div class="lc-desc"><span class="t-en">26 questions across 6 categories — project, satellites, heritage, tech, SDR, micro:bit.</span><span class="t-fr">26 questions dans 6 catégories — projet, satellites, patrimoine, technique, SDR, micro:bit.</span><span class="t-ar">٢٦ سؤالاً في ٦ فئات — المشروع، الأقمار، التراث، التقنية، SDR، micro:bit.</span></div>
+    </a>
+  </div>
+</div>
+
+<footer>
+  <div class="ft">"Every satellite carries centuries of knowledge."</div>
+  <p>59 HTML files + 2 docs · ~1.1 MB · Zero dependencies · v1.0<br>Satellites in the Sky</p>
+</footer>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* Full portal i18n */
+const TR={
+  '.badge':{
+    en:'🛰️ Complete Project',
+    fr:'🛰️ Projet Complet',
+    ar:'🛰️ مشروع متكامل'
+  },
+  'header h1':{
+    en:'Satellites in<br>the <span class="g1">Sky</span>',
+    fr:'Satellites dans<br>le <span class="g1">Ciel</span>',
+    ar:'أقمار في<br><span class="g1">السماء</span>'
+  },
+  'header>p':{
+    en:'59 standalone HTML experiences exploring real-time satellite tracking, orbital mechanics, Islamic astronomical heritage, and the science of space.',
+    fr:'59 expériences HTML autonomes explorant le suivi de satellites en temps réel, la mécanique orbitale, le patrimoine astronomique islamique et la science spatiale.',
+    ar:'٥٩ تجربة تفاعلية مستقلة تستكشف تتبع الأقمار الصناعية، ميكانيكا المدارات، التراث الفلكي الإسلامي، وعلوم الفضاء.'
+  },
+  '.heritage-banner h2':{
+    en:'من الإسطرلاب إلى المدار — From Astrolabe to Orbit',
+    fr:'من الإسطرلاب إلى المدار — De l\'Astrolabe à l\'Orbite',
+    ar:'من الإسطرلاب إلى المدار'
+  },
+  '.heritage-banner p':{
+    en:'The mathematical foundations of satellite science were built by <strong>Arab scholars</strong> during the Islamic Golden Age. Over <strong>200 star names</strong> still used in modern astronomy are Arabic. This project honors that heritage while exploring the satellites those foundations made possible.',
+    fr:'Les fondements mathématiques de la science satellitaire ont été posés par les <strong>savants arabes</strong> durant l\'Âge d\'Or islamique. Plus de <strong>200 noms d\'étoiles</strong> encore utilisés en astronomie moderne sont arabes. Ce projet honore cet héritage tout en explorant les satellites que ces fondations ont rendus possibles.',
+    ar:'بنى <strong>العلماء العرب</strong> الأسس الرياضية لعلوم الأقمار الصناعية خلال العصر الذهبي الإسلامي. أكثر من <strong>٢٠٠ اسم نجم</strong> لا تزال مستخدمة في الفلك الحديث هي عربية. يكرّم هذا المشروع ذلك الإرث ويستكشف الأقمار التي أتاحتها تلك الأسس.'
+  }
+};
+
+const SEC={
+  '01':{en:'01 — Core Phases',fr:'01 — Phases Principales',ar:'٠١ — المراحل الأساسية'},
+  '02':{en:'02 — The Ultimate Build',fr:'02 — L\'Expérience Ultime',ar:'٠٢ — التجربة الشاملة'},
+  '03':{en:'03 — Interactive Experiences',fr:'03 — Expériences Interactives',ar:'٠٣ — تجارب تفاعلية'},
+  '04':{en:'04 — Simulations & Instruments',fr:'04 — Simulations & Instruments',ar:'٠٤ — محاكاة وأدوات'},
+  '05':{en:'05 — Reference & Guides',fr:'05 — Références & Guides',ar:'٠٥ — مراجع وأدلة'},
+  '06':{en:'06 — Planning',fr:'06 — Planification',ar:'٠٦ — التخطيط'},
+  '07':{en:'07 — Beyond the Roadmap',fr:'07 — Au-delà du Plan',ar:'٠٧ — ما وراء الخطة'},
+  '08':{en:'08 — Deep Cuts',fr:'08 — Explorations Profondes',ar:'٠٨ — استكشافات عميقة'},
+  '09a':{en:'09 — Deep Space',fr:'09 — Espace Profond',ar:'٠٩ — الفضاء العميق'},
+  '09b':{en:'09 — The Frontier',fr:'09 — La Frontière',ar:'٠٩ — الحدود'},
+  '10':{en:'10 — Maker Lab',fr:'10 — Labo Maker',ar:'١٠ — مختبر الصانع'},
+  'doc':{en:'📚 Documentation',fr:'📚 Documentation',ar:'📚 التوثيق'}
+};
+
+const STIT={
+  'Five':{en:'The Five Modes',fr:'Les Cinq Modes',ar:'الأنماط الخمسة'},
+  'Ultimate':{en:'All Five Modes in One',fr:'Les Cinq Modes en Un',ar:'الأنماط الخمسة في ملف واحد'},
+  'Genius':{en:'The Genius Ideas — All 8 Built',fr:'Les Idées Géniales — Les 8 Construites',ar:'الأفكار العبقرية — الثماني مكتملة'},
+  'Physics':{en:'Physics Playgrounds',fr:'Terrains de Physique',ar:'ساحات الفيزياء'},
+  'Learning':{en:'Learning Resources',fr:'Ressources Éducatives',ar:'موارد تعليمية'},
+  'Roadmap':{en:'The Roadmap',fr:'La Feuille de Route',ar:'خارطة الطريق'},
+  'Bonus':{en:'8 Bonus Experiences',fr:'8 Expériences Bonus',ar:'٨ تجارب إضافية'},
+  'More8':{en:'8 More Experiences',fr:'8 Autres Expériences',ar:'٨ تجارب أخرى'},
+  'More7':{en:'7 More Explorations',fr:'7 Autres Explorations',ar:'٧ استكشافات أخرى'},
+  'Deep':{en:'8 More Explorations',fr:'8 Autres Explorations',ar:'٨ استكشافات أخرى'},
+  'Maker':{en:'Hands-On Hardware',fr:'Matériel Pratique',ar:'أجهزة عملية'},
+  'v10':{en:'v1.0 Release',fr:'Version 1.0',ar:'الإصدار ١.٠'}
+};
+
+const STAT={
+  'HTML':{en:'HTML Files',fr:'Fichiers HTML',ar:'ملفات HTML'},
+  'Core':{en:'Core Modes',fr:'Modes Principaux',ar:'أنماط أساسية'},
+  'Int':{en:'Interactive Exp.',fr:'Exp. Interactives',ar:'تجارب تفاعلية'},
+  'Star':{en:'Arabic Star Names',fr:'Noms d\'Étoiles Arabes',ar:'أسماء نجوم عربية'},
+  'Size':{en:'Total Size',fr:'Taille Totale',ar:'الحجم الكلي'},
+  'Dep':{en:'Dependencies',fr:'Dépendances',ar:'اعتماديات'}
+};
+
+function setLang(l){
+  const h=document.documentElement;
+  h.setAttribute('data-lang',l);
+  h.dir=l==='ar'?'rtl':'ltr';
+  h.lang=l;
+  document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));
+  const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');
+
+  /* Direct selector translations */
+  for(const[sel,t]of Object.entries(TR)){
+    const el=document.querySelector(sel);
+    if(el&&t[l])el.innerHTML=t[l];
+  }
+
+  /* Section numbers */
+  document.querySelectorAll('.section-num').forEach(el=>{
+    const txt=el.textContent.trim();
+    for(const[k,t]of Object.entries(SEC)){
+      if(txt.includes(k.replace(/[ab]/,''))||el.dataset.secKey===k){
+        el.dataset.secKey=el.dataset.secKey||k;
+        el.textContent=t[l]||t.en;break;
+      }
+    }
+  });
+
+  /* Section titles */
+  document.querySelectorAll('.section-title').forEach(el=>{
+    for(const[k,t]of Object.entries(STIT)){
+      if((el.dataset.titKey===k)||el.textContent.includes(k)){
+        el.dataset.titKey=el.dataset.titKey||k;
+        el.textContent=t[l]||t.en;break;
+      }
+    }
+  });
+
+  /* Stats labels */
+  document.querySelectorAll('.sl').forEach(el=>{
+    for(const[k,t]of Object.entries(STAT)){
+      if((el.dataset.stKey===k)||el.textContent.includes(k.length>3?k:'')){
+        el.dataset.stKey=el.dataset.stKey||k;
+        el.textContent=t[l]||t.en;break;
+      }
+    }
+  });
+
+  /* data-* attribute elements */
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    const t=el.getAttribute('data-'+l);
+    if(t)el.textContent=t;
+    else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}
+  });
+
+  try{localStorage.setItem('aa-lang',l)}catch(e){}
+}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

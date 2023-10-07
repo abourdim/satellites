@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Launch Countdown — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+header{text-align:center;padding:50px 20px 30px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(252,129,129,0.06);border:1px solid rgba(252,129,129,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:8px}
+header h1 span{color:var(--red)}
+header p{font-size:.85rem;color:var(--text-dim);max-width:500px;margin:0 auto}
+
+.launches{max-width:700px;margin:0 auto;padding:0 20px 60px;display:flex;flex-direction:column;gap:14px}
+
+.launch{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:16px;overflow:hidden;transition:all .4s}
+.launch:hover{border-color:rgba(110,140,255,0.12)}
+.launch.next{border-color:rgba(252,129,129,0.15)}
+.launch.next::before{content:'NEXT LAUNCH';position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:.42rem;color:var(--red);background:rgba(252,129,129,0.08);padding:2px 8px;border-radius:4px;letter-spacing:.06em}
+.launch{position:relative}
+
+.l-countdown{padding:18px 20px;text-align:center;position:relative}
+.l-countdown::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(110,140,255,0.08),transparent)}
+.l-timer{font-family:var(--mono);font-size:1.8rem;font-weight:500;color:var(--cyan);line-height:1}
+.l-timer.past{color:var(--green)}
+.l-tl{font-family:var(--mono);font-size:.46rem;color:var(--text-muted);margin-top:3px;text-transform:uppercase;letter-spacing:.08em}
+
+.l-body{padding:16px 20px;display:flex;gap:16px;align-items:flex-start}
+.l-icon{font-size:2rem;flex-shrink:0}
+.l-info{flex:1;min-width:0}
+.l-mission{font-size:1rem;font-weight:700;color:#fff;margin-bottom:2px}
+.l-rocket{font-family:var(--mono);font-size:.6rem;color:var(--text-muted);margin-bottom:6px}
+.l-details{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:8px}
+.l-det{background:rgba(255,255,255,0.02);border-radius:5px;padding:5px 8px}
+.l-det .ldl{font-family:var(--mono);font-size:.36rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.l-det .ldv{font-family:var(--mono);font-size:.58rem;font-weight:500;color:var(--cyan);margin-top:1px}
+.l-desc{font-size:.74rem;color:var(--text-dim);line-height:1.5}
+.l-desc strong{font-weight:600}
+.l-impact{background:rgba(92,224,214,0.04);border:1px solid rgba(92,224,214,0.08);border-radius:6px;padding:6px 10px;margin-top:8px;font-size:.7rem;color:var(--cyan);line-height:1.4}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🚀 Upcoming Missions" data-fr="🚀 Missions à venir" data-ar="🚀 المهام القادمة">🚀 Upcoming Missions</span></div>
+  <h1 data-en="Launch" data-fr="Lancement" data-ar="إطلاق">Launch <span><span data-en="Countdown" data-fr="Compte à rebours" data-ar="العد التنازلي">Countdown</span></span></h1>
+  <p>Every few days, new satellites appear in your sky. Here's what's going up next — with live countdowns to the moment of launch.</p>
+</header>
+
+<div class="launches" id="launches"></div>
+<footer>Part of the Satellites in the Sky project · Schedules are simulated for demonstration</footer>
+
+<script>
+const now=new Date();
+function hrs(h){return new Date(now.getTime()+h*3600000)}
+function days(d){return new Date(now.getTime()+d*86400000)}
+
+const LAUNCHES=[
+{mission:'Starlink Group 12-5',rocket:'Falcon 9 Block 5',rocket_fr:'Falcon 9 Block 5',rocket_ar:'فالكون ٩ بلوك ٥',provider:'SpaceX',flag:'🇺🇸',icon:'🚀',
+site:'Cape Canaveral SLC-40',orbit:'LEO 550 km, 53°',date:hrs(6),
+desc:'22 Starlink v2 Mini satellites joining the mega-constellation. <strong>Booster landing on droneship</strong> "Just Read the Instructions" — 19th flight for this booster.',
+impact:'🛰️ Within 48 hours, 22 new dots will appear in your sky. Watch for a "Starlink train" — a line of bright dots moving together before they spread out.'},
+
+{mission:'OneWeb #20',rocket:'Falcon 9',rocket_fr:'Falcon 9',rocket_ar:'فالكون ٩',provider:'SpaceX (for OneWeb)',flag:'🇬🇧',icon:'🌐',
+site:'Vandenberg SLC-4E',orbit:'LEO 1,200 km, 87.9°',date:days(2),
+desc:'36 OneWeb internet satellites for UK-based constellation. <strong>Polar orbit</strong> — these will fly over every point on Earth.',
+impact:'🌍 OneWeb satellites orbit higher than Starlink, appearing dimmer but visible with binoculars.'},
+
+{mission:'Crew Dragon "Resilience"',rocket:'Falcon 9',provider:'SpaceX/NASA',flag:'🇺🇸',icon:'👨‍🚀',
+site:'Kennedy Space Center LC-39A',orbit:'ISS rendezvous, 408 km',date:days(5),
+desc:'Four astronauts heading to the ISS for a 6-month mission. Crew includes <strong>the first astronaut from Saudi Arabia</strong> on a long-duration flight.',
+impact:'👀 After docking, the ISS will be slightly brighter. Watch for the approach — Dragon visible as a separate dot chasing ISS!'},
+
+{mission:'GSLV Mk III — GSAT-24',rocket:'LVM3 (GSLV Mk III)',rocket_fr:'LVM3 (GSLV Mk III)',rocket_ar:'LVM3 (GSLV Mk III)',provider:'ISRO',flag:'🇮🇳',icon:'📡',
+site:'Sriharikota SDSC-SHAR',orbit:'GEO 35,786 km',date:days(8),
+desc:'Indian communication satellite for DTH television broadcasting. Launched on India\'s heaviest rocket, the LVM3.',
+impact:'📺 This satellite will hover permanently over the Indian Ocean — invisible to the eye but serving millions of homes.'},
+
+{mission:'Ariane 6 — Galileo FOC-13/14',rocket:'Ariane 6',rocket_fr:'Ariane 6',rocket_ar:'آريان ٦',provider:'Arianespace (ESA)',flag:'🇪🇺',icon:'📡',
+site:'Kourou, French Guiana',orbit:'MEO 23,222 km',date:days(12),
+desc:'Two Galileo navigation satellites. Europe\'s answer to GPS. Each carries <strong>hydrogen maser atomic clocks</strong> accurate to 1 nanosecond.',
+impact:'📍 These will improve your phone\'s location accuracy in Europe. Galileo provides 1-meter precision.'},
+
+{mission:'Long March 5B — Wentian Lab',rocket:'Long March 5B',rocket_fr:'Longue Marche 5B',rocket_ar:'المسيرة الطويلة 5B',provider:'CASC',flag:'🇨🇳',icon:'🏗️',
+site:'Wenchang, Hainan Island',orbit:'LEO 390 km, 41.5°',date:days(18),
+desc:'New experiment module for China\'s Tiangong space station. Will be the station\'s <strong>third major module</strong>, expanding research capacity.',
+impact:'🇨🇳 Tiangong will become slightly brighter after this module docks. Look for it as a bright dot, similar to Jupiter.'},
+
+{mission:'Falcon Heavy — GOES-U',rocket:'Falcon Heavy',rocket_fr:'Falcon Heavy',rocket_ar:'فالكون هيفي',provider:'SpaceX/NOAA',flag:'🇺🇸',icon:'🌦️',
+site:'Kennedy Space Center LC-39A',orbit:'GEO 35,786 km',date:days(25),
+desc:'Next-gen weather satellite. <strong>Triple-booster launch</strong> — two side boosters land simultaneously at Cape Canaveral. The most dramatic launch to watch.',
+impact:'🌦️ GOES-U will improve hurricane forecasting for the western hemisphere. Every weather app will use its data.'},
+
+{mission:'H3 — ALOS-4',rocket:'H3',provider:'JAXA',flag:'🇯🇵',icon:'📸',
+site:'Tanegashima, Japan',orbit:'LEO 628 km, SSO',date:days(30),
+desc:'Advanced Land Observing Satellite. Radar imaging of Earth\'s surface for disaster monitoring, mapping, and environmental research.',
+impact:'📸 ALOS-4 will photograph every inch of Earth every 14 days. Sun-synchronous orbit — visible at the same time each night.'},
+];
+
+function formatCountdown(ms){
+  if(ms<=0)return{text:'LAUNCHED',past:true};
+  const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60),d=Math.floor(h/24);
+  if(d>0)return{text:`T-${d}d ${h%24}h ${m%60}m`,past:false};
+  if(h>0)return{text:`T-${h}h ${m%60}m ${s%60}s`,past:false};
+  return{text:`T-${m}m ${s%60}s`,past:false};
+}
+
+function renderLaunches(){
+  const cont=document.getElementById('launches');
+  cont.innerHTML='';
+  LAUNCHES.sort((a,b)=>a.date-b.date).forEach((l,i)=>{
+    const ms=l.date-Date.now();
+    const cd=formatCountdown(ms);
+    const div=document.createElement('div');
+    div.className='launch'+(i===0?' next':'');
+    div.innerHTML=`
+      <div class="l-countdown">
+        <div class="l-timer${cd.past?' past':''}" data-date="${l.date.getTime()}">${cd.text}</div>
+        <div class="l-tl">${l.date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})} · ${l.date.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})} local</div>
+      </div>
+      <div class="l-body">
+        <div class="l-icon">${l.icon}</div>
+        <div class="l-info">
+          <div class="l-mission">${l.flag} ${l.mission}</div>
+          <div class="l-rocket">${l.rocket} · ${l.provider}</div>
+          <div class="l-details">
+            <div class="l-det"><div class="ldl">Launch Site</div><div class="ldv">${l.site.split(',')[0]}</div></div>
+            <div class="l-det"><div class="ldl"><span data-en="Orbit" data-fr="Orbite" data-ar="المدار">Orbit</span></div><div class="ldv">${l.orbit.split(',')[0]}</div></div>
+            <div class="l-det"><div class="ldl">Country</div><div class="ldv">${l.flag}</div></div>
+          </div>
+          <div class="l-desc">${l.desc}</div>
+          <div class="l-impact">${l.impact}</div>
+        </div>
+      </div>`;
+    cont.appendChild(div);
+  });
+}
+
+function updateTimers(){
+  document.querySelectorAll('.l-timer').forEach(el=>{
+    const d=+el.dataset.date;
+    const ms=d-Date.now();
+    const cd=formatCountdown(ms);
+    el.textContent=cd.text;
+    if(cd.past)el.classList.add('past');
+  });
+}
+
+renderLaunches();
+setInterval(updateTimers,1000);
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Launch Countdown',project:'Satellites in the Sky'},fr:{title:'Compte à Rebours',project:'Satellites dans le Ciel'},ar:{title:'العد التنازلي للإطلاق',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

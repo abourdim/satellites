@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Culture Cards — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--magenta:#f687b3;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px}
+
+header{text-align:center;padding:50px 30px 30px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(110,140,255,0.06);border:1px solid rgba(110,140,255,0.1);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:8px}
+header h1 span{color:var(--orange)}
+header p{font-size:.85rem;color:var(--text-dim);max-width:500px;margin:0 auto}
+
+.filter-bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 20px;margin-bottom:30px}
+.filter-btn{font-family:var(--mono);font-size:.5rem;padding:5px 12px;border-radius:20px;border:1px solid rgba(110,140,255,0.08);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .3s}
+.filter-btn.active{background:rgba(92,224,214,0.08);border-color:rgba(92,224,214,0.2);color:var(--cyan)}
+
+.grid{max-width:1100px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+
+.cc{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:16px;overflow:hidden;transition:all .4s}
+.cc:hover{border-color:rgba(110,140,255,0.12);transform:translateY(-2px)}
+.cc.hidden{display:none}
+.cc-header{height:100px;position:relative;display:flex;align-items:flex-end;padding:12px 16px;overflow:hidden}
+.cc-header::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(10,16,32,0.9),transparent)}
+.cc-flag{position:absolute;top:10px;right:10px;font-size:1.5rem;z-index:2}
+.cc-coords{position:relative;z-index:2;font-family:var(--mono);font-size:.48rem;color:var(--text-muted)}
+.cc-body{padding:16px 18px}
+.cc-name{font-family:var(--serif);font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:2px}
+.cc-location{font-size:.72rem;color:var(--text-dim);margin-bottom:10px}
+.cc-why{background:rgba(110,140,255,0.03);border:1px solid rgba(110,140,255,0.06);border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.cc-why .cw-title{font-family:var(--mono);font-size:.42rem;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.cc-why p{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+.cc-specs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.cc-spec{background:rgba(255,255,255,0.02);border-radius:5px;padding:5px 8px}
+.cc-spec .cs-l{font-family:var(--mono);font-size:.38rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.cc-spec .cs-v{font-family:var(--mono);font-size:.6rem;font-weight:500;color:var(--cyan);margin-top:1px}
+.cc-fact{font-size:.7rem;color:var(--text-dim);line-height:1.45;padding-top:8px;border-top:1px solid rgba(255,255,255,0.03)}
+.cc-fact strong{font-weight:600}
+.cc-heritage{background:rgba(232,193,112,0.03);border:1px solid rgba(232,193,112,0.08);border-radius:8px;padding:8px 12px;margin-top:8px}
+.cc-heritage .ch-t{font-family:var(--mono);font-size:.4rem;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.cc-heritage p{font-size:.66rem;color:var(--text-dim);line-height:1.45}
+.cc-heritage strong{color:var(--gold)}
+
+footer{text-align:center;padding:40px 20px;font-size:.6rem;color:var(--text-muted)}
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🌍 Geography & Geopolitics" data-fr="🌍 Géographie et géopolitique" data-ar="🌍 الجغرافيا والجيوسياسة">🌍 Geography & Geopolitics</span></div>
+  <h1 data-en="Where Satellites Come From" data-fr="D'où viennent les satellites" data-ar="من أين تأتي الأقمار">Where Satellites <span>Come From</span></h1>
+  <p>Every satellite has a birthplace. Each launch site was chosen for physics, politics, and history. Every launch is a geography lesson.</p>
+</header>
+
+<div class="filter-bar" id="filterBar"></div>
+<div class="grid" id="grid"></div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const SITES=[
+{name:'Baikonur Cosmodrome',name_fr:'Cosmodrome de Baïkonour',name_ar:'قاعدة بايكونور',country:'Kazakhstan',flag:'🇰🇿',lat:'45.6°N',lon:'63.3°E',
+grad:'linear-gradient(135deg,#2a1a0a,#1a2a3a)',
+location:'Tyuratam, Kazakhstan (leased by Russia)',
+why:'Built in 1955 by the Soviet Union in the Kazakh steppe — flat, remote, with clear skies 300+ days/year. Still the world\'s most active spaceport.',
+specs:[{l:'First Launch',v:'1957 (Sputnik)'},{l:'Latitude',v:'45.6°N'},{l:'Rockets',v:'Soyuz, Proton'},{l:'Famous For',v:'First in everything'}],
+fact:'Sputnik, Gagarin, and every ISS crew launch from here. The Soviet Union chose this remote site to hide it from Western spy planes. After independence, <strong>Kazakhstan leases it to Russia for $115 million/year</strong>.',
+heritage:'Baikonur sits on the ancient Silk Road. The mathematics of the rockets it launches trace back to <strong>al-Khwarizmi</strong>, who was born nearby in Khwarezm (modern Uzbekistan).',
+filter:'russia'},
+
+{name:'Kennedy Space Center',name_fr:'Centre spatial Kennedy',name_ar:'مركز كينيدي الفضائي',country:'USA',flag:'🇺🇸',lat:'28.5°N',lon:'80.6°W',
+grad:'linear-gradient(135deg,#0a1a2a,#1a2a4a)',
+location:'Cape Canaveral, Florida, USA',
+why:'Chosen in the 1950s: eastern coastline (rockets fly over ocean, not land), low latitude (28.5°N gives free speed from Earth\'s rotation), far from population centers.',
+specs:[{l:'First Launch',v:'1950 (Bumper)'},{l:'Latitude',v:'28.5°N'},{l:'Rockets',v:'Falcon 9, SLS, Atlas'},{l:'Famous For',v:'Apollo, Shuttle, SpaceX'}],
+fact:'Apollo 11 launched from Pad 39A. Today, <strong>SpaceX launches from the same pad</strong> — sometimes twice a week. The Vehicle Assembly Building is so large clouds form inside it.',
+filter:'usa'},
+
+{name:'Guiana Space Centre',name_fr:'Centre Spatial Guyanais',name_ar:'مركز غيانا الفضائي',country:'France/ESA',flag:'🇫🇷',lat:'5.2°N',lon:'52.8°W',
+grad:'linear-gradient(135deg,#0a2a1a,#1a3a2a)',
+location:'Kourou, French Guiana, South America',
+why:'Europe\'s spaceport is in South America — just 5° from the equator. This gives rockets a massive <strong>speed boost from Earth\'s rotation</strong> (465 m/s free), perfect for geostationary launches.',
+specs:[{l:'First Launch',v:'1968'},{l:'Latitude',v:'5.2°N'},{l:'Rockets',v:'Ariane, Vega, Soyuz'},{l:'Famous For',v:'GEO satellite launches'}],
+fact:'French Guiana is technically part of France — and thus the EU. Arabsat, Türksat, and many Middle Eastern TV satellites were launched from the jungles of South America.',
+heritage:'The satellites launched here broadcast across the Arabic-speaking world. <strong>Arabsat 6A</strong>, serving 25+ countries, launched from Kourou in 2019.',
+filter:'europe'},
+
+{name:'Jiuquan Satellite Launch Center',name_fr:'Base de Jiuquan',name_ar:'قاعدة جيوتشيوان',country:'China',flag:'🇨🇳',lat:'40.9°N',lon:'100.3°E',
+grad:'linear-gradient(135deg,#2a1a1a,#1a1a2a)',
+location:'Gobi Desert, Inner Mongolia, China',
+why:'Remote desert location, clear weather, far from population. China\'s oldest and most secretive launch facility — built with Soviet assistance in 1958.',
+specs:[{l:'First Launch',v:'1970'},{l:'Latitude',v:'40.9°N'},{l:'Rockets',v:'Long March'},{l:'Famous For',v:'Crewed missions, Tiangong'}],
+fact:'Every Chinese astronaut (taikonaut) launches from Jiuquan. The Gobi Desert location means <strong>spent rocket stages fall on uninhabited land</strong> — though villages have been evacuated.',
+filter:'china'},
+
+{name:'Satish Dhawan Space Centre',name_fr:'Centre Satish Dhawan',name_ar:'مركز ساتيش دهاوان',country:'India',flag:'🇮🇳',lat:'13.7°N',lon:'80.2°E',
+grad:'linear-gradient(135deg,#2a2a0a,#1a2a1a)',
+location:'Sriharikota Island, Andhra Pradesh, India',
+why:'Island location on India\'s east coast — launches fly over the Bay of Bengal. Low latitude (13.7°N) provides good equatorial access. Tropical climate allows year-round launches.',
+specs:[{l:'First Launch',v:'1971'},{l:'Latitude',v:'13.7°N'},{l:'Rockets',v:'PSLV, GSLV, LVM3'},{l:'Famous For',v:'Budget missions'}],
+fact:'ISRO launched 104 satellites on a single rocket in 2017. India\'s Mars mission (Mangalyaan) cost <strong>$74 million — less than the movie Gravity</strong>. Remarkable efficiency.',
+heritage:'Indian astronomy has deep connections with Islamic astronomy. <strong>Al-Biruni</strong> (973 CE) lived in India for years, writing extensively about Indian mathematics and astronomy.',
+filter:'india'},
+
+{name:'Tanegashima Space Center',name_fr:'Centre de Tanegashima',name_ar:'مركز تانيغاشيما',country:'Japan',flag:'🇯🇵',lat:'30.4°N',lon:'131.0°E',
+grad:'linear-gradient(135deg,#1a1a2a,#0a2a3a)',
+location:'Tanegashima Island, Kagoshima, Japan',
+why:'Scenic island location in southern Japan. Coastal launches over the Pacific. Known as "the most beautiful launch site in the world" — surrounded by beaches and forest.',
+specs:[{l:'First Launch',v:'1969'},{l:'Latitude',v:'30.4°N'},{l:'Rockets',v:'H-IIA, H3, Epsilon'},{l:'Famous For',v:'Hayabusa missions'}],
+fact:'Japan\'s Hayabusa missions launched from here — the first to bring back <strong>samples from an asteroid</strong>. Fishing rights limit launch windows to certain months.',
+filter:'japan'},
+
+{name:'Wenchang Spacecraft Launch Site',name_fr:'Site de Wenchang',name_ar:'موقع وينتشانغ',country:'China',flag:'🇨🇳',lat:'19.6°N',lon:'110.9°E',
+grad:'linear-gradient(135deg,#0a1a2a,#1a2a3a)',
+location:'Hainan Island, China',
+why:'China\'s newest and lowest-latitude site (19.6°N). Coastal location allows large rocket stages to ship by sea. Designed for the heavy-lift Long March 5 and space station modules.',
+specs:[{l:'First Launch',v:'2016'},{l:'Latitude',v:'19.6°N'},{l:'Rockets',v:'Long March 5/7/8'},{l:'Famous For',v:'Tiangong modules, lunar probes'}],
+fact:'Open to public viewing — tourists watch launches from nearby beaches. Every module of the Tiangong space station launched from here.',
+filter:'china'},
+
+{name:'Plesetsk Cosmodrome',name_fr:'Cosmodrome de Plesetsk',name_ar:'قاعدة بليسيتسك',country:'Russia',flag:'🇷🇺',lat:'62.9°N',lon:'40.7°E',
+grad:'linear-gradient(135deg,#1a2a3a,#0a1a2a)',
+location:'Arkhangelsk Oblast, Northern Russia',
+why:'The most northern major launch site — ideal for <strong>polar and sun-synchronous orbits</strong>. Originally built as an ICBM base in 1957. High latitude is an advantage for polar launches.',
+specs:[{l:'First Launch',v:'1966'},{l:'Latitude',v:'62.9°N'},{l:'Rockets',v:'Soyuz, Angara'},{l:'Famous For',v:'Military & polar orbits'}],
+fact:'Most-used launch site in history by number of launches (1,600+). The high latitude means rockets <strong>naturally achieve polar orbits</strong> — perfect for Earth observation and spy satellites.',
+filter:'russia'},
+
+{name:'Mohammed bin Rashid Space Centre',name_fr:'Centre Mohammed bin Rashid',name_ar:'مركز محمد بن راشد للفضاء',country:'UAE',flag:'🇦🇪',lat:'25.2°N',lon:'55.3°E',
+grad:'linear-gradient(135deg,#2a2a1a,#1a2a2a)',
+location:'Dubai, UAE (missions launch from other sites)',
+why:'Not a launch site but a mission control and satellite design center. The UAE designs its satellites in Dubai, then launches them from Japan (H-IIA) or other partners.',
+specs:[{l:'Founded',v:'2006'},{l:'Location',v:'Dubai, UAE'},{l:'Missions',v:'Hope Mars, KhalifaSat'},{l:'Famous For',v:'First Arab Mars mission'}],
+fact:'The <strong>Hope (Al-Amal) Mars probe</strong> was designed here by Emirati engineers (average age 27), then launched from Tanegashima, Japan. The UAE is the 5th entity to reach Mars.',
+heritage:'From <strong>al-Khwarizmi\'s algorithms</strong> in 9th-century Baghdad to a Mars orbiter designed in 21st-century Dubai — the Arabic astronomical tradition continues unbroken.',
+filter:'uae'},
+
+{name:'Alcântara Launch Center',name_fr:'Centre d\'Alcântara',name_ar:'مركز ألكانتارا',country:'Brazil',flag:'🇧🇷',lat:'2.3°S',lon:'44.4°W',
+grad:'linear-gradient(135deg,#0a2a0a,#1a3a1a)',
+location:'Maranhão, Brazil',
+why:'The <strong>closest launch site to the equator</strong> (2.3°S) — maximum rotational speed boost. Brazil is developing its own launch capability and leasing pads to international partners.',
+specs:[{l:'First Launch',v:'1990'},{l:'Latitude',v:'2.3°S'},{l:'Rockets',v:'VLS (developing)'},{l:'Famous For',v:'Equatorial advantage'}],
+fact:'At 2.3°S, Alcântara gives rockets <strong>the biggest free speed boost of any launch site on Earth</strong> — 30% more efficient than Cape Canaveral for GEO launches.',
+filter:'brazil'},
+];
+
+// Build filters
+const countries=[...new Set(SITES.map(s=>s.filter))];
+const filterBar=document.getElementById('filterBar');
+filterBar.innerHTML='<button class="filter-btn active" data-f="all"><span data-en="All" data-fr="Tous" data-ar="الكل">All</span></button>'+countries.map(c=>`<button class="filter-btn" data-f="${c}">${c.toUpperCase()}</button>`).join('');
+
+document.querySelectorAll('.filter-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    const f=b.dataset.f;document.querySelectorAll('.cc').forEach(c=>c.classList.toggle('hidden',f!=='all'&&c.dataset.f!==f));
+  });
+});
+
+// Build cards
+const grid=document.getElementById('grid');
+SITES.forEach(s=>{
+  const card=document.createElement('div');card.className='cc';card.dataset.f=s.filter;
+  card.innerHTML=`
+    <div class="cc-header" style="background:${s.grad}">
+      <div class="cc-flag">${s.flag}</div>
+      <div class="cc-coords">${s.lat} · ${s.lon}</div>
+    </div>
+    <div class="cc-body">
+      <div class="cc-name">${s.name}</div>
+      <div class="cc-location">${s.location}</div>
+      <div class="cc-why"><div class="cw-title">📍 Why Here?</div><p>${s.why}</p></div>
+      <div class="cc-specs">${s.specs.map(sp=>`<div class="cc-spec"><div class="cs-l">${sp.l}</div><div class="cs-v">${sp.v}</div></div>`).join('')}</div>
+      <div class="cc-fact">${s.fact}</div>
+      ${s.heritage?`<div class="cc-heritage"><div class="ch-t">☽ Heritage</div><p>${s.heritage}</p></div>`:''}
+    </div>`;
+  grid.appendChild(card);
+});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Culture Cards',project:'Satellites in the Sky'},fr:{title:'Cartes Culturelles',project:'Satellites dans le Ciel'},ar:{title:'بطاقات ثقافية',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

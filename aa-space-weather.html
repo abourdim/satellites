@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Weather — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(246,173,85,0.06);border:1px solid rgba(246,173,85,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--orange);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--orange)}
+header p{font-size:.82rem;color:var(--text-dim);max-width:480px;margin:0 auto}
+
+.status-strip{display:flex;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
+.status{padding:8px 16px;border-radius:8px;text-align:center;font-family:var(--mono);font-size:.72rem;font-weight:600;border:1px solid}
+.status.quiet{background:rgba(111,207,151,0.06);border-color:rgba(111,207,151,0.15);color:var(--green)}
+.status.active{background:rgba(246,173,85,0.06);border-color:rgba(246,173,85,0.15);color:var(--orange)}
+.status.storm{background:rgba(252,129,129,0.06);border-color:rgba(252,129,129,0.15);color:var(--red)}
+
+.dash{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:700px){.dash{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.dash{grid-template-columns:1fr}}
+
+.metric{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:14px;padding:16px;transition:all .3s}
+.metric:hover{border-color:rgba(110,140,255,0.12)}
+.metric.wide{grid-column:span 2}@media(max-width:480px){.metric.wide{grid-column:span 1}}
+.metric.full{grid-column:span 3}@media(max-width:700px){.metric.full{grid-column:span 2}}@media(max-width:480px){.metric.full{grid-column:span 1}}
+
+.m-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.m-label{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+.m-icon{font-size:1.1rem}
+.m-value{font-family:var(--mono);font-size:1.8rem;font-weight:500;line-height:1;margin-bottom:2px;transition:color .3s}
+.m-unit{font-family:var(--mono);font-size:.5rem;color:var(--text-muted)}
+.m-bar{height:4px;border-radius:2px;background:rgba(255,255,255,0.04);margin:8px 0;overflow:hidden}
+.m-bar-fill{height:100%;border-radius:2px;transition:width 1s,background 1s}
+.m-desc{font-size:.68rem;color:var(--text-dim);line-height:1.45;margin-top:6px}
+.m-desc strong{font-weight:600}
+
+.m-chart{height:60px;display:flex;align-items:flex-end;gap:2px;margin:8px 0}
+.m-chart-bar{flex:1;border-radius:2px 2px 0 0;transition:height 1s,background 1s;min-width:3px}
+
+/* Aurora viz */
+.aurora-viz{text-align:center;padding:10px}
+.aurora-viz canvas{max-width:100%;border-radius:8px}
+
+/* Alerts */
+.alerts{grid-column:span 3;display:flex;flex-direction:column;gap:6px}
+@media(max-width:700px){.alerts{grid-column:span 2}}@media(max-width:480px){.alerts{grid-column:span 1}}
+.alert{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:8px}
+.alert.info{background:rgba(110,140,255,0.04);border:1px solid rgba(110,140,255,0.08)}
+.alert.warn{background:rgba(246,173,85,0.04);border:1px solid rgba(246,173,85,0.08)}
+.alert.danger{background:rgba(252,129,129,0.04);border:1px solid rgba(252,129,129,0.08)}
+.alert .ai{font-size:.9rem;flex-shrink:0}.alert .at{font-size:.7rem;color:var(--text-dim);line-height:1.45}
+.alert strong{font-weight:600}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="☀️ Real-Time Monitoring" data-fr="☀️ Surveillance en temps réel" data-ar="☀️ مراقبة مباشرة">☀️ Real-Time Monitoring</span></div>
+  <h1 data-en="Space" data-fr="Météo" data-ar="طقس">Space <span><span data-en="Weather" data-fr="Météo" data-ar="الطقس">Weather</span></span></h1>
+  <p>The Sun controls the space environment. Solar wind, magnetic storms, and radiation affect every satellite in orbit. Here's the current state of the Sun-Earth system.</p>
+</header>
+
+<div class="status-strip" id="statusStrip"></div>
+<div class="dash" id="dash"></div>
+
+<footer>Data simulated for demonstration · Based on real NOAA SWPC metrics · Part of the Satellites in the Sky project</footer>
+
+<script>
+// Simulated space weather data with realistic ranges
+function genData(){
+  const hour=new Date().getHours();
+  const storm=Math.random();// Storm probability
+  const isStormy=storm>.8;
+  const isActive=storm>.5;
+  
+  const swSpeed=300+Math.random()*400+(isStormy?300:0);// 300-1000 km/s
+  const swDensity=1+Math.random()*20+(isStormy?30:0);// 1-50 p/cm³
+  const bz=-15+Math.random()*30+(isStormy?-10:0);// -25 to +15 nT
+  const kp=isStormy?6+Math.random()*3:isActive?3+Math.random()*3:Math.random()*3;
+  const f107=70+Math.random()*130;// Solar flux
+  const xray=isStormy?'M'+((1+Math.random()*9).toFixed(1)):isActive?'C'+((1+Math.random()*9).toFixed(1)):'B'+((1+Math.random()*9).toFixed(1));
+  const proton=isStormy?10+Math.random()*100:Math.random()*10;
+  const electron=isStormy?1000+Math.random()*9000:100+Math.random()*900;
+  
+  // 24h history
+  const hist=[];
+  for(let i=23;i>=0;i--){
+    const h=isStormy&&i<6?.7:isActive&&i<10?.4:.1;
+    hist.push(Math.random()*3+h*6);
+  }
+  
+  return{swSpeed,swDensity,bz,kp,f107,xray,proton,electron,hist,isStormy,isActive};
+}
+
+function getKpColor(kp){
+  if(kp<4)return'var(--green)';if(kp<6)return'var(--orange)';return'var(--red)';
+}
+
+function render(){
+  const d=genData();
+  
+  // Status
+  const ss=document.getElementById('statusStrip');
+  const level=d.isStormy?'storm':d.isActive?'active':'quiet';
+  const levelText=d.isStormy?'⚠️ Geomagnetic Storm':d.isActive?'⚡ Active Conditions':'✅ Quiet Conditions';
+  ss.innerHTML=`<div class="status ${level}">${levelText}</div>
+    <div class="status" style="background:rgba(110,140,255,0.04);border-color:rgba(110,140,255,0.1);color:var(--blue)">Kp ${d.kp.toFixed(0)} · ${d.xray}</div>`;
+  
+  // Dashboard
+  const dash=document.getElementById('dash');
+  dash.innerHTML=`
+    <div class="metric">
+      <div class="m-head"><span class="m-label">Solar Wind Speed</span><span class="m-icon">💨</span></div>
+      <div class="m-value" style="color:${d.swSpeed>600?'var(--red)':d.swSpeed>450?'var(--orange)':'var(--green)'}">${Math.round(d.swSpeed)}</div>
+      <div class="m-unit">km/s</div>
+      <div class="m-bar"><div class="m-bar-fill" style="width:${(d.swSpeed/1000)*100}%;background:${d.swSpeed>600?'var(--red)':d.swSpeed>450?'var(--orange)':'var(--green)'}"></div></div>
+      <div class="m-desc">Normal: 300-400 km/s. Above 600 km/s indicates a <strong>coronal hole stream</strong> or CME impact. High speeds increase satellite drag in LEO.</div>
+    </div>
+    
+    <div class="metric">
+      <div class="m-head"><span class="m-label">Kp Index</span><span class="m-icon">🧲</span></div>
+      <div class="m-value" style="color:${getKpColor(d.kp)}">${d.kp.toFixed(1)}</div>
+      <div class="m-unit">Geomagnetic activity (0-9)</div>
+      <div class="m-bar"><div class="m-bar-fill" style="width:${(d.kp/9)*100}%;background:${getKpColor(d.kp)}"></div></div>
+      <div class="m-desc">Kp 0-3: quiet. Kp 4-5: active. <strong>Kp 6+: geomagnetic storm</strong>. Aurora visible at lower latitudes. GPS accuracy degrades. Satellite orbits perturbed.</div>
+    </div>
+    
+    <div class="metric">
+      <div class="m-head"><span class="m-label">Bz Component</span><span class="m-icon">🔄</span></div>
+      <div class="m-value" style="color:${d.bz<-5?'var(--red)':d.bz<0?'var(--orange)':'var(--green)'}">${d.bz>0?'+':''}${d.bz.toFixed(1)}</div>
+      <div class="m-unit">nT (interplanetary magnetic field)</div>
+      <div class="m-bar"><div class="m-bar-fill" style="width:${50+d.bz*2}%;background:${d.bz<-5?'var(--red)':d.bz<0?'var(--orange)':'var(--green)'}"></div></div>
+      <div class="m-desc"><strong>Negative Bz is the trigger</strong> for geomagnetic storms. When Bz turns south (negative), Earth's magnetic field opens like a door, letting solar wind pour in.</div>
+    </div>
+    
+    <div class="metric">
+      <div class="m-head"><span class="m-label">X-Ray Flux</span><span class="m-icon">☀️</span></div>
+      <div class="m-value" style="color:${d.xray.startsWith('M')?'var(--orange)':d.xray.startsWith('X')?'var(--red)':'var(--green)'}">${d.xray}</div>
+      <div class="m-unit">Solar flare class</div>
+      <div class="m-desc">B/C: background. <strong>M-class: moderate flares</strong>. X-class: major flares causing radio blackouts. Each class is 10× the previous.</div>
+    </div>
+    
+    <div class="metric">
+      <div class="m-head"><span class="m-label">Proton Flux</span><span class="m-icon">⚡</span></div>
+      <div class="m-value" style="color:${d.proton>10?'var(--red)':d.proton>1?'var(--orange)':'var(--green)'}">${d.proton.toFixed(1)}</div>
+      <div class="m-unit">pfu (>10 MeV protons)</div>
+      <div class="m-desc">Above 10 pfu: <strong>Solar Radiation Storm</strong>. Dangerous to astronauts on EVA. Can damage satellite electronics and solar panels.</div>
+    </div>
+    
+    <div class="metric">
+      <div class="m-head"><span class="m-label">Solar Flux (F10.7)</span><span class="m-icon">📡</span></div>
+      <div class="m-value" style="color:${d.f107>150?'var(--orange)':'var(--cyan)'}">${Math.round(d.f107)}</div>
+      <div class="m-unit">sfu (solar flux units)</div>
+      <div class="m-desc">Proxy for solar activity. 70 sfu = solar minimum. 200+ sfu = solar maximum. <strong>Higher values increase atmospheric drag</strong> on LEO satellites.</div>
+    </div>
+    
+    <div class="metric wide">
+      <div class="m-head"><span class="m-label">24-Hour Kp History</span><span class="m-icon">📊</span></div>
+      <div class="m-chart">${d.hist.map(v=>`<div class="m-chart-bar" style="height:${(v/9)*100}%;background:${getKpColor(v)}"></div>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.38rem;color:var(--text-muted)"><span>24h ago</span><span>Now</span></div>
+    </div>
+    
+    <div class="metric">
+      <div class="m-head"><span class="m-label">Aurora Forecast</span><span class="m-icon">🌌</span></div>
+      <div class="m-value" style="color:var(--green)">${d.kp>=5?'YES!':d.kp>=3?'Maybe':'Unlikely'}</div>
+      <div class="m-unit">Aurora visible at your latitude?</div>
+      <div class="m-desc">${d.kp>=5?'<strong>Aurora likely visible</strong> at mid-latitudes! Look north after dark for green/purple curtains.':d.kp>=3?'Aurora possible at higher latitudes (>55°N). <strong>Check dark skies</strong> after midnight.':'Aurora confined to polar regions. Kp 5+ needed for mid-latitude display.'}</div>
+    </div>
+    
+    <div class="alerts">
+      <div class="m-label" style="padding:6px 0">🛰️ Satellite Impact Assessment</div>
+      ${d.isStormy?`
+        <div class="alert danger"><span class="ai">⚠️</span><span class="at"><strong>LEO Drag Alert:</strong> Increased atmospheric heating expands the upper atmosphere. Satellites below 500 km experiencing enhanced drag. Starlink lost 40 satellites to a storm like this in Feb 2022.</span></div>
+        <div class="alert danger"><span class="ai">📡</span><span class="at"><strong>GPS Degradation:</strong> Ionospheric disturbance causing scintillation. GPS accuracy may degrade to 10+ meters. Galileo and GLONASS similarly affected.</span></div>
+        <div class="alert warn"><span class="ai">👨‍🚀</span><span class="at"><strong>ISS Crew:</strong> Elevated radiation levels. Crew may shelter in better-shielded modules during peak storm. No EVA recommended.</span></div>
+      `:d.isActive?`
+        <div class="alert warn"><span class="ai">💨</span><span class="at"><strong>Elevated drag:</strong> Solar wind pressure slightly increasing atmospheric density at LEO altitudes. Station-keeping burns may be needed sooner.</span></div>
+        <div class="alert info"><span class="ai">📡</span><span class="at"><strong>Minor GPS effects:</strong> Slight ionospheric variability. Precision applications may notice increased error bars.</span></div>
+      `:`
+        <div class="alert info"><span class="ai">✅</span><span class="at"><strong>All clear:</strong> Quiet space weather. Normal satellite operations. GPS accuracy nominal. Low radiation environment.</span></div>
+        <div class="alert info"><span class="ai">🔭</span><span class="at"><strong>Good observing:</strong> Stable ionosphere means excellent conditions for satellite tracking and radio communication.</span></div>
+      `}
+    </div>
+  `;
+}
+
+render();
+setInterval(render,30000);// Refresh every 30s
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Space Weather',project:'Satellites in the Sky'},fr:{title:'Météo Spatiale',project:'Satellites dans le Ciel'},ar:{title:'طقس الفضاء',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

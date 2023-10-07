@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbit Compare — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--a:#5ce0d6;--b:#f6ad55;--blue:#6e8cff;--gold:#e8c170;--purple:#b794f4;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+
+header{text-align:center;margin-bottom:28px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(110,140,255,0.06);border:1px solid rgba(110,140,255,0.1);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 .ca{color:var(--a)}.cb{color:var(--b)}
+header p{font-size:.82rem;color:var(--text-dim);max-width:450px;margin:0 auto}
+
+.selectors{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+.sel{display:flex;flex-direction:column;align-items:center;gap:4px}
+.sel label{font-family:var(--mono);font-size:.5rem;text-transform:uppercase;letter-spacing:.08em}
+.sel select{font-family:var(--mono);font-size:.72rem;padding:8px 14px;border-radius:8px;border:1px solid;background:rgba(6,10,22,0.8);color:inherit;outline:none;cursor:pointer;min-width:160px}
+.sel:nth-child(1) label{color:var(--a)}.sel:nth-child(1) select{border-color:rgba(92,224,214,0.2);color:var(--a)}
+.sel:nth-child(2) label{color:var(--b)}.sel:nth-child(2) select{border-color:rgba(246,173,85,0.2);color:var(--b)}
+
+.vs{font-family:var(--serif);font-size:1rem;font-weight:700;color:var(--text-muted);align-self:center;padding-top:16px}
+
+/* Visual comparison */
+.visual{text-align:center;margin-bottom:24px;position:relative;height:220px}
+canvas#orbVis{max-width:100%}
+
+/* Comparison table */
+.compare{max-width:700px;margin:0 auto}
+.comp-row{display:grid;grid-template-columns:1fr 100px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.02);align-items:center}
+.comp-row:last-child{border:none}
+.comp-label{text-align:center;font-family:var(--mono);font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.comp-val{padding:6px 10px;border-radius:6px;font-family:var(--mono);font-size:.72rem;font-weight:500}
+.comp-val.left{text-align:right;background:rgba(92,224,214,0.04);color:var(--a)}
+.comp-val.right{text-align:left;background:rgba(246,173,85,0.04);color:var(--b)}
+.comp-bar{height:4px;border-radius:2px;margin-top:2px;transition:width .5s}
+.comp-header{font-family:var(--serif);font-size:.85rem;font-weight:700;text-align:center;padding:14px 0 6px;color:#fff;grid-column:span 3}
+
+.fun-facts{max-width:700px;margin:20px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ff{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:10px;padding:12px 14px}
+.ff .fft{font-family:var(--mono);font-size:.42rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.ff .ffv{font-size:.78rem;color:var(--text-dim);line-height:1.5}
+.ff strong{font-weight:600}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--text-muted)}
+@media(max-width:600px){.comp-row{grid-template-columns:1fr 70px 1fr}.fun-facts{grid-template-columns:1fr}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="⚖️ Side by Side" data-fr="⚖️ Côte à côte" data-ar="⚖️ جنباً إلى جنب">⚖️ Side by Side</span></div>
+  <h1>Orbit <span class="ca"><span data-en="Compare" data-fr="Comparer" data-ar="مقارنة">Compare</span></span></h1>
+  <p>Pick any two satellites. See how they differ in altitude, speed, period, and purpose — with scale visuals.</p>
+</header>
+
+<div class="selectors">
+  <div class="sel"><label><span data-en="Satellite A" data-fr="Satellite A" data-ar="القمر أ">Satellite A</span></label><select id="selA"></select></div>
+  <div class="vs">vs</div>
+  <div class="sel"><label><span data-en="Satellite B" data-fr="Satellite B" data-ar="القمر ب">Satellite B</span></label><select id="selB"></select></div>
+</div>
+
+<div class="visual"><canvas id="orbVis" width="600" height="220"></canvas></div>
+<div class="compare" id="compare"></div>
+<div class="fun-facts" id="funFacts"></div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const G=6.674e-11,M=5.972e24,Re=6371;
+const SATS=[
+  {name:'ISS',name_fr:'ISS',name_ar:'م.ف.د',alt:408,icon:'🏗️',type:'Station',mass:'420,000 kg',launched:1998,country:'🌍',note:'Largest structure in space'},
+  {name:'Tiangong',name_fr:'Tiangong',name_ar:'تيانغونغ',alt:390,icon:'🇨🇳',type:'Station',mass:'80,000 kg',launched:2021,country:'🇨🇳',note:'China\'s permanent station'},
+  {name:'Starlink',name_fr:'Starlink',name_ar:'ستارلينك',alt:550,icon:'📶',type:'Comms',mass:'260 kg',launched:2019,country:'🇺🇸',note:'5,000+ in constellation'},
+  {name:'Hubble',name_fr:'Hubble',name_ar:'هابل',alt:547,icon:'🔭',type:'Science',mass:'11,110 kg',launched:1990,country:'🇺🇸',note:'Sees 13.4B light-years'},
+  {name:'GPS IIR-M',name_fr:'GPS IIR-M',name_ar:'GPS IIR-M',alt:20200,icon:'📡',type:'Navigation',mass:'2,000 kg',launched:2005,country:'🇺🇸',note:'31 sats, 1ns clocks'},
+  {name:'Galileo',name_fr:'Galileo',name_ar:'غاليليو',alt:23222,icon:'🇪🇺',type:'Navigation',mass:'700 kg',launched:2011,country:'🇪🇺',note:'1-meter accuracy'},
+  {name:'GOES-16',name_fr:'GOES-16',name_ar:'GOES-16',alt:35786,icon:'🌦️',type:'Weather',mass:'5,192 kg',launched:2016,country:'🇺🇸',note:'Full Earth every 10 min'},
+  {name:'Arabsat 6A',name_fr:'Arabsat 6A',name_ar:'عربسات 6A',alt:35786,icon:'📺',type:'Comms',mass:'6,460 kg',launched:2019,country:'🇸🇦',note:'Serves 25+ Arab nations'},
+  {name:'NOAA-20',name_fr:'NOAA-20',name_ar:'NOAA-20',alt:833,icon:'🌦️',type:'Weather',mass:'2,300 kg',launched:2017,country:'🇺🇸',note:'Polar orbit, sees all'},
+  {name:'Landsat 9',name_fr:'Landsat 9',name_ar:'لاندسات 9',alt:705,icon:'📸',type:'Imaging',mass:'2,711 kg',launched:2021,country:'🇺🇸',note:'50+ years of Earth data'},
+  {name:'Vanguard 1',name_fr:'Vanguard 1',name_ar:'فانغارد 1',alt:3969,icon:'👻',type:'Dead',mass:'1.47 kg',launched:1958,country:'🇺🇸',note:'Oldest object in orbit'},
+  {name:'Moon',name_fr:'Lune',name_ar:'القمر',alt:384400,icon:'🌙',type:'Natural',mass:'7.3×10²² kg',launched:'4.5B yrs',country:'—',note:'Only natural satellite'},
+];
+
+function speed(alt){return Math.sqrt(G*M/((Re+alt)*1000))/1000}
+function period(alt){return 2*Math.PI*Math.sqrt(Math.pow((Re+alt)*1000,3)/(G*M))/60}
+function circumf(alt){return 2*Math.PI*(Re+alt)}
+function signalDelay(alt){return(alt/299792)*1000}
+function gForce(alt){return(G*M/Math.pow((Re+alt)*1000,2))}
+
+// Build selects
+const selA=document.getElementById('selA'),selB=document.getElementById('selB');
+SATS.forEach((s,i)=>{
+  selA.innerHTML+=`<option value="${i}" ${i===0?'selected':''}>${s.icon} ${s.name} (${s.alt.toLocaleString()} km)</option>`;
+  selB.innerHTML+=`<option value="${i}" ${i===4?'selected':''}>${s.icon} ${s.name} (${s.alt.toLocaleString()} km)</option>`;
+});
+
+function update(){
+  const a=SATS[selA.value],b=SATS[selB.value];
+  
+  // Visual
+  const cv=document.getElementById('orbVis'),cx=cv.getContext('2d');
+  const d=devicePixelRatio||1;cv.width=600*d;cv.height=220*d;cx.setTransform(d,0,0,d,0,0);
+  cx.clearRect(0,0,600,220);
+  const eR=30,cy=110,cx1=200,cx2=400;
+  
+  // Scale: max orbit shown is proportional
+  const maxAlt=Math.max(a.alt,b.alt);
+  const scale=70/maxAlt;
+  
+  [a,b].forEach((s,i)=>{
+    const x=i===0?cx1:cx2;
+    const col=i===0?'rgba(92,224,214,':'rgba(246,173,85,';
+    const oR=eR+Math.max(8,s.alt*scale);
+    
+    // Orbit
+    cx.beginPath();cx.arc(x,cy,oR,0,T2);
+    cx.strokeStyle=col+'0.2)';cx.lineWidth=1;cx.setLineDash([3,4]);cx.stroke();cx.setLineDash([]);
+    
+    // Earth
+    cx.beginPath();cx.arc(x,cy,eR,0,T2);
+    const eg=cx.createRadialGradient(x-3,cy-3,0,x,cy,eR);
+    eg.addColorStop(0,'#1a4a6c');eg.addColorStop(1,'#061428');
+    cx.fillStyle=eg;cx.fill();
+    
+    // Sat dot
+    const sa=-.5;
+    cx.beginPath();cx.arc(x+oR*Math.cos(sa),cy+oR*Math.sin(sa),3,0,T2);
+    cx.fillStyle=col+'0.8)';cx.fill();
+    
+    // Labels
+    cx.font='italic 700 11px "Playfair Display"';cx.fillStyle=col+'0.7)';cx.textAlign='center';
+    cx.fillText(s.name,x,12);
+    cx.font='400 8px "JetBrains Mono"';cx.fillStyle=col+'0.3)';
+    cx.fillText(s.alt.toLocaleString()+' km',x,24);
+  });
+  
+  // Comparison rows
+  const rows=[
+    {label:'Altitude',label_fr:'Altitude',label_ar:'الارتفاع',va:a.alt.toLocaleString()+' km',vb:b.alt.toLocaleString()+' km',na:a.alt,nb:b.alt},
+    {label:'Orbital Speed',label_fr:'Vitesse orbitale',label_ar:'السرعة المدارية',va:speed(a.alt).toFixed(2)+' km/s',vb:speed(b.alt).toFixed(2)+' km/s',na:speed(a.alt),nb:speed(b.alt)},
+    {label:'Period',label_fr:'Période',label_ar:'الدورة',va:period(a.alt).toFixed(1)+' min',vb:period(b.alt).toFixed(1)+' min',na:period(a.alt),nb:period(b.alt)},
+    {label:'Circumference',va:Math.round(circumf(a.alt)).toLocaleString()+' km',vb:Math.round(circumf(b.alt)).toLocaleString()+' km',na:circumf(a.alt),nb:circumf(b.alt)},
+    {label:'Orbits/Day',va:(1440/period(a.alt)).toFixed(1),vb:(1440/period(b.alt)).toFixed(1),na:1440/period(a.alt),nb:1440/period(b.alt)},
+    {label:'Signal Delay',va:signalDelay(a.alt).toFixed(1)+' ms',vb:signalDelay(b.alt).toFixed(1)+' ms',na:signalDelay(a.alt),nb:signalDelay(b.alt)},
+    {label:'Gravity',va:gForce(a.alt).toFixed(2)+' m/s²',vb:gForce(b.alt).toFixed(2)+' m/s²',na:gForce(a.alt),nb:gForce(b.alt)},
+    {label:'Type',label_fr:'Type',label_ar:'النوع',va:a.type,vb:b.type},
+    {label:'Mass',va:a.mass,vb:b.mass},
+    {label:'Country',va:a.country,vb:b.country},
+  ];
+  
+  let html='<div class="comp-row"><div class="comp-header">Orbital Properties</div></div>';
+  rows.forEach(r=>{
+    const hasBar=r.na&&r.nb;
+    const maxV=hasBar?Math.max(r.na,r.nb):0;
+    html+=`<div class="comp-row">
+      <div class="comp-val left">${r.va}${hasBar?`<div class="comp-bar" style="width:${(r.na/maxV)*100}%;background:var(--a);margin-left:auto"></div>`:''}</div>
+      <div class="comp-label">${r.label}</div>
+      <div class="comp-val right">${r.vb}${hasBar?`<div class="comp-bar" style="width:${(r.nb/maxV)*100}%;background:var(--b)"></div>`:''}</div>
+    </div>`;
+  });
+  document.getElementById('compare').innerHTML=html;
+  
+  // Fun facts
+  const ratio=(b.alt/a.alt);
+  const moonTrips=Math.floor(384400/Math.max(a.alt,b.alt));
+  const speedRatio=speed(a.alt)/speed(b.alt);
+  document.getElementById('funFacts').innerHTML=`
+    <div class="ff"><div class="fft">Altitude Ratio</div><div class="ffv"><strong>${a.name}</strong> is ${ratio>1?(1/ratio).toFixed(1)+'× closer':ratio.toFixed(1)+'× farther'} to Earth than <strong>${b.name}</strong></div></div>
+    <div class="ff"><div class="fft">Speed Comparison</div><div class="ffv"><strong>${a.name}</strong> moves <strong>${speedRatio.toFixed(1)}×</strong> ${speedRatio>1?'faster':'slower'} than <strong>${b.name}</strong></div></div>
+    <div class="ff"><div class="fft">Moon Distance</div><div class="ffv">You could stack <strong>${moonTrips}</strong> ${ratio>1?b.name:a.name} orbits to reach the Moon</div></div>
+    <div class="ff"><div class="fft"><span data-en="Heritage" data-fr="Patrimoine" data-ar="التراث">Heritage</span></div><div class="ffv">Both orbits are calculated using <strong>algorithms</strong> — named after al-Khwarizmi (780 CE)</div></div>
+  `;
+}
+
+selA.addEventListener('change',update);
+selB.addEventListener('change',update);
+update();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Orbit Compare',project:'Satellites in the Sky'},fr:{title:'Orbit Compare',project:'Satellites dans le Ciel'},ar:{title:'Orbit Compare',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

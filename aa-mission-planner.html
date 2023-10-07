@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Planner — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(92,224,214,0.06);border:1px solid rgba(92,224,214,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--cyan)}
+header p{font-size:.82rem;color:var(--dim);max-width:480px;margin:0 auto;line-height:1.6}
+
+.wizard{max-width:650px;margin:0 auto}
+.step-nav{display:flex;gap:3px;margin-bottom:16px}
+.sn{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.04);transition:all .3s}
+.sn.done{background:var(--cyan)}.sn.current{background:var(--gold)}
+
+.step-card{background:var(--card);border:1px solid rgba(92,224,214,0.06);border-radius:14px;padding:20px;display:none}
+.step-card.active{display:block}
+.sc-head{margin-bottom:14px}
+.sc-step{font-family:var(--mono);font-size:.42rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.sc-title{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:4px}
+.sc-desc{font-size:.76rem;color:var(--dim);line-height:1.5}
+
+.options{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:12px 0}
+@media(max-width:500px){.options{grid-template-columns:1fr}}
+.opt{padding:12px;border-radius:10px;border:2px solid rgba(110,140,255,0.06);cursor:pointer;transition:all .3s;text-align:center}
+.opt:hover{border-color:rgba(92,224,214,0.15)}
+.opt.selected{border-color:var(--cyan);background:rgba(92,224,214,0.04)}
+.opt-icon{font-size:1.4rem;margin-bottom:4px}
+.opt-name{font-size:.78rem;font-weight:600;color:#fff;margin-bottom:2px}
+.opt-desc{font-size:.6rem;color:var(--dim);line-height:1.3}
+
+.nav-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.nbtn{font-family:var(--mono);font-size:.6rem;padding:8px 20px;border-radius:8px;border:none;cursor:pointer;transition:all .2s}
+.nbtn.next{background:var(--cyan);color:var(--bg);font-weight:600}
+.nbtn.next:hover{opacity:.8}
+.nbtn.back{background:transparent;border:1px solid rgba(110,140,255,0.1);color:var(--dim)}
+
+/* Summary */
+.summary{margin-top:12px}
+.sum-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:.72rem}
+.sum-row .sl{color:var(--dim)}.sum-row .sv{font-family:var(--mono);font-weight:500}
+.total-row{font-size:.88rem;font-weight:700;padding:8px 0;color:#fff}
+.total-row .sv{color:var(--gold)}
+
+.launch-btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--cyan),var(--blue));color:var(--bg);font-family:var(--mono);font-size:.7rem;font-weight:600;cursor:pointer;margin-top:12px;letter-spacing:.04em;transition:all .3s}
+.launch-btn:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(92,224,214,0.2)}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted);max-width:650px;margin:0 auto}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge"><span data-en="🛰️ Design Workshop" data-fr="🛰️ Atelier de conception" data-ar="🛰️ ورشة التصميم">🛰️ Design Workshop</span></div>
+  <h1>Mission <span><span data-en="Planner" data-fr="Planificateur" data-ar="المخطط">Planner</span></span></h1>
+  <p>Design a real satellite mission from scratch. Choose your purpose, orbit, instruments, and launch vehicle. See the cost, mass, and power budget.</p>
+</header>
+<div class="wizard">
+  <div class="step-nav" id="stepNav"></div>
+  <div id="steps"></div>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+const STEPS=[
+  {title:'Mission Type',desc:'What will your satellite do?',desc_fr:'Que fera votre satellite ?',desc_ar:'ماذا سيفعل قمرك الصناعي؟',opts:[
+    {icon:'📸',name:'Earth Observation',name_fr:'Observation de la Terre',name_ar:'مراقبة الأرض',desc:'Image the surface. Mapping, agriculture, disasters.',desc_fr:'Imagerie de surface. Cartographie, agriculture, catastrophes.',desc_ar:'تصوير السطح. خرائط، زراعة، كوارث.',mass:800,power:500,cost:50,orbit:'SSO',alt:700},
+    {icon:'📡',name:'Communications',name_fr:'Communications',name_ar:'الاتصالات',desc:'Relay data, TV, internet. Serve millions.',desc_fr:'Relais de données, TV, internet. Servir des millions.',desc_ar:'ترحيل بيانات، تلفزيون، إنترنت. خدمة الملايين.',mass:4000,power:12000,cost:200,orbit:'GEO',alt:35786},
+    {icon:'🌦️',name:'Weather Monitoring',name_fr:'Surveillance météo',name_ar:'رصد الطقس',desc:'Track storms, clouds, ocean temps.',desc_fr:'Suivi des tempêtes, nuages, température des océans.',desc_ar:'تتبع العواصف، السحب، حرارة المحيطات.',mass:2000,power:2000,cost:100,orbit:'SSO',alt:833},
+    {icon:'📍',name:'Navigation',name_fr:'Navigation',name_ar:'الملاحة',desc:'Precision positioning for billions of users.',desc_fr:'Positionnement précis pour des milliards d\'utilisateurs.',desc_ar:'تحديد مواقع دقيق لمليارات المستخدمين.',mass:2000,power:2900,cost:120,orbit:'MEO',alt:20200},
+    {icon:'🔬',name:'Science',name_fr:'Science',name_ar:'العلوم',desc:'Study Earth\'s magnetosphere, radiation, gravity.',mass:500,power:400,cost:40,orbit:'LEO',alt:500},
+    {icon:'📦',name:'Technology Demo',name_fr:'Démo technologique',name_ar:'عرض تقني',desc:'CubeSat testing new tech. Low cost, high risk.',desc_fr:'CubeSat testant la nouvelle tech. Faible coût, haut risque.',desc_ar:'قمر مكعب يختبر تقنية جديدة. تكلفة منخفضة، مخاطر عالية.',mass:4,power:10,cost:0.5,orbit:'LEO',alt:450},
+  ]},
+  {title:'Orbit Selection',desc:'Where will it fly? (Recommended based on mission)',desc_fr:'Où volera-t-il ? (Recommandé selon la mission)',desc_ar:'أين سيطير؟ (موصى به حسب المهمة)',opts:[
+    {icon:'🔵',name:'LEO (200-2000 km)',name_fr:'LEO (200-2000 km)',name_ar:'LEO (200-2000 كم)',desc:'Close to Earth. Low latency. High drag.',desc_fr:'Proche de la Terre. Faible latence. Fort frottement.',desc_ar:'قريب من الأرض. زمن استجابة قصير. سحب عالٍ.',mass:0,power:0,cost:0,alt:500},
+    {icon:'🟢',name:'Sun-Synchronous',name_fr:'Héliosynchrone',name_ar:'متزامن شمسياً',desc:'Same local time every pass. Earth observation ideal.',desc_fr:'Même heure locale à chaque passage. Idéal pour l\'observation.',desc_ar:'نفس التوقيت المحلي كل مرور. مثالي للمراقبة.',mass:0,power:0,cost:10,alt:700},
+    {icon:'🟡',name:'MEO (2000-35000 km)',name_fr:'MEO (2000-35000 km)',name_ar:'MEO (2000-35000 كم)',desc:'Navigation sweet spot. GPS, Galileo.',mass:0,power:0,cost:20,alt:20200},
+    {icon:'🔴',name:'GEO (35,786 km)',name_fr:'GEO (35 786 km)',name_ar:'GEO (35,786 كم)',desc:'Hovers over one spot. Comms & weather.',mass:0,power:0,cost:50,alt:35786},
+  ]},
+  {title:'Instruments',desc:'What sensors will it carry?',opts:[
+    {icon:'📸',name:'Multispectral Camera',name_fr:'Caméra multispectrale',name_ar:'كاميرا متعددة الأطياف',desc:'Visible + infrared imaging. 0.5-30m resolution.',mass:50,power:100,cost:5},
+    {icon:'📡',name:'SAR Radar',name_fr:'Radar SAR',name_ar:'رادار SAR',desc:'See through clouds. Day/night imaging.',mass:200,power:1500,cost:30},
+    {icon:'🌡️',name:'Thermal Sensor',name_fr:'Capteur thermique',name_ar:'مستشعر حراري',desc:'Measure surface temperature. Fire detection.',mass:30,power:50,cost:3},
+    {icon:'📻',name:'Radio Transponder',name_fr:'Transpondeur radio',name_ar:'مرسل مستجيب راديوي',desc:'Communications relay. Data or broadcast.',mass:100,power:500,cost:10},
+    {icon:'🧲',name:'Magnetometer',name_fr:'Magnétomètre',name_ar:'مقياس مغناطيسي',desc:'Measure Earth\'s magnetic field.',mass:5,power:10,cost:1},
+    {icon:'⚡',name:'Particle Detector',name_fr:'Détecteur de particules',name_ar:'كاشف جسيمات',desc:'Measure radiation environment.',mass:15,power:20,cost:2},
+  ]},
+  {title:'Launch Vehicle',desc:'How does it get to orbit?',opts:[
+    {icon:'🚀',name:'Falcon 9',name_fr:'Falcon 9',name_ar:'فالكون ٩',desc:'SpaceX workhorse. $67M. Reusable.',mass:0,power:0,cost:67,capacity:22800},
+    {icon:'🚀',name:'Ariane 6',name_fr:'Ariane 6',name_ar:'آريان ٦',desc:'ESA heavy lifter. $75M.',mass:0,power:0,cost:75,capacity:21600},
+    {icon:'🚀',name:'GSLV Mk III',name_fr:'GSLV Mk III',name_ar:'GSLV Mk III',desc:'ISRO heavy. $50M. Great value.',mass:0,power:0,cost:50,capacity:10000},
+    {icon:'🚀',name:'Electron',name_fr:'Electron',name_ar:'إلكترون',desc:'Rocket Lab small sat. $7.5M.',mass:0,power:0,cost:7.5,capacity:300},
+  ]},
+];
+
+let currentStep=0;
+const selections=[];
+
+function renderStep(){
+  const s=STEPS[currentStep];
+  
+  // Nav
+  let navHtml='';
+  for(let i=0;i<STEPS.length+1;i++){
+    navHtml+=`<div class="sn ${i<currentStep?'done':i===currentStep?'current':''}"></div>`;
+  }
+  document.getElementById('stepNav').innerHTML=navHtml;
+  
+  if(currentStep>=STEPS.length){renderSummary();return}
+  
+  let html=`<div class="step-card active">
+    <div class="sc-head">
+      <div class="sc-step">Step ${currentStep+1} of ${STEPS.length}</div>
+      <div class="sc-title">${s.title}</div>
+      <div class="sc-desc">${s.desc}</div>
+    </div>
+    <div class="options">${s.opts.map((o,i)=>`
+      <div class="opt ${selections[currentStep]===i?'selected':''}" onclick="select(${i})">
+        <div class="opt-icon">${o.icon}</div>
+        <div class="opt-name">${o.name}</div>
+        <div class="opt-desc">${o.desc}</div>
+      </div>`).join('')}
+    </div>
+    <div class="nav-btns">
+      ${currentStep>0?'<button class="nbtn back" onclick="back()">← Back</button>':''}
+      <button class="nbtn next" onclick="next()" ${selections[currentStep]==null?'style="opacity:.4"':''}>Next →</button>
+    </div>
+  </div>`;
+  document.getElementById('steps').innerHTML=html;
+}
+
+function select(i){selections[currentStep]=i;renderStep()}
+function next(){if(selections[currentStep]==null)return;currentStep++;renderStep()}
+function back(){currentStep=Math.max(0,currentStep-1);renderStep()}
+
+function renderSummary(){
+  const mission=STEPS[0].opts[selections[0]];
+  const orbit=STEPS[1].opts[selections[1]];
+  const instr=STEPS[2].opts[selections[2]];
+  const launch=STEPS[3].opts[selections[3]];
+  
+  const totalMass=mission.mass+instr.mass;
+  const totalPower=mission.power+instr.power;
+  const satCost=mission.cost+instr.cost+orbit.cost;
+  const totalCost=satCost+launch.cost;
+  const fits=totalMass<=launch.capacity;
+  
+  const Re=6371,G=6.674e-11,Me=5.972e24;
+  const alt=orbit.alt||mission.alt;
+  const period=2*Math.PI*Math.sqrt(Math.pow((Re+alt)*1000,3)/(G*Me))/60;
+  const speed=Math.sqrt(G*Me/((Re+alt)*1000))/1000;
+  
+  document.getElementById('steps').innerHTML=`<div class="step-card active">
+    <div class="sc-head">
+      <div class="sc-step">Mission Summary</div>
+      <div class="sc-title">🛰️ Your Satellite</div>
+    </div>
+    <div class="summary">
+      <div class="sum-row"><span class="sl"><span data-en="Mission" data-fr="Mission" data-ar="المهمة">Mission</span></span><span class="sv" style="color:var(--cyan)">${mission.name}</span></div>
+      <div class="sum-row"><span class="sl"><span data-en="Orbit" data-fr="Orbite" data-ar="المدار">Orbit</span></span><span class="sv" style="color:var(--blue)">${orbit.name} (${alt.toLocaleString()} km)</span></div>
+      <div class="sum-row"><span class="sl">Instrument</span><span class="sv" style="color:var(--purple)">${instr.name}</span></div>
+      <div class="sum-row"><span class="sl">Launch Vehicle</span><span class="sv" style="color:var(--orange)">${launch.name}</span></div>
+      <div class="sum-row"><span class="sl">Total Mass</span><span class="sv">${totalMass.toLocaleString()} kg ${fits?'✅':'❌ TOO HEAVY'}</span></div>
+      <div class="sum-row"><span class="sl">Power Budget</span><span class="sv">${totalPower.toLocaleString()} W</span></div>
+      <div class="sum-row"><span class="sl">Orbital Period</span><span class="sv">${period.toFixed(0)} min</span></div>
+      <div class="sum-row"><span class="sl"><span data-en="Speed" data-fr="Vitesse" data-ar="السرعة">Speed</span></span><span class="sv">${speed.toFixed(2)} km/s</span></div>
+      <div class="sum-row"><span class="sl">Satellite Cost</span><span class="sv" style="color:var(--gold)">$${satCost}M</span></div>
+      <div class="sum-row"><span class="sl">Launch Cost</span><span class="sv" style="color:var(--gold)">$${launch.cost}M</span></div>
+      <div class="sum-row total-row"><span class="sl">TOTAL MISSION</span><span class="sv">$${totalCost}M</span></div>
+    </div>
+    ${fits?'<button class="launch-btn" onclick="alert(\'🚀 LAUNCH SUCCESSFUL! Your \'+\'' +mission.name+'\'+\' satellite is now in orbit at \'+\''+alt.toLocaleString()+'\'+\' km!\')">🚀 LAUNCH MISSION</button>':'<div style="text-align:center;padding:12px;color:var(--red);font-size:.8rem">⚠️ Satellite too heavy for '+launch.name+'. Choose a bigger rocket or lighter payload.</div>'}
+    <div class="nav-btns" style="margin-top:12px"><button class="nbtn back" onclick="back()">← Back</button><button class="nbtn next" onclick="currentStep=0;selections.length=0;renderStep()">🔄 New Mission</button></div>
+  </div>`;
+}
+
+renderStep();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Mission Planner',project:'Satellites in the Sky'},fr:{title:'Planificateur de Mission',project:'Satellites dans le Ciel'},ar:{title:'مخطط المهمة',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

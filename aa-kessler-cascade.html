@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kessler Cascade — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020408;--red:#fc8181;--orange:#f6ad55;--gold:#e8c170;--cyan:#5ce0d6;--blue:#6e8cff;--green:#6fcf97;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4558;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;width:100vw;height:100vh}
+canvas#sim{position:fixed;inset:0;width:100%;height:100%}
+
+/* HUD */
+.hud-top{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(to bottom,rgba(2,4,8,0.85),transparent);pointer-events:none}
+.hud-top>*{pointer-events:auto}
+.logo{font-family:var(--serif);font-size:.85rem;font-weight:700;color:var(--red);display:flex;align-items:center;gap:8px}
+.logo .dot{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 8px var(--red)}50%{box-shadow:0 0 20px var(--red)}}
+
+.counters{display:flex;gap:16px}
+.counter{text-align:center}
+.counter .cv{font-family:var(--mono);font-size:1.4rem;font-weight:500;line-height:1}
+.counter .cl{font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.hud-bottom{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;align-items:flex-end;justify-content:space-between;padding:16px 20px;background:linear-gradient(to top,rgba(2,4,8,0.9),transparent);pointer-events:none}
+.hud-bottom>*{pointer-events:auto}
+
+.controls{display:flex;gap:8px;align-items:center}
+.ctrl-btn{font-family:var(--mono);font-size:.58rem;padding:7px 14px;border-radius:6px;border:1px solid;cursor:pointer;transition:all .3s;letter-spacing:.04em;text-transform:uppercase;font-weight:500;background:transparent}
+.ctrl-btn.launch{border-color:rgba(252,129,129,0.3);color:var(--red);background:rgba(252,129,129,0.06)}
+.ctrl-btn.launch:hover{background:rgba(252,129,129,0.15);border-color:var(--red)}
+.ctrl-btn.reset{border-color:rgba(92,224,214,0.2);color:var(--cyan)}
+.ctrl-btn.reset:hover{background:rgba(92,224,214,0.08)}
+.ctrl-btn.speed{border-color:rgba(110,140,255,0.2);color:var(--blue)}
+.ctrl-btn.speed:hover{background:rgba(110,140,255,0.08)}
+.ctrl-btn.add{border-color:rgba(111,207,151,0.2);color:var(--green)}
+.ctrl-btn.add:hover{background:rgba(111,207,151,0.08)}
+
+.info-panel{max-width:340px;text-align:right}
+.info-panel h3{font-family:var(--serif);font-size:.82rem;font-weight:700;color:var(--orange);margin-bottom:4px}
+.info-panel p{font-size:.68rem;color:var(--text-dim);line-height:1.5}
+
+/* Collision flash */
+.flash{position:fixed;inset:0;background:radial-gradient(circle,rgba(252,129,129,0.08),transparent);pointer-events:none;opacity:0;transition:opacity .1s;z-index:5}
+.flash.on{opacity:1}
+
+/* Status bar */
+.status{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:10;font-family:var(--mono);font-size:.52rem;color:var(--text-muted);text-align:center;pointer-events:none}
+.status.warn{color:var(--orange)}.status.crit{color:var(--red);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Timeline */
+.timeline{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:10;display:flex;flex-direction:column;gap:3px;pointer-events:none}
+.tl-event{font-family:var(--mono);font-size:.42rem;color:var(--text-muted);padding:2px 6px;border-left:2px solid;border-radius:0 3px 3px 0;white-space:nowrap;opacity:.7;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+
+/* Intro overlay */
+.intro{position:fixed;inset:0;z-index:100;background:rgba(2,4,8,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;backdrop-filter:blur(4px);transition:opacity .5s}
+.intro.hidden{opacity:0;pointer-events:none}
+.intro h1{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:16px}
+.intro h1 span{color:var(--red)}
+.intro p{font-size:.88rem;color:var(--text-dim);max-width:500px;line-height:1.6;margin-bottom:24px}
+.intro .fact{font-family:var(--mono);font-size:.7rem;color:var(--orange);margin-bottom:24px;max-width:460px}
+.start-btn{font-family:var(--font);font-size:.85rem;font-weight:600;padding:12px 32px;border-radius:10px;border:1px solid rgba(252,129,129,0.3);background:rgba(252,129,129,0.08);color:var(--red);cursor:pointer;transition:all .3s;letter-spacing:.02em}
+.start-btn:hover{background:rgba(252,129,129,0.15);border-color:var(--red);box-shadow:0 0 30px rgba(252,129,129,0.1)}
+
+@media(max-width:600px){.counters{gap:10px}.counter .cv{font-size:1rem}.info-panel{display:none}.tl-event{font-size:.36rem}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<canvas id="sim"></canvas>
+<div class="flash" id="flash"></div>
+
+<div class="intro" id="intro">
+  <div style="font-size:2.5rem;margin-bottom:16px">💥</div>
+  <h1>The <span>Kessler</span> Cascade</h1>
+  <p>In 1978, NASA scientist Donald Kessler predicted that if enough objects accumulate in orbit, a single collision could trigger a chain reaction — each impact creating debris that causes more impacts, until entire orbital shells become unusable.</p>
+  <div class="fact">There are currently ~36,500 tracked objects in orbit. Millions of smaller fragments are untracked. At orbital speeds (28,000 km/h), a 1cm piece of debris hits with the force of a hand grenade.</div>
+  <button class="start-btn" id="startBtn">🚀 Launch Simulation</button>
+</div>
+
+<div class="hud-top">
+  <div class="logo"><span class="dot"></span> Kessler Cascade</div>
+  <div class="counters">
+    <div class="counter"><div class="cv" id="satCt" style="color:var(--cyan)">0</div><div class="cl"><span data-en="Satellites" data-fr="Satellites" data-ar="أقمار صناعية">Satellites</span></div></div>
+    <div class="counter"><div class="cv" id="debCt" style="color:var(--red)">0</div><div class="cl"><span data-en="Debris" data-fr="Débris" data-ar="حطام">Debris</span></div></div>
+    <div class="counter"><div class="cv" id="colCt" style="color:var(--orange)">0</div><div class="cl"><span data-en="Collisions" data-fr="Collisions" data-ar="تصادمات">Collisions</span></div></div>
+    <div class="counter"><div class="cv" id="totCt" style="color:var(--text-dim)">0</div><div class="cl"><span data-en="Total Objects" data-fr="Total d'objets" data-ar="إجمالي الأجسام">Total Objects</span></div></div>
+  </div>
+</div>
+
+<div class="status" id="status"><span data-en="Simulation paused" data-fr="Simulation en pause" data-ar="المحاكاة متوقفة">Simulation paused</span></div>
+
+<div class="timeline" id="timeline"></div>
+
+<div class="hud-bottom">
+  <div class="controls">
+    <button class="ctrl-btn launch" id="triggerBtn"><span data-en="💥 Trigger Collision" data-fr="💥 Déclencher la collision" data-ar="💥 إطلاق التصادم">💥 Trigger Collision</span></button>
+    <button class="ctrl-btn add" id="addBtn"><span data-en="➕ Add 20 Sats" data-fr="➕ Ajouter 20 sats" data-ar="➕ إضافة 20 قمر">➕ Add 20 Sats</span></button>
+    <button class="ctrl-btn speed" id="speedBtn"><span data-en="⏩ 1x" data-fr="⏩ 1x" data-ar="⏩ 1x">⏩ 1x</span></button>
+    <button class="ctrl-btn reset" id="resetBtn"><span data-en="🔄 Reset" data-fr="🔄 Réinitialiser" data-ar="🔄 إعادة تعيين">🔄 Reset</span></button>
+  </div>
+  <div class="info-panel">
+    <h3><span data-en="⚠️ Kessler Syndrome" data-fr="⚠️ Syndrome de Kessler" data-ar="⚠️ متلازمة كيسلر">⚠️ Kessler Syndrome</span></h3>
+    <p>Watch how a single collision cascades. Each impact at ~28,000 km/h shatters objects into hundreds of fragments, each becoming a new projectile. Click "Trigger Collision" to start the cascade.</p>
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('sim'),cx=cv.getContext('2d');
+const T2=Math.PI*2;
+let W,H,CX,CY,ER;
+
+function resize(){
+  const dp=devicePixelRatio||1;
+  W=innerWidth;H=innerHeight;
+  cv.width=W*dp;cv.height=H*dp;
+  cv.style.width=W+'px';cv.style.height=H+'px';
+  cx.setTransform(dp,0,0,dp,0,0);
+  CX=W/2;CY=H/2;
+  ER=Math.min(W,H)*.15;// Earth radius on screen
+}
+resize();addEventListener('resize',resize);
+
+// Simulation
+let objects=[],collisions=0,running=false,speed=1,frame=0,events=[];
+
+function createSat(alt,angle,isSat){
+  const r=ER+alt;// Screen radius
+  const v=.3+Math.random()*.4;// Angular velocity (faster at lower orbits)
+  const vActual=isSat?v*(1-.2*(alt/(ER*2.5))):v*(0.5+Math.random());
+  return{
+    type:isSat?'sat':'debris',
+    r,angle:angle||Math.random()*T2,
+    v:vActual*(Math.random()>.5?1:-1),
+    alt,// Relative altitude above Earth surface on screen
+    size:isSat?2+Math.random()*1.5:.5+Math.random()*1.2,
+    age:0,
+    color:isSat?null:null,// Will be computed
+    incl:(Math.random()-.5)*.3,// Slight inclation wobble for visual
+    phase:Math.random()*T2,
+    alive:true
+  };
+}
+
+function init(){
+  objects=[];collisions=0;events=[];frame=0;
+  document.getElementById('timeline').innerHTML='';
+  // Create initial satellites in various orbital shells
+  for(let i=0;i<40;i++)objects.push(createSat(ER*.4+Math.random()*ER*.3,null,true));// LEO
+  for(let i=0;i<25;i++)objects.push(createSat(ER*.8+Math.random()*ER*.4,null,true));// MEO-ish
+  for(let i=0;i<15;i++)objects.push(createSat(ER*1.5+Math.random()*ER*.5,null,true));// Higher
+  for(let i=0;i<20;i++)objects.push(createSat(ER*2+Math.random()*ER*.8,null,true));// GEO-ish
+  addEvent('Simulation initialized','var(--cyan)');
+}
+
+function addEvent(text,color){
+  events.unshift({text,color,t:Date.now()});
+  if(events.length>12)events.pop();
+  const tl=document.getElementById('timeline');
+  tl.innerHTML='';
+  events.forEach(e=>{
+    const d=document.createElement('div');
+    d.className='tl-event';
+    d.style.borderColor=e.color;
+    d.textContent=e.text;
+    tl.appendChild(d);
+  });
+}
+
+function triggerCollision(){
+  // Find two close satellites and collide them
+  const sats=objects.filter(o=>o.alive&&o.type==='sat');
+  if(sats.length<2){addEvent('Not enough satellites!','var(--orange)');return}
+  
+  // Pick random sat
+  const s1=sats[Math.floor(Math.random()*sats.length)];
+  const s2=sats.filter(s=>s!==s1).reduce((best,s)=>{
+    const d=Math.abs(s.r-s1.r)+Math.abs(((s.angle-s1.angle+Math.PI)%(T2))-Math.PI)*s.r;
+    const bd=best?Math.abs(best.r-s1.r)+Math.abs(((best.angle-s1.angle+Math.PI)%(T2))-Math.PI)*best.r:Infinity;
+    return d<bd?s:best;
+  },null);
+  
+  if(!s2)return;
+  
+  // Destroy both
+  s1.alive=false;s2.alive=false;collisions++;
+  
+  // Spawn debris
+  const cx2=(s1.r*Math.cos(s1.angle)+s2.r*Math.cos(s2.angle))/2;
+  const cy2=(s1.r*Math.sin(s1.angle)+s2.r*Math.sin(s2.angle))/2;
+  const midR=Math.sqrt(cx2*cx2+cy2*cy2);
+  const midA=Math.atan2(cy2,cx2);
+  const numDebris=8+Math.floor(Math.random()*12);
+  
+  for(let i=0;i<numDebris;i++){
+    const d=createSat(midR-ER+(Math.random()-.5)*ER*.4,midA+(Math.random()-.5)*.5,false);
+    d.v+=(Math.random()-.5)*.6;
+    objects.push(d);
+  }
+  
+  // Flash
+  const fl=document.getElementById('flash');fl.classList.add('on');setTimeout(()=>fl.classList.remove('on'),150);
+  addEvent(`💥 Collision! +${numDebris} debris fragments`,'var(--red)');
+}
+
+function checkCollisions(){
+  if(frame%3!==0)return;// Check every 3 frames for perf
+  const alive=objects.filter(o=>o.alive);
+  for(let i=0;i<alive.length;i++){
+    for(let j=i+1;j<alive.length;j++){
+      const a=alive[i],b=alive[j];
+      const ax=a.r*Math.cos(a.angle),ay=a.r*Math.sin(a.angle);
+      const bx=b.r*Math.cos(b.angle),by=b.r*Math.sin(b.angle);
+      const dist=Math.sqrt((ax-bx)**2+(ay-by)**2);
+      const threshold=(a.size+b.size)*1.8;
+      
+      if(dist<threshold){
+        a.alive=false;b.alive=false;collisions++;
+        const midR2=(a.r+b.r)/2,midA2=(a.angle+b.angle)/2;
+        const nDeb=3+Math.floor(Math.random()*8);
+        for(let k=0;k<nDeb;k++){
+          const d=createSat(midR2-ER+(Math.random()-.5)*ER*.3,midA2+(Math.random()-.5)*.4,false);
+          d.v+=(Math.random()-.5)*.8;
+          objects.push(d);
+        }
+        const fl=document.getElementById('flash');fl.classList.add('on');setTimeout(()=>fl.classList.remove('on'),100);
+        addEvent(`💥 Cascade collision! +${nDeb} fragments`,'var(--orange)');
+        return;// One collision per frame
+      }
+    }
+  }
+}
+
+function update(){
+  if(!running)return;
+  frame++;
+  for(const o of objects){
+    if(!o.alive)continue;
+    o.angle+=o.v*speed*.001;
+    o.age++;
+    // Slight orbital decay for debris
+    if(o.type==='debris'&&o.r>ER+5){
+      o.r-=.003*speed;
+      if(o.r<=ER+2){o.alive=false;addEvent('🔥 Debris burned up in atmosphere','var(--green)')}
+    }
+  }
+  // Remove dead objects older than some frames
+  objects=objects.filter(o=>o.alive||o.age<10);
+  
+  // Autonomous collisions
+  if(frame%60===0)checkCollisions();
+  
+  // Update status
+  const sats=objects.filter(o=>o.alive&&o.type==='sat').length;
+  const debs=objects.filter(o=>o.alive&&o.type==='debris').length;
+  const total=sats+debs;
+  document.getElementById('satCt').textContent=sats;
+  document.getElementById('debCt').textContent=debs;
+  document.getElementById('colCt').textContent=collisions;
+  document.getElementById('totCt').textContent=total;
+  
+  const st=document.getElementById('status');
+  if(debs>150){st.textContent='⚠️ CRITICAL: KESSLER CASCADE IN PROGRESS';st.className='status crit'}
+  else if(debs>50){st.textContent='⚠️ WARNING: Debris density increasing rapidly';st.className='status warn'}
+  else if(debs>10){st.textContent='Debris detected — monitoring collision probability';st.className='status'}
+  else{st.textContent=`Simulation running · ${total} objects tracked · ${speed}x speed`;st.className='status'}
+}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  
+  // Background
+  cx.fillStyle=var_bg();cx.fillRect(0,0,W,H);
+  
+  // Background stars
+  if(!render.bgStars){
+    render.bgStars=[];
+    for(let i=0;i<200;i++)render.bgStars.push({x:Math.random()*3000,y:Math.random()*2000,s:.5+Math.random()*1.5,b:.2+Math.random()*.4});
+  }
+  for(const s of render.bgStars){
+    cx.beginPath();cx.arc(s.x%W,s.y%H,s.s*.4,0,T2);
+    cx.fillStyle=`rgba(200,210,230,${s.b*.3})`;cx.fill();
+  }
+  
+  // Earth
+  const eg=cx.createRadialGradient(CX-ER*.2,CY-ER*.2,0,CX,CY,ER);
+  eg.addColorStop(0,'#1a3a5c');eg.addColorStop(.5,'#0d2240');eg.addColorStop(.85,'#061428');eg.addColorStop(1,'#020810');
+  cx.beginPath();cx.arc(CX,CY,ER,0,T2);cx.fillStyle=eg;cx.fill();
+  
+  // Earth atmosphere glow
+  cx.beginPath();cx.arc(CX,CY,ER+4,0,T2);
+  const ag=cx.createRadialGradient(CX,CY,ER-2,CX,CY,ER+15);
+  ag.addColorStop(0,'rgba(92,224,214,0.06)');ag.addColorStop(1,'transparent');
+  cx.fillStyle=ag;cx.fill();
+  
+  // Earth label
+  cx.font='500 10px "JetBrains Mono"';cx.fillStyle='rgba(92,224,214,0.15)';cx.textAlign='center';
+  cx.fillText('EARTH',CX,CY+3);
+  
+  // Orbital shells (guides)
+  const shells=[{r:ER*.4,label:'LEO',label_fr:'LEO',label_ar:'المدار المنخفض',c:'rgba(92,224,214,0.04)'},{r:ER*1,label:'MEO',label_fr:'MEO',label_ar:'المدار المتوسط',c:'rgba(110,140,255,0.03)'},{r:ER*2,label:'GEO',label_fr:'GEO',label_ar:'المدار الثابت',c:'rgba(246,173,85,0.03)'}];
+  for(const s of shells){
+    cx.beginPath();cx.arc(CX,CY,ER+s.r,0,T2);cx.strokeStyle=s.c;cx.lineWidth=.5;cx.setLineDash([2,6]);cx.stroke();cx.setLineDash([]);
+  }
+  
+  // Objects
+  const now=Date.now();
+  for(const o of objects){
+    if(!o.alive)continue;
+    const wobble=Math.sin(o.phase+now*.001)*o.incl*20;
+    const x=CX+o.r*Math.cos(o.angle);
+    const y=CY+o.r*Math.sin(o.angle)+wobble;
+    
+    // Skip if behind Earth
+    const dx=x-CX,dy=y-CY;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    // Don't skip, let them orbit around
+    
+    if(o.type==='sat'){
+      // Satellite glow
+      cx.beginPath();cx.arc(x,y,o.size*3,0,T2);
+      const sg=cx.createRadialGradient(x,y,0,x,y,o.size*3);
+      sg.addColorStop(0,'rgba(92,224,214,0.15)');sg.addColorStop(1,'transparent');
+      cx.fillStyle=sg;cx.fill();
+      
+      // Satellite dot
+      cx.beginPath();cx.arc(x,y,o.size,0,T2);
+      cx.fillStyle='rgba(92,224,214,0.8)';cx.fill();
+    } else {
+      // Debris — red/orange
+      const age_factor=Math.min(1,o.age/500);
+      cx.beginPath();cx.arc(x,y,o.size*.7,0,T2);
+      
+      if(o.age<20){
+        // Fresh debris — bright
+        cx.fillStyle=`rgba(252,129,129,${.9-age_factor*.3})`;
+        // Explosion particles
+        const pr=o.size*4*(1-o.age/20);
+        cx.beginPath();cx.arc(x,y,pr,0,T2);
+        const pg=cx.createRadialGradient(x,y,0,x,y,pr);
+        pg.addColorStop(0,`rgba(246,173,85,${.3*(1-o.age/20)})`);pg.addColorStop(1,'transparent');
+        cx.fillStyle=pg;cx.fill();
+        cx.beginPath();cx.arc(x,y,o.size*.7,0,T2);
+      }
+      
+      cx.fillStyle=`rgba(252,129,129,${.6-age_factor*.3})`;cx.fill();
+    }
+  }
+  
+  update();
+  requestAnimationFrame(render);
+}
+
+function var_bg(){return'#020408'}
+
+// Controls
+document.getElementById('startBtn').addEventListener('click',()=>{
+  document.getElementById('intro').classList.add('hidden');
+  running=true;
+  addEvent('🚀 Simulation started with 100 satellites','var(--cyan)');
+});
+
+document.getElementById('triggerBtn').addEventListener('click',()=>{
+  if(!running)return;
+  triggerCollision();
+});
+
+document.getElementById('addBtn').addEventListener('click',()=>{
+  if(!running)return;
+  for(let i=0;i<20;i++)objects.push(createSat(ER*.3+Math.random()*ER*2,null,true));
+  addEvent('➕ Added 20 satellites','var(--green)');
+});
+
+let speedIdx=0;const speeds=[1,2,5,10];
+document.getElementById('speedBtn').addEventListener('click',()=>{
+  speedIdx=(speedIdx+1)%speeds.length;
+  speed=speeds[speedIdx];
+  document.getElementById('speedBtn').textContent='⏩ '+speed+'x';
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  init();running=true;
+  addEvent('🔄 Simulation reset','var(--cyan)');
+});
+
+// Click canvas to trigger collision at click point
+cv.addEventListener('click',e=>{
+  if(!running||document.getElementById('intro').classList.contains('hidden')===false)return;
+  triggerCollision();
+});
+
+init();
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Kessler Cascade',project:'Satellites in the Sky'},fr:{title:'Cascade de Kessler',project:'Satellites dans le Ciel'},ar:{title:'تسلسل كيسلر',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

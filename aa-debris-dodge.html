@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debris Dodge — Survive in Orbit</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:#030510;color:#c8d0e0;overflow:hidden;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+canvas{border-radius:12px;display:block;cursor:pointer;touch-action:none}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="cv"></canvas>
+<script>
+const cv=document.getElementById('cv'),c=cv.getContext('2d'),P=Math.PI*2;
+const W=Math.min(400,innerWidth-20),H=Math.min(640,innerHeight-20);
+cv.width=W;cv.height=H;
+
+const FACTS=[
+  'The US Space Surveillance Network tracks 36,500+ objects larger than 10cm.',
+  'Debris travels at 7-8 km/s. A 1cm paint fleck hits like a hand grenade.',
+  'The ISS has performed 30+ debris avoidance maneuvers since 1999.',
+  'In 2009, Iridium 33 and Cosmos 2251 collided at 11.7 km/s creating 2,000+ fragments.',
+  'NASA gets ~20 conjunction warnings per day for the ISS alone.',
+  'A typical satellite dodges debris 2-3 times per year.',
+  'There are an estimated 130 million pieces of debris smaller than 1cm.',
+  'At LEO speeds, a marble-sized object has the energy of a bowling ball at 100 km/h.',
+];
+
+let state='menu',sat,debris,score,hiScore=0,factIdx=0,particles;
+
+function reset(){
+  sat={x:W/2,y:H*.7,vy:0,r:8,fuel:100};
+  debris=[];score=0;particles=[];
+  for(let i=0;i<3;i++)spawnDebris();
+}
+
+function spawnDebris(){
+  const fromTop=Math.random()>.3;
+  debris.push({
+    x:20+Math.random()*(W-40),
+    y:fromTop?-20:H+20,
+    vx:(Math.random()-.5)*1.5,
+    vy:fromTop?(1+Math.random()*2):-(1+Math.random()*2),
+    r:3+Math.random()*5,
+    rot:Math.random()*P,
+    rv:(Math.random()-.5)*.1
+  });
+}
+
+function drawSat(){
+  const s=sat;
+  // Body
+  c.fillStyle='#5ce0d6';c.fillRect(s.x-4,s.y-6,8,12);
+  // Panels
+  c.fillStyle='#6e8cff';c.fillRect(s.x-14,s.y-3,10,6);c.fillRect(s.x+4,s.y-3,10,6);
+  // Glow
+  if(sat.vy<0){
+    c.beginPath();c.arc(s.x,s.y+8,4,0,P);
+    const g=c.createRadialGradient(s.x,s.y+8,0,s.x,s.y+8,4);
+    g.addColorStop(0,'rgba(246,173,85,0.4)');g.addColorStop(1,'transparent');c.fillStyle=g;c.fill();
+  }
+}
+
+function drawDebris(d){
+  c.save();c.translate(d.x,d.y);c.rotate(d.rot);
+  c.fillStyle='rgba(252,129,129,0.7)';
+  c.beginPath();
+  for(let i=0;i<5;i++){
+    const a=i/5*P-P/4;
+    const r=d.r*(0.7+Math.random()*.3);
+    i===0?c.moveTo(r*Math.cos(a),r*Math.sin(a)):c.lineTo(r*Math.cos(a),r*Math.sin(a));
+  }
+  c.closePath();c.fill();c.restore();
+}
+
+function update(){
+  if(state!=='play')return;
+  // Gravity
+  sat.vy+=.08;
+  sat.y+=sat.vy;
+  // Bounds
+  sat.y=Math.max(10,Math.min(H-10,sat.y));
+  if(sat.y>=H-10)sat.vy=0;
+
+  // Debris
+  score++;
+  if(score%60===0)spawnDebris();
+  if(score%120===0&&debris.length<20)spawnDebris();
+
+  for(let i=debris.length-1;i>=0;i--){
+    const d=debris[i];
+    d.x+=d.vx;d.y+=d.vy;d.rot+=d.rv;
+    if(d.y>H+30||d.y<-30||d.x<-30||d.x>W+30){debris.splice(i,1);spawnDebris();continue}
+    // Collision
+    const dist=Math.hypot(sat.x-d.x,sat.y-d.y);
+    if(dist<sat.r+d.r){
+      state='dead';
+      for(let j=0;j<20;j++)particles.push({x:sat.x,y:sat.y,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,lf:1});
+      if(score>hiScore)hiScore=score;
+      factIdx=(factIdx+1)%FACTS.length;
+    }
+  }
+
+  // Particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.lf-=.02;
+    if(p.lf<=0)particles.splice(i,1);
+  }
+}
+
+function draw(){
+  c.fillStyle='#030510';c.fillRect(0,0,W,H);
+  // Stars
+  for(let i=0;i<40;i++){const sx=(i*137.5)%W,sy=((i*97.3)+score*.1)%H;c.beginPath();c.arc(sx,sy,.5,0,P);c.fillStyle='rgba(200,210,230,0.08)';c.fill()}
+  // Earth edge
+  c.fillStyle='rgba(26,74,124,0.1)';c.fillRect(0,H-3,W,3);
+
+  if(state==='menu'){
+    c.font='800 1.4rem "Playfair Display"';c.textAlign='center';c.fillStyle='#fc8181';
+    c.fillText('DEBRIS DODGE',W/2,H*.35);
+    c.font='300 .7rem Outfit';c.fillStyle='#6a7a8e';
+    c.fillText('You\'re a satellite operator.',W/2,H*.42);
+    c.fillText('Tap/click to thrust up. Dodge the debris.',W/2,H*.47);
+    c.font='600 .65rem "JetBrains Mono"';c.fillStyle='#5ce0d6';
+    c.fillText('[ TAP TO START ]',W/2,H*.58);
+    if(hiScore>0){c.font='400 .5rem "JetBrains Mono"';c.fillStyle='#e8c170';c.fillText(`Best: ${hiScore}`,W/2,H*.65)}
+  }
+  else if(state==='play'){
+    update();
+    debris.forEach(d=>drawDebris(d));
+    drawSat();
+    particles.forEach(p=>{c.beginPath();c.arc(p.x,p.y,2*p.lf,0,P);c.fillStyle=`rgba(252,129,129,${p.lf})`;c.fill()});
+    // HUD
+    c.font='500 .55rem "JetBrains Mono"';c.textAlign='left';
+    c.fillStyle='rgba(92,224,214,0.4)';c.fillText(`SCORE ${score}`,10,20);
+    c.textAlign='right';c.fillStyle='rgba(232,193,112,0.3)';c.fillText(`HI ${hiScore}`,W-10,20);
+  }
+  else if(state==='dead'){
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.lf-=.005;c.beginPath();c.arc(p.x,p.y,2*Math.max(0,p.lf),0,P);c.fillStyle=`rgba(252,129,129,${Math.max(0,p.lf)})`;c.fill()});
+    debris.forEach(d=>{d.x+=d.vx;d.y+=d.vy;d.rot+=d.rv;drawDebris(d)});
+    c.font='800 1.2rem "Playfair Display"';c.textAlign='center';c.fillStyle='#fc8181';
+    c.fillText('COLLISION',W/2,H*.3);
+    c.font='500 .7rem "JetBrains Mono"';c.fillStyle='#e8c170';
+    c.fillText(`Score: ${score}`,W/2,H*.37);
+    // Fact
+    c.font='italic 11px "Outfit"';c.fillStyle='#6a7a8e';
+    const fact=FACTS[factIdx];const words=fact.split(' ');let line='',ly=H*.48;
+    for(const w of words){const test=line+w+' ';if(c.measureText(test).width>W-40){c.fillText(line.trim(),W/2,ly);ly+=16;line=w+' '}else line=test}
+    c.fillText(line.trim(),W/2,ly);
+    c.font='600 .55rem "JetBrains Mono"';c.fillStyle='#5ce0d6';
+    c.fillText('[ TAP TO RETRY ]',W/2,H*.7);
+  }
+
+  requestAnimationFrame(draw);
+}
+
+function thrust(){
+  if(state==='menu'){state='play';reset();return}
+  if(state==='dead'){state='play';reset();return}
+  if(state==='play'){sat.vy=-3.5}
+}
+
+cv.addEventListener('click',thrust);
+cv.addEventListener('touchstart',e=>{e.preventDefault();thrust()});
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();thrust()}});
+
+reset();draw();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Debris Dodge',project:'Satellites in the Sky'},fr:{title:'Esquive de Débris',project:'Satellites dans le Ciel'},ar:{title:'تفادي الحطام',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

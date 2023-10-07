@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Launch Windows — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(246,173,85,.06);border:1px solid rgba(246,173,85,.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--orange);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--orange)}
+header p{font-size:.82rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.6}
+
+.content{max-width:700px;margin:0 auto}
+.viz{background:var(--card);border:1px solid rgba(246,173,85,.08);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center}
+.viz h3{font-family:'JetBrains Mono',monospace;font-size:.42rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+canvas{display:block;margin:0 auto}
+.tabs{display:flex;gap:4px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.tab{font-family:'JetBrains Mono',monospace;font-size:.5rem;padding:6px 14px;border-radius:20px;border:1px solid rgba(246,173,85,.1);background:transparent;color:var(--dim);cursor:pointer}
+.tab.active{background:rgba(246,173,85,.08);border-color:rgba(246,173,85,.2);color:var(--orange)}
+
+.card{background:var(--card);border:1px solid rgba(110,140,255,.06);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.card h3{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.card p{font-size:.76rem;color:var(--dim);line-height:1.6;margin-bottom:4px}
+.card strong{font-weight:600;color:var(--text)}
+.stat-row{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.stat{background:rgba(255,255,255,.02);border-radius:6px;padding:6px 10px;text-align:center;flex:1;min-width:80px}
+.stat .sv{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:500;color:var(--cyan)}
+.stat .sl{font-family:'JetBrains Mono',monospace;font-size:.32rem;color:var(--muted);text-transform:uppercase}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge">🚀 Orbital Mechanics</div>
+  <h1>Launch <span>Windows</span></h1>
+  <p>You can't just launch whenever you want. Earth rotates, orbits have specific planes, and planets move. Timing is everything.</p>
+</header>
+<div class="content">
+  <div class="tabs">
+    <button class="tab active" onclick="setScene(0)">🏗️ ISS</button>
+    <button class="tab" onclick="setScene(1)"><span data-en="📡 GEO" data-fr="📡 GEO" data-ar="📡 المدار الثابت">📡 GEO</span></button>
+    <button class="tab" onclick="setScene(2)">🔴 Mars</button>
+    <button class="tab" onclick="setScene(3)">🌙 Moon</button>
+  </div>
+  <div class="viz">
+    <h3 id="vizTitle">ISS Rendezvous Window</h3>
+    <canvas id="cv" width="500" height="300"></canvas>
+  </div>
+  <div id="info"></div>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+const cv=document.getElementById('cv'),c=cv.getContext('2d'),P=Math.PI*2;
+
+const SCENES=[
+  {title:'ISS Rendezvous Window',
+    info:`<div class="card"><h3>🏗️ ISS Launch Window</h3>
+      <p>The ISS orbits at <strong>51.6° inclination</strong>. A launch site must wait until Earth's rotation carries it under the ISS's orbital plane. This happens <strong>roughly twice per day</strong> — but the "instantaneous" window is only <strong>~10 seconds wide</strong>.</p>
+      <p>Miss it and the plane change costs too much fuel. That's why ISS launches count down to the second.</p>
+      <div class="stat-row"><div class="stat"><div class="sv">51.6°</div><div class="sl"><span data-en="Inclination" data-fr="Inclinaison" data-ar="الميل">Inclination</span></div></div><div class="stat"><div class="sv">~10 sec</div><div class="sl">Window</div></div><div class="stat"><div class="sv">2×/day</div><div class="sl">Opportunities</div></div></div></div>`,
+    draw(t){
+      const cx=250,cy=150,eR=50;
+      // Earth
+      c.beginPath();c.arc(cx,cy,eR,0,P);const eg=c.createRadialGradient(cx-5,cy-5,0,cx,cy,eR);
+      eg.addColorStop(0,'#1a4a7c');eg.addColorStop(1,'#0d2a4c');c.fillStyle=eg;c.fill();
+      // ISS orbit (tilted)
+      c.save();c.translate(cx,cy);c.rotate(-.3);
+      c.beginPath();c.ellipse(0,0,100,25,0,0,P);c.strokeStyle='rgba(92,224,214,0.2)';c.lineWidth=1;c.stroke();
+      // ISS
+      const ia=t*1.5;c.beginPath();c.arc(100*Math.cos(ia),25*Math.sin(ia),3,0,P);c.fillStyle='#5ce0d6';c.fill();
+      c.restore();
+      // Launch site
+      const la=t*.3;const lx=cx+eR*Math.cos(la+1),ly=cy+eR*Math.sin(la+1)*.4;
+      c.beginPath();c.arc(lx,ly,3,0,P);c.fillStyle='#f6ad55';c.fill();
+      c.font='400 7px "JetBrains Mono"';c.fillStyle='rgba(246,173,85,.4)';c.textAlign='left';c.fillText('Launch Site',lx+6,ly+3);
+      // Window indicator
+      const close=Math.abs(Math.sin(t*.3+1)*.4-25*Math.sin(t*1.5)/100);
+      if(close<.15){c.fillStyle='rgba(111,207,151,0.1)';c.fillRect(0,0,500,300);c.font='600 10px "JetBrains Mono"';c.textAlign='center';c.fillStyle='#6fcf97';c.fillText('🟢 WINDOW OPEN',cx,20)}
+    }
+  },
+  {title:'Geostationary Transfer',
+    info:`<div class="card"><h3>📡 GEO Launch Window</h3>
+      <p>To reach geostationary orbit, you need to arrive at the <strong>right longitude</strong>. Earth rotates 360° in 24 hours, so the launch window opens <strong>twice daily</strong> for each target slot — once on the ascending node, once descending.</p>
+      <p>GEO windows are more flexible than ISS: typically <strong>1-2 hours wide</strong> because small orbit adjustments are possible.</p>
+      <div class="stat-row"><div class="stat"><div class="sv">35,786 km</div><div class="sl"><span data-en="Altitude" data-fr="Altitude" data-ar="الارتفاع">Altitude</span></div></div><div class="stat"><div class="sv">1-2 hr</div><div class="sl">Window</div></div><div class="stat"><div class="sv">2×/day</div><div class="sl">Per slot</div></div></div></div>`,
+    draw(t){
+      const cx=250,cy=150,eR=40;
+      c.beginPath();c.arc(cx,cy,eR,0,P);const eg=c.createRadialGradient(cx,cy,0,cx,cy,eR);
+      eg.addColorStop(0,'#1a4a7c');eg.addColorStop(1,'#0d2a4c');c.fillStyle=eg;c.fill();
+      // GEO ring
+      c.beginPath();c.ellipse(cx,cy,130,30,0,0,P);c.strokeStyle='rgba(110,140,255,0.1)';c.lineWidth=1;c.stroke();
+      // Target slot
+      const ta=.8;c.beginPath();c.arc(cx+130*Math.cos(ta),cy+30*Math.sin(ta),4,0,P);c.fillStyle='rgba(110,140,255,.4)';c.fill();
+      c.font='400 7px "JetBrains Mono"';c.fillStyle='rgba(110,140,255,.3)';c.textAlign='center';
+      c.fillText('Target Slot',cx+130*Math.cos(ta),cy+30*Math.sin(ta)-8);
+      // Transfer orbit
+      c.beginPath();c.ellipse(cx-20,cy,85,60,-.2,-.5,1.2);c.strokeStyle='rgba(246,173,85,0.2)';c.lineWidth=1;c.setLineDash([3,4]);c.stroke();c.setLineDash([]);
+      // Satellite in transfer
+      const sa=t*.8;const sr=40+sa*10%90;c.beginPath();c.arc(cx+sr*Math.cos(sa),cy+sr*Math.sin(sa)*.3,2.5,0,P);c.fillStyle='#f6ad55';c.fill();
+    }
+  },
+  {title:'Mars Transfer Window',
+    info:`<div class="card"><h3>🔴 Mars Launch Window</h3>
+      <p>Mars and Earth orbit at different speeds. A fuel-efficient <strong>Hohmann transfer</strong> requires launch when the planets are at the right angle. This alignment happens every <strong>26 months</strong>.</p>
+      <p>Miss the window? Wait over 2 years. The window itself is about <strong>2-3 weeks wide</strong>. Every Mars mission in history launched during these narrow opportunities.</p>
+      <div class="stat-row"><div class="stat"><div class="sv">26 mo</div><div class="sl">Between windows</div></div><div class="stat"><div class="sv">~9 mo</div><div class="sl">Travel time</div></div><div class="stat"><div class="sv">2-3 wk</div><div class="sl">Window width</div></div></div></div>`,
+    draw(t){
+      const cx=250,cy=150;
+      // Sun
+      c.beginPath();c.arc(cx,cy,10,0,P);c.fillStyle='#e8c170';c.fill();
+      // Earth orbit
+      c.beginPath();c.arc(cx,cy,70,0,P);c.strokeStyle='rgba(92,224,214,0.08)';c.lineWidth=.5;c.stroke();
+      // Mars orbit
+      c.beginPath();c.arc(cx,cy,110,0,P);c.strokeStyle='rgba(252,129,129,0.08)';c.lineWidth=.5;c.stroke();
+      // Earth
+      const ea=t*.4;c.beginPath();c.arc(cx+70*Math.cos(ea),cy+70*Math.sin(ea),5,0,P);c.fillStyle='#2a6a9c';c.fill();
+      c.font='400 7px "JetBrains Mono"';c.fillStyle='rgba(92,224,214,.3)';c.textAlign='center';
+      c.fillText('Earth',cx+70*Math.cos(ea),cy+70*Math.sin(ea)-8);
+      // Mars
+      const ma=t*.2+1.2;c.beginPath();c.arc(cx+110*Math.cos(ma),cy+110*Math.sin(ma),4,0,P);c.fillStyle='#c44';c.fill();
+      c.fillStyle='rgba(252,129,129,.3)';c.fillText('Mars',cx+110*Math.cos(ma),cy+110*Math.sin(ma)-8);
+      // Transfer arc
+      c.beginPath();c.ellipse(cx,cy,90,90,ea+.1,0,Math.PI);c.strokeStyle='rgba(246,173,85,0.15)';c.lineWidth=1;c.setLineDash([4,4]);c.stroke();c.setLineDash([]);
+      c.fillStyle='rgba(246,173,85,.2)';c.font='italic 7px Outfit';c.fillText('Hohmann Transfer',cx,cy-90);
+    }
+  },
+  {title:'Lunar Window',
+    info:`<div class="card"><h3>🌙 Lunar Launch Window</h3>
+      <p>The Moon orbits Earth every <strong>27.3 days</strong> at 5.1° to the ecliptic. Launch windows for lunar missions open when the Moon's orbital plane intersects the launch site's latitude.</p>
+      <p>For Apollo, windows were about <strong>4 hours wide</strong>, occurring roughly <strong>once per month</strong>. Modern missions have more flexibility with improved propulsion.</p>
+      <div class="stat-row"><div class="stat"><div class="sv">~3 days</div><div class="sl">Travel time</div></div><div class="stat"><div class="sv">Monthly</div><div class="sl"><span data-en="Frequency" data-fr="Fréquence" data-ar="التردد">Frequency</span></div></div><div class="stat"><div class="sv">~4 hr</div><div class="sl">Window (Apollo)</div></div></div></div>`,
+    draw(t){
+      const cx=250,cy=150,eR=30;
+      c.beginPath();c.arc(cx,cy,eR,0,P);const eg=c.createRadialGradient(cx,cy,0,cx,cy,eR);
+      eg.addColorStop(0,'#1a4a7c');eg.addColorStop(1,'#0d2a4c');c.fillStyle=eg;c.fill();
+      // Moon orbit
+      c.save();c.translate(cx,cy);c.rotate(.1);
+      c.beginPath();c.ellipse(0,0,100,25,0,0,P);c.strokeStyle='rgba(200,200,210,0.08)';c.lineWidth=.5;c.stroke();
+      const ma=t*.5;c.beginPath();c.arc(100*Math.cos(ma),25*Math.sin(ma),6,0,P);c.fillStyle='rgba(200,200,210,0.3)';c.fill();
+      c.font='400 7px "JetBrains Mono"';c.fillStyle='rgba(200,200,210,.25)';c.textAlign='center';
+      c.fillText('Moon',100*Math.cos(ma),25*Math.sin(ma)-10);
+      c.restore();
+      // Transfer
+      c.beginPath();c.ellipse(cx+10,cy,55,45,t*.1,-.3,.8);c.strokeStyle='rgba(246,173,85,0.15)';c.lineWidth=1;c.setLineDash([3,4]);c.stroke();c.setLineDash([]);
+    }
+  },
+];
+
+let scene=0,anim=0;
+function setScene(i){scene=i;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.getElementById('vizTitle').textContent=SCENES[i].title;document.getElementById('info').innerHTML=SCENES[i].info}
+
+function draw(){
+  anim+=.01;
+  c.clearRect(0,0,500,300);c.fillStyle='#060a18';c.fillRect(0,0,500,300);
+  // Stars
+  for(let i=0;i<30;i++){c.beginPath();c.arc((i*73)%500,(i*137)%300,.3,0,P);c.fillStyle='rgba(200,210,230,.06)';c.fill()}
+  SCENES[scene].draw(anim);
+  requestAnimationFrame(draw);
+}
+setScene(0);draw();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Launch Windows',project:'Satellites in the Sky'},fr:{title:'Fenêtres de Lancement',project:'Satellites dans le Ciel'},ar:{title:'نوافذ الإطلاق',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

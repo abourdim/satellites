@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Journey — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+header{text-align:center;padding:50px 20px 20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(111,207,151,0.06);border:1px solid rgba(111,207,151,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--green);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:8px}
+header h1 span{color:var(--green)}
+header p{font-size:.85rem;color:var(--text-dim);max-width:500px;margin:0 auto;line-height:1.6}
+
+.journey{max-width:700px;margin:30px auto;padding:0 20px;position:relative}
+.journey::before{content:'';position:absolute;left:28px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--cyan),var(--blue),var(--green),var(--orange),var(--purple));opacity:.15}
+
+.step{position:relative;padding-left:60px;margin-bottom:28px;opacity:0;transform:translateY(20px);transition:all .6s}
+.step.visible{opacity:1;transform:translateY(0)}
+
+.step-num{position:absolute;left:10px;top:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.6rem;font-weight:600;border:2px solid}
+.step:nth-child(1) .step-num{border-color:var(--cyan);color:var(--cyan);background:rgba(92,224,214,0.06)}
+.step:nth-child(2) .step-num{border-color:var(--blue);color:var(--blue);background:rgba(110,140,255,0.06)}
+.step:nth-child(3) .step-num{border-color:var(--green);color:var(--green);background:rgba(111,207,151,0.06)}
+.step:nth-child(4) .step-num{border-color:var(--orange);color:var(--orange);background:rgba(246,173,85,0.06)}
+.step:nth-child(5) .step-num{border-color:var(--purple);color:var(--purple);background:rgba(183,148,244,0.06)}
+.step:nth-child(6) .step-num{border-color:var(--gold);color:var(--gold);background:rgba(232,193,112,0.06)}
+.step:nth-child(7) .step-num{border-color:var(--red);color:var(--red);background:rgba(252,129,129,0.06)}
+.step:nth-child(8) .step-num{border-color:var(--green);color:var(--green);background:rgba(111,207,151,0.06)}
+
+.step-card{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:14px;padding:20px;transition:all .3s}
+.step-card:hover{border-color:rgba(110,140,255,0.12)}
+.sc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sc-icon{font-size:1.4rem}
+.sc-title{font-family:var(--serif);font-size:1rem;font-weight:700;color:#fff}
+.sc-time{font-family:var(--mono);font-size:.5rem;padding:2px 7px;border-radius:3px;background:rgba(92,224,214,0.06);color:var(--cyan);margin-left:auto}
+
+.sc-body{font-size:.78rem;color:var(--text-dim);line-height:1.6;margin-bottom:10px}
+.sc-body strong{font-weight:600}
+
+.sc-physics{background:rgba(110,140,255,0.03);border:1px solid rgba(110,140,255,0.06);border-radius:8px;padding:10px 14px;margin-bottom:8px}
+.sc-physics .phl{font-family:var(--mono);font-size:.42rem;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.sc-physics p{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+.sc-physics code{font-family:var(--mono);background:rgba(110,140,255,0.06);padding:1px 5px;border-radius:3px;font-size:.68rem;color:var(--cyan)}
+
+.sc-visual{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.sv-tag{font-family:var(--mono);font-size:.46rem;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.03);color:var(--text-dim)}
+
+.sc-heritage{background:rgba(232,193,112,0.03);border:1px solid rgba(232,193,112,0.08);border-radius:8px;padding:8px 12px;margin-top:8px}
+.sc-heritage .ht{font-family:var(--mono);font-size:.4rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.sc-heritage p{font-size:.68rem;color:var(--text-dim);line-height:1.45}
+.sc-heritage strong{color:var(--gold)}
+
+/* Summary */
+.summary{max-width:700px;margin:20px auto 40px;padding:0 20px}
+.summary-card{background:var(--card);border:1px solid rgba(111,207,151,0.08);border-radius:16px;padding:24px;text-align:center}
+.summary-card h2{font-family:var(--serif);font-size:1.2rem;font-weight:800;color:var(--green);margin-bottom:10px}
+.summary-card p{font-size:.82rem;color:var(--text-dim);line-height:1.6;max-width:500px;margin:0 auto}
+.total-time{font-family:var(--mono);font-size:2.2rem;font-weight:500;color:var(--cyan);margin:12px 0}
+.total-label{font-size:.52rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.sg{background:rgba(255,255,255,0.02);border-radius:6px;padding:8px}
+.sg .sgv{font-family:var(--mono);font-size:.8rem;font-weight:500;color:var(--cyan)}
+.sg .sgl{font-size:.42rem;color:var(--text-muted)}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="📡 Interactive Explainer" data-fr="📡 Explication interactive" data-ar="📡 شرح تفاعلي">📡 Interactive Explainer</span></div>
+  <h1>The Signal <span><span data-en="Journey" data-fr="Voyage" data-ar="الرحلة">Journey</span></span></h1>
+  <p>Right now, your phone knows where you are to within 3 meters. Here's the incredible 67-millisecond journey a GPS signal takes from space to your pocket — step by step.</p>
+</header>
+
+<div class="journey">
+
+<div class="step"><div class="step-num">1</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">⏱️</span><span class="sc-title">Atomic Clock Tick</span><span class="sc-time">T = 0.000 ms</span></div>
+  <div class="sc-body">Deep inside GPS satellite IIR-M, a <strong>rubidium atomic clock</strong> ticks. It measures time by counting oscillations of rubidium-87 atoms: exactly <strong>6,834,682,610.904 Hz</strong>. This clock loses less than 1 second in 100,000 years. Without this precision, GPS would drift 10 km per day.</div>
+  <div class="sc-physics"><div class="phl"><span data-en="⚛️ The Physics" data-fr="⚛️ La Physique" data-ar="⚛️ الفيزياء">⚛️ The Physics</span></div><p>GPS needs <code>nanosecond</code> timing. Light travels 30 cm per nanosecond. A 10 ns error = 3 meter position error. Each satellite carries 3-4 atomic clocks for redundancy.</p></div>
+  <div class="sc-visual"><span class="sv-tag">🕐 Accuracy: ±10 ns</span><span class="sv-tag">📡 Frequency: 6.83 GHz</span><span class="sv-tag">💰 Clock cost: ~$50,000</span></div>
+</div></div>
+
+<div class="step"><div class="step-num">2</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">📻</span><span class="sc-title">Signal Generation</span><span class="sc-time">T = 0.001 ms</span></div>
+  <div class="sc-body">The satellite generates a <strong>navigation message</strong>: its exact position (ephemeris), the current time, atmospheric correction data, and health status. This is encoded onto two radio frequencies: <strong>L1 (1575.42 MHz)</strong> and <strong>L2 (1227.60 MHz)</strong>. The signal power is just 20-50 watts — less than a light bulb.</div>
+  <div class="sc-physics"><div class="phl">📊 The Data</div><p>The nav message is 1,500 bits, broadcast at 50 bps. It takes <code>12.5 minutes</code> to send the complete almanac of all 31 satellites. Your phone combines data from 4+ satellites simultaneously.</p></div>
+</div></div>
+
+<div class="step"><div class="step-num">3</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">🚀</span><span class="sc-title">Crossing the Vacuum</span><span class="sc-time">T = 0.001 → 66.7 ms</span></div>
+  <div class="sc-body">The signal leaves the satellite antenna at <strong>the speed of light: 299,792,458 m/s</strong>. It travels 20,200 km straight down through the vacuum of space. This leg takes about <strong>67 milliseconds</strong>. The signal spreads out — by the time it reaches Earth, it's weaker than the noise from a microwave oven.</div>
+  <div class="sc-physics"><div class="phl"><span data-en="💡 Speed of Light" data-fr="💡 Vitesse de la lumière" data-ar="💡 سرعة الضوء">💡 Speed of Light</span></div><p><code>Distance = Speed × Time</code>. At 299,792 km/s, the signal crosses 20,200 km in 67.38 ms. But the speed isn't constant — it changes in the atmosphere.</p></div>
+  <div class="sc-heritage"><div class="ht">☽ Heritage</div><p><strong>Ibn al-Haytham</strong> (965 CE) proved light travels in straight lines at finite speed — the very principle GPS depends on. Without his optics, we wouldn't understand signal propagation.</p></div>
+</div></div>
+
+<div class="step"><div class="step-num">4</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">🌌</span><span class="sc-title">Ionosphere (Electron Storm)</span><span class="sc-time">T ≈ 66.8 ms</span></div>
+  <div class="sc-body">At 80-1,000 km altitude, the signal hits the <strong>ionosphere</strong> — a layer of electrically charged particles. Free electrons <strong>slow the signal down</strong>, adding a delay of 1-50 nanoseconds depending on solar activity. This is the <strong>#1 source of GPS error</strong>. Dual-frequency receivers (L1+L2) can cancel this out because the two frequencies are affected differently.</div>
+  <div class="sc-physics"><div class="phl"><span data-en="⚡ Ionospheric Delay" data-fr="⚡ Délai ionosphérique" data-ar="⚡ تأخير الأيونوسفير">⚡ Ionospheric Delay</span></div><p>Delay is proportional to <code>TEC / f²</code> where TEC = Total Electron Content. Higher solar activity → more electrons → more delay → worse GPS. This is why space weather matters.</p></div>
+  <div class="sc-visual"><span class="sv-tag">⚡ Error: 1-50 ns</span><span class="sv-tag">☀️ Worse during storms</span><span class="sv-tag">📡 Fixed by dual-freq</span></div>
+</div></div>
+
+<div class="step"><div class="step-num">5</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">🌦️</span><span class="sc-title">Troposphere (Weather Layer)</span><span class="sc-time">T ≈ 67.0 ms</span></div>
+  <div class="sc-body">Below 80 km, the signal passes through the <strong>troposphere</strong> — where weather happens. Water vapor and air density cause another delay of <strong>2-25 nanoseconds</strong>. Unlike the ionosphere, this affects both frequencies equally, so it can't be corrected with dual-frequency. Instead, mathematical models predict the delay.</div>
+  <div class="sc-physics"><div class="phl"><span data-en="💧 Wet vs Dry Delay" data-fr="💧 Délai humide vs sec" data-ar="💧 التأخير الرطب والجاف">💧 Wet vs Dry Delay</span></div><p><code>Dry delay</code> (air pressure): ~2.3 m, predictable. <code>Wet delay</code> (humidity): 0-0.3 m, unpredictable. Rain doesn't affect it much — it's the invisible water vapor that matters.</p></div>
+</div></div>
+
+<div class="step"><div class="step-num">6</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">🏢</span><span class="sc-title">Multipath (Bouncing Signals)</span><span class="sc-time">T ≈ 67.3 ms</span></div>
+  <div class="sc-body">Near the ground, the signal <strong>bounces off buildings, cars, and the ground itself</strong>. Your phone receives the direct signal plus delayed reflections. These "multipath" signals confuse the receiver, adding <strong>1-5 meters of error</strong> in cities. This is why GPS works better in open fields than downtown.</div>
+  <div class="sc-physics"><div class="phl"><span data-en="🏙️ Urban Canyons" data-fr="🏙️ Canyons urbains" data-ar="🏙️ الأودية الحضرية">🏙️ Urban Canyons</span></div><p>In dense cities, the direct signal may be <code>blocked entirely</code>. Your phone calculates position from reflected signals only — sometimes giving you "GPS drift" where your location jumps around.</p></div>
+</div></div>
+
+<div class="step"><div class="step-num">7</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">📱</span><span class="sc-title">Your Phone Receives</span><span class="sc-time">T = 67.38 ms</span></div>
+  <div class="sc-body">Your phone's tiny GPS chip (smaller than a fingernail) <strong>locks onto the signal</strong>. It compares the received time code against its own clock to measure the delay. From 4+ satellites, it calculates 4 unknowns: <strong>latitude, longitude, altitude, and clock error</strong>. This is called <strong>trilateration</strong> — not triangulation.</div>
+  <div class="sc-physics"><div class="phl"><span data-en="📐 The Math" data-fr="📐 Les Maths" data-ar="📐 الرياضيات">📐 The Math</span></div><p>4 equations, 4 unknowns. Each satellite gives: <code>distance = c × (t_received - t_sent)</code>. The intersection of 4 spheres gives one point in 3D space + time correction. Your phone solves this ~10 times per second.</p></div>
+  <div class="sc-heritage"><div class="ht">☽ Heritage</div><p>The position calculation requires knowing <strong>Earth's radius</strong> — measured by <strong>al-Biruni</strong> in 973 CE using a mountain and trigonometry. His result (6,340 km) was accurate to within <strong>0.5%</strong> of the modern value (6,371 km). Every GPS fix uses his measurement.</p></div>
+</div></div>
+
+<div class="step"><div class="step-num">8</div>
+<div class="step-card">
+  <div class="sc-head"><span class="sc-icon">📍</span><span class="sc-title">Position Fix</span><span class="sc-time">T = 67.38 ms + computation</span></div>
+  <div class="sc-body">Done. In <strong>67 milliseconds</strong>, a signal has traveled 20,200 km from space, passed through charged plasma and weather, bounced off buildings, and told your phone where you are to within <strong>3 meters</strong>. And it does this continuously, from 4+ satellites simultaneously, 10 times per second, for free, anywhere on Earth.</div>
+  <div class="sc-visual"><span class="sv-tag">📍 Accuracy: ~3 m</span><span class="sv-tag">🛰️ Satellites used: 4-12</span><span class="sv-tag">🔄 Updates: 10/sec</span><span class="sv-tag">💰 Cost to you: $0</span></div>
+</div></div>
+
+</div>
+
+<div class="summary">
+<div class="summary-card">
+  <h2>The Complete Journey</h2>
+  <div class="total-time">67.38 ms</div>
+  <div class="total-label">Satellite to your pocket</div>
+  <p>In less time than a blink (300 ms), radio waves from 4+ satellites 20,200 km away converge on your phone and pinpoint your location to within a few meters. This happens billions of times per day, for billions of devices, all from 31 satellites.</p>
+  <div class="sum-grid">
+    <div class="sg"><div class="sgv">20,200 km</div><div class="sgl">Distance traveled</div></div>
+    <div class="sg"><div class="sgv">299,792 km/s</div><div class="sgl">Speed of light</div></div>
+    <div class="sg"><div class="sgv">4+ sats</div><div class="sgl">Minimum needed</div></div>
+    <div class="sg"><div class="sgv">~3 m</div><div class="sgl">Position accuracy</div></div>
+  </div>
+</div>
+</div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+// Scroll-triggered animations
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.2});
+document.querySelectorAll('.step').forEach(s=>observer.observe(s));
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Signal Journey',project:'Satellites in the Sky'},fr:{title:'Voyage du Signal',project:'Satellites dans le Ciel'},ar:{title:'رحلة الإشارة',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

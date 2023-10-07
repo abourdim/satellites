@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbital Mechanics — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(246,173,85,0.06);border:1px solid rgba(246,173,85,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--orange);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--orange)}
+header p{font-size:.82rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.6}
+.layout{max-width:900px;margin:0 auto;display:grid;grid-template-columns:260px 1fr;gap:14px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:14px;padding:14px}
+.panel h3{font-family:var(--mono);font-size:.46rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.ctrl{margin-bottom:10px}
+.ctrl label{font-size:.66rem;color:var(--dim);display:flex;justify-content:space-between;margin-bottom:2px}
+.ctrl label span{font-family:var(--mono);color:var(--cyan);font-weight:500}
+.ctrl input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,0.06);outline:none}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--orange);cursor:pointer}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
+.pre{font-family:var(--mono);font-size:.42rem;padding:5px;border-radius:5px;border:1px solid rgba(110,140,255,0.08);background:transparent;color:var(--dim);cursor:pointer;text-align:center}
+.pre:hover{border-color:var(--orange);color:var(--orange)}
+.res{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:.66rem}
+.res .rl{color:var(--dim)}.res .rv{font-family:var(--mono);font-weight:500}
+canvas{width:100%;height:420px;border-radius:10px;background:#060a18;display:block}
+.play-row{display:flex;gap:6px;margin-top:8px;justify-content:center}
+.pbtn{font-family:var(--mono);font-size:.5rem;padding:5px 12px;border-radius:5px;border:1px solid rgba(246,173,85,0.15);background:rgba(246,173,85,0.04);color:var(--orange);cursor:pointer}
+.explainer{max-width:900px;margin:16px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:600px){.explainer{grid-template-columns:1fr}}
+.ex{background:var(--card);border:1px solid rgba(110,140,255,0.04);border-radius:10px;padding:12px 14px}
+.ex h4{font-size:.78rem;font-weight:700;color:#fff;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.ex p{font-size:.7rem;color:var(--dim);line-height:1.5}
+.ex strong{font-weight:600}
+.ex code{font-family:var(--mono);background:rgba(110,140,255,0.06);padding:1px 4px;border-radius:3px;font-size:.66rem;color:var(--cyan)}
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge">🔬 Advanced Physics</div>
+  <h1>Orbital <span><span data-en="Mechanics" data-fr="Mécanique" data-ar="الميكانيكا">Mechanics</span></span> Lab</h1>
+  <p>To go higher, you speed up. To go lower, you slow down. To catch something ahead, you drop behind. Welcome to the counterintuitive world of orbital mechanics.</p>
+</header>
+<div class="layout">
+  <div>
+    <div class="panel">
+      <h3><span data-en="🎛️ Hohmann Transfer" data-fr="🎛️ Transfert de Hohmann" data-ar="🎛️ نقل هوهمان">🎛️ Hohmann Transfer</span></h3>
+      <div class="ctrl"><label>Start Orbit <span id="vR1">400 km</span></label><input type="range" id="rR1" min="200" max="2000" value="400" step="10"></div>
+      <div class="ctrl"><label>Target Orbit <span id="vR2">35786 km</span></label><input type="range" id="rR2" min="500" max="42000" value="35786" step="50"></div>
+    </div>
+    <div class="panel" style="margin-top:8px">
+      <h3><span data-en="📋 Presets" data-fr="📋 Préréglages" data-ar="📋 إعدادات مسبقة">📋 Presets</span></h3>
+      <div class="presets">
+        <button class="pre" onclick="preset(400,35786)">LEO → GEO</button>
+        <button class="pre" onclick="preset(400,20200)">LEO → GPS</button>
+        <button class="pre" onclick="preset(200,550)">Deploy → Starlink</button>
+        <button class="pre" onclick="preset(400,384400)">LEO → Moon</button>
+        <button class="pre" onclick="preset(400,800)">ISS → Hubble</button>
+        <button class="pre" onclick="preset(550,35786)">Starlink → GEO</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:8px">
+      <h3>📊 Transfer Analysis</h3>
+      <div id="results"></div>
+    </div>
+  </div>
+  <div>
+    <canvas id="cv"></canvas>
+    <div class="play-row">
+      <button class="pbtn" onclick="startTransfer()"><span data-en="🚀 Execute Transfer" data-fr="🚀 Exécuter le transfert" data-ar="🚀 تنفيذ النقل">🚀 Execute Transfer</span></button>
+      <button class="pbtn" onclick="reset()"><span data-en="🔄 Reset" data-fr="🔄 Réinitialiser" data-ar="🔄 إعادة تعيين">🔄 Reset</span></button>
+    </div>
+  </div>
+</div>
+<div class="explainer">
+  <div class="ex"><h4>🔄 Why orbit is "falling"</h4><p>An orbiting satellite is <strong>falling toward Earth constantly</strong> — but moving sideways so fast that the ground curves away beneath it. Orbit is perpetual free-fall with enough horizontal speed to keep missing.</p></div>
+  <div class="ex"><h4>⬆️ Speed up = go higher</h4><p>Counterintuitively, to reach a higher orbit you <strong>accelerate in the direction of travel</strong>. This raises the opposite side of your orbit. Then you burn again at the top to circularize. This is a <strong>Hohmann transfer</strong>.</p></div>
+  <div class="ex"><h4><span data-en="🧮 Delta-V Budget" data-fr="🧮 Budget Delta-V" data-ar="🧮 ميزانية دلتا-ف">🧮 Delta-V Budget</span></h4><p><code>Δv</code> is the currency of spaceflight. Every maneuver costs delta-v. LEO → GEO costs ~3.9 km/s. LEO → Moon: ~3.1 km/s. LEO → Mars: ~3.6 km/s. Every gram of fuel matters.</p></div>
+  <div class="ex"><h4>☽ Heritage</h4><p><strong>Al-Tusi</strong> (1201 CE) described circular motion through combinations of circles — the "Tusi couple." This mathematical tool for composing orbital motions anticipated the elliptical transfer orbits calculated 700 years later.</p></div>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),P=Math.PI*2;
+const G=6.674e-11,Me=5.972e24,Re=6371;
+let W,H;function rs(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0)}
+rs();addEventListener('resize',rs);
+
+let r1=400,r2=35786,transferring=false,tAngle=0,tPhase=0;
+
+function vCirc(alt){return Math.sqrt(G*Me/((Re+alt)*1000))/1000}
+function period(alt){return 2*Math.PI*Math.sqrt(Math.pow((Re+alt)*1000,3)/(G*Me))/3600}
+function hohmann(a1,a2){
+  const r1k=(Re+a1)*1000,r2k=(Re+a2)*1000;
+  const v1=Math.sqrt(G*Me/r1k);const v2=Math.sqrt(G*Me/r2k);
+  const vt1=Math.sqrt(G*Me*(2/r1k-2/(r1k+r2k)));
+  const vt2=Math.sqrt(G*Me*(2/r2k-2/(r1k+r2k)));
+  const dv1=Math.abs(vt1-v1);const dv2=Math.abs(v2-vt2);
+  const tof=Math.PI*Math.sqrt(Math.pow((r1k+r2k)/2,3)/(G*Me));
+  return{dv1:dv1/1000,dv2:dv2/1000,total:(dv1+dv2)/1000,tof:tof/3600};
+}
+
+function preset(a,b){document.getElementById('rR1').value=a;document.getElementById('rR2').value=b;r1=a;r2=b;update()}
+function update(){
+  r1=+document.getElementById('rR1').value;r2=+document.getElementById('rR2').value;
+  document.getElementById('vR1').textContent=r1.toLocaleString()+' km';
+  document.getElementById('vR2').textContent=r2.toLocaleString()+' km';
+  const h=hohmann(r1,r2);
+  document.getElementById('results').innerHTML=`
+    <div class="res"><span class="rl">Start speed</span><span class="rv" style="color:var(--cyan)">${vCirc(r1).toFixed(3)} km/s</span></div>
+    <div class="res"><span class="rl">Target speed</span><span class="rv" style="color:var(--green)">${vCirc(r2).toFixed(3)} km/s</span></div>
+    <div class="res"><span class="rl">Burn 1 (Δv₁)</span><span class="rv" style="color:var(--orange)">${h.dv1.toFixed(3)} km/s</span></div>
+    <div class="res"><span class="rl">Burn 2 (Δv₂)</span><span class="rv" style="color:var(--orange)">${h.dv2.toFixed(3)} km/s</span></div>
+    <div class="res"><span class="rl">Total Δv</span><span class="rv" style="color:var(--gold)">${h.total.toFixed(3)} km/s</span></div>
+    <div class="res"><span class="rl">Transfer time</span><span class="rv" style="color:var(--purple)">${h.tof<24?h.tof.toFixed(1)+' hrs':(h.tof/24).toFixed(1)+' days'}</span></div>
+    <div class="res"><span class="rl">Start period</span><span class="rv">${period(r1).toFixed(2)} hrs</span></div>
+    <div class="res"><span class="rl">Target period</span><span class="rv">${period(r2).toFixed(2)} hrs</span></div>`;
+}
+
+function startTransfer(){transferring=true;tAngle=0;tPhase=0}
+function reset(){transferring=false;tAngle=0;tPhase=0}
+
+['rR1','rR2'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+
+function render(){
+  cx.clearRect(0,0,W,H);cx.fillStyle='#060a18';cx.fillRect(0,0,W,H);
+  
+  const ecx=W/2,ecy=H/2;
+  const maxR=Math.max(r1,r2);
+  const scale=Math.min(W,H)*.38/maxR;
+  const eR=Re*scale;
+  
+  // Earth
+  cx.beginPath();cx.arc(ecx,ecy,Math.max(8,eR),0,P);
+  const eg=cx.createRadialGradient(ecx-3,ecy-3,0,ecx,ecy,Math.max(8,eR));
+  eg.addColorStop(0,'#1a4a6c');eg.addColorStop(1,'#061428');cx.fillStyle=eg;cx.fill();
+  
+  // Start orbit
+  const or1=(Re+r1)*scale;
+  cx.beginPath();cx.arc(ecx,ecy,or1,0,P);cx.strokeStyle='rgba(92,224,214,0.2)';cx.lineWidth=1;cx.setLineDash([3,4]);cx.stroke();cx.setLineDash([]);
+  
+  // Target orbit
+  const or2=(Re+r2)*scale;
+  cx.beginPath();cx.arc(ecx,ecy,or2,0,P);cx.strokeStyle='rgba(111,207,151,0.15)';cx.lineWidth=1;cx.setLineDash([3,4]);cx.stroke();cx.setLineDash([]);
+  
+  // Labels
+  cx.font='400 6px "JetBrains Mono"';cx.textAlign='left';
+  cx.fillStyle='rgba(92,224,214,0.3)';cx.fillText(r1+' km',ecx+or1+4,ecy);
+  cx.fillStyle='rgba(111,207,151,0.2)';cx.fillText(r2.toLocaleString()+' km',ecx+or2+4,ecy);
+  
+  // Transfer ellipse
+  if(transferring){
+    const a=(or1+or2)/2;// Semi-major axis
+    const c2=(or2-or1)/2;// Center offset
+    const b=Math.sqrt(a*a-c2*c2);// Semi-minor axis
+    
+    cx.beginPath();
+    cx.ellipse(ecx+c2,ecy,a,b,0,Math.PI,0,true);
+    cx.strokeStyle='rgba(246,173,85,0.3)';cx.lineWidth=1.5;cx.setLineDash([4,3]);cx.stroke();cx.setLineDash([]);
+    
+    // Animate satellite along transfer
+    tAngle+=0.008;
+    if(tAngle>Math.PI){tPhase=1;tAngle=Math.min(tAngle,Math.PI+2)}
+    
+    let sx,sy;
+    if(tPhase===0){
+      const t=tAngle;
+      sx=ecx+c2-a*Math.cos(t);
+      sy=ecy-b*Math.sin(t);
+    } else {
+      const t2=(tAngle-Math.PI)*2;
+      sx=ecx+or2*Math.cos(-t2+Math.PI);
+      sy=ecy+or2*Math.sin(-t2+Math.PI);
+    }
+    
+    // Satellite on transfer
+    cx.beginPath();cx.arc(sx,sy,4,0,P);
+    cx.fillStyle=tPhase===0?'rgba(246,173,85,0.8)':'rgba(111,207,151,0.8)';cx.fill();
+    
+    // Burn indicators
+    if(tAngle<0.3){
+      cx.font='italic 500 8px "Playfair Display"';cx.fillStyle='rgba(246,173,85,0.6)';cx.textAlign='center';
+      cx.fillText('🔥 BURN 1: Δv₁ = '+hohmann(r1,r2).dv1.toFixed(2)+' km/s',ecx,ecy+or1+16);
+    }
+    if(tAngle>Math.PI-0.1&&tAngle<Math.PI+0.3){
+      cx.font='italic 500 8px "Playfair Display"';cx.fillStyle='rgba(111,207,151,0.6)';cx.textAlign='center';
+      cx.fillText('🔥 BURN 2: Δv₂ = '+hohmann(r1,r2).dv2.toFixed(2)+' km/s',ecx,ecy-or2-10);
+    }
+  } else {
+    // Satellite on start orbit
+    const t=Date.now()*.001;
+    cx.beginPath();cx.arc(ecx+or1*Math.cos(t),ecy+or1*Math.sin(t),4,0,P);
+    cx.fillStyle='rgba(92,224,214,0.7)';cx.fill();
+  }
+  
+  requestAnimationFrame(render);
+}
+update();render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Orbital Mechanics',project:'Satellites in the Sky'},fr:{title:'Mécanique Orbitale',project:'Satellites dans le Ciel'},ar:{title:'ميكانيكا المدارات',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

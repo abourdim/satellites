@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zoom Out — From Street to Space</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020408;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#5a6a7e;--text-muted:#2a3a4e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;width:100vw;height:100vh}
+canvas#cv{position:fixed;inset:0}
+
+.hud{position:fixed;z-index:10;pointer-events:none}.hud>*{pointer-events:auto}
+.top-bar{top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(to bottom,rgba(2,4,8,0.85),transparent)}
+.logo{font-family:var(--serif);font-size:.82rem;font-weight:700;color:var(--blue)}
+.alt-display{text-align:center}
+.alt-display .av{font-family:var(--mono);font-size:1.6rem;font-weight:500;color:var(--cyan);line-height:1}
+.alt-display .al{font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.scale-display{text-align:right}
+.scale-display .sv{font-family:var(--mono);font-size:.7rem;color:var(--orange)}
+.scale-display .sl{font-size:.46rem;color:var(--text-muted)}
+
+.info-card{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:10;max-width:400px;width:calc(100% - 40px);background:rgba(6,10,22,0.92);border:1px solid rgba(110,140,255,0.08);border-radius:12px;padding:14px 18px;backdrop-filter:blur(14px);text-align:center;pointer-events:none;transition:opacity .4s}
+.info-card h3{font-family:var(--serif);font-size:.92rem;font-weight:700;color:#fff;margin-bottom:4px}
+.info-card p{font-size:.74rem;color:var(--text-dim);line-height:1.5}
+
+.zoom-bar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:10px;background:rgba(6,10,22,0.88);border:1px solid rgba(110,140,255,0.08);border-radius:10px;padding:8px 16px;backdrop-filter:blur(12px)}
+.zoom-bar .zl{font-family:var(--mono);font-size:.5rem;color:var(--text-muted)}
+.zoom-slider{-webkit-appearance:none;width:200px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--purple),var(--orange));outline:none}
+.zoom-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 0 10px rgba(255,255,255,0.3)}
+.zoom-cue{font-family:var(--mono);font-size:.42rem;color:var(--text-muted);position:fixed;bottom:62px;left:50%;transform:translateX(-50%);z-index:10}
+
+@media(max-width:600px){.zoom-slider{width:140px}}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="cv"></canvas>
+
+<div class="hud top-bar">
+  <div class="logo"><span data-en="🔍 Zoom Out" data-fr="🔍 Dézoomer" data-ar="🔍 تصغير">🔍 Zoom Out</span></div>
+  <div class="alt-display"><div class="av" id="altVal" data-en="1.7 m" data-fr="1,7 m" data-ar="١٫٧ م">1.7 m</div><div class="al" id="altLabel" data-en="Eye Level" data-fr="Niveau des yeux" data-ar="مستوى العين">Eye Level</div></div>
+  <div class="scale-display"><div class="sv" id="scaleVal">1:1</div><div class="sl"><span data-en="Scale" data-fr="Échelle" data-ar="المقياس">Scale</span></div></div>
+</div>
+
+<div class="info-card" id="infoCard">
+  <h3 id="icTitle"><span data-en="You Are Here" data-fr="Vous êtes ici" data-ar="أنت هنا">You Are Here</span></h3>
+  <p id="icDesc">Standing on the surface. Looking up. Everything above you — clouds, planes, satellites, the Moon — exists in a column of air and vacuum stretching 384,400 km.</p>
+</div>
+
+<div class="zoom-cue" data-en="Scroll or drag slider to zoom out" data-fr="Défiler ou glisser pour dézoomer" data-ar="مرر أو اسحب للتصغير">Scroll or drag slider to zoom out</div>
+<div class="zoom-bar">
+  <span class="zl">🧍</span>
+  <input type="range" class="zoom-slider" id="zoomSlider" min="0" max="1000" value="0">
+  <span class="zl">🌙</span>
+</div>
+
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const T2=Math.PI*2;
+let W,H,CX,CY;
+function resize(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0);CX=W/2;CY=H/2}
+resize();addEventListener('resize',resize);
+
+const Re=6371;// Earth radius km
+// Zoom levels: altitude in km that fits on screen half-height
+const LEVELS=[
+  {alt:.001,title:'Eye Level',desc:'1.7 meters. You, looking up. The sky seems infinite.',label:'1.7 m',scale:'1:1'},
+  {alt:.3,title:'Skyline',desc:'300 meters. Birds, buildings, the Eiffel Tower. The lowest layer of the troposphere.',label:'300 m',scale:'1:180'},
+  {alt:12,title:'Cruising Altitude',desc:'Aircraft at 12 km. Temperature: -56°C. The sky above is turning dark blue.',label:'12 km',scale:'1:7,000'},
+  {alt:100,title:'Edge of Space',desc:'The Kármán Line. Above this, aerodynamic flight is impossible. You are officially in space.',label:'100 km',scale:'1:60,000'},
+  {alt:600,title:'LEO — Starlink & ISS',desc:'Low Earth Orbit. ISS at 408 km, Starlink at 550 km, Hubble at 547 km. Most satellites live here.',label:'600 km',scale:'1:350,000'},
+  {alt:25000,title:'MEO — GPS Belt',desc:'GPS at 20,200 km, Galileo at 23,222 km. Orbital period: 12 hours. Your phone talks to these.',label:'25,000 km',scale:'1:15M'},
+  {alt:42000,title:'GEO — The Ring',desc:'Geostationary orbit at 35,786 km. Satellites hover over one spot. TV, weather, comms. The Clarke Belt.',label:'42,000 km',scale:'1:25M'},
+  {alt:400000,title:'The Moon',desc:'384,400 km. Light takes 1.3 seconds. 12 humans have walked on it. From here, Earth is a marble.',label:'384,400 km',scale:'1:230M'},
+];
+
+let zoomT=0;// 0-1 normalized zoom
+let targetZoom=0;
+let sats=[];// Pre-generate some satellite dots
+
+// Generate satellite positions
+for(let i=0;i<200;i++)sats.push({alt:200+Math.random()*600,angle:Math.random()*T2,speed:.0003+Math.random()*.0005,type:'leo'});
+for(let i=0;i<40;i++)sats.push({alt:19500+Math.random()*4000,angle:Math.random()*T2,speed:.00008+Math.random()*.0001,type:'meo'});
+for(let i=0;i<30;i++)sats.push({alt:35500+Math.random()*800,angle:Math.random()*T2,speed:.00003,type:'geo'});
+
+function getLevel(t){
+  const idx=t*(LEVELS.length-1);
+  const i=Math.floor(idx);
+  const f=idx-i;
+  if(i>=LEVELS.length-1)return LEVELS[LEVELS.length-1];
+  const a=LEVELS[i],b=LEVELS[i+1];
+  // Logarithmic interpolation for altitude
+  const logA=Math.log(a.alt+.001),logB=Math.log(b.alt+.001);
+  const alt=Math.exp(logA+(logB-logA)*f);
+  return{alt,title:f<.5?a.title:b.title,desc:f<.5?a.desc:b.desc,label:f<.5?a.label:b.label,scale:f<.5?a.scale:b.scale};
+}
+
+function kmToPixels(km,viewAlt){
+  return(km/(viewAlt*2))*H;
+}
+
+function render(){
+  cx.clearRect(0,0,W,H);
+  const now=Date.now();
+  
+  // Smooth zoom
+  zoomT+=(targetZoom-zoomT)*.08;
+  const lv=getLevel(zoomT);
+  const viewAlt=lv.alt;// km visible in half screen
+  
+  // Background
+  cx.fillStyle='#020408';cx.fillRect(0,0,W,H);
+  
+  // Stars (only visible when zoomed out enough)
+  if(viewAlt>50){
+    if(!render.st){render.st=[];for(let i=0;i<150;i++)render.st.push({x:Math.random()*W,y:Math.random()*H,b:.1+Math.random()*.3})}
+    const sa=Math.min(1,(viewAlt-50)/200);
+    for(const s of render.st){cx.beginPath();cx.arc(s.x,s.y,.5,0,T2);cx.fillStyle=`rgba(200,210,230,${s.b*sa})`;cx.fill()}
+  }
+  
+  // Earth
+  const earthR=kmToPixels(Re,viewAlt);
+  const earthY=CY+earthR;// Earth surface at CY, center below
+  
+  if(earthR>2){
+    // Earth body (below horizon)
+    if(earthY-earthR<H){
+      cx.beginPath();cx.arc(CX,earthY,earthR,0,T2);
+      const eg=cx.createRadialGradient(CX-earthR*.1,earthY-earthR*.3,0,CX,earthY,earthR);
+      eg.addColorStop(0,'#1a4a6c');eg.addColorStop(.5,'#0d2a48');eg.addColorStop(1,'#061428');
+      cx.fillStyle=eg;cx.fill();
+      
+      // Atmosphere glow
+      const atmoH=kmToPixels(100,viewAlt);
+      if(atmoH>1){
+        cx.beginPath();cx.arc(CX,earthY,earthR+atmoH,0,T2);
+        const ag=cx.createRadialGradient(CX,earthY,earthR,CX,earthY,earthR+atmoH);
+        ag.addColorStop(0,'rgba(92,224,214,0.08)');ag.addColorStop(1,'transparent');
+        cx.fillStyle=ag;cx.fill();
+      }
+    }
+    
+    // Earth label
+    if(earthR>20&&earthR<H){
+      cx.font='500 9px "JetBrains Mono"';cx.fillStyle='rgba(92,224,214,0.12)';cx.textAlign='center';
+      cx.fillText('EARTH',CX,earthY-earthR*.5>CY?CY+20:earthY);
+    }
+  }
+  
+  // Orbital shells
+  const shells=[
+    {alt:408,label:'ISS',l_fr:'ISS',l_ar:'م.ف.د',col:'var(--gold)'},
+    {alt:550,label:'Starlink',col:'var(--cyan)'},
+    {alt:20200,label:'GPS',l_fr:'GPS',l_ar:'GPS',col:'var(--green)'},
+    {alt:35786,label:'GEO',l_fr:'GEO',l_ar:'المدار الثابت',col:'var(--orange)'},
+  ];
+  
+  for(const sh of shells){
+    const r=earthR+kmToPixels(sh.alt,viewAlt);
+    if(r>5&&r<Math.max(W,H)*2){
+      cx.beginPath();cx.arc(CX,earthY,r,0,T2);
+      cx.strokeStyle='rgba(110,140,255,0.04)';cx.lineWidth=.5;cx.setLineDash([3,6]);cx.stroke();cx.setLineDash([]);
+      // Label
+      if(r>earthR+15&&r<Math.max(W,H)*.9){
+        cx.font='400 7px "JetBrains Mono"';cx.fillStyle='rgba(110,140,255,0.15)';
+        cx.textAlign='left';cx.fillText(sh.label+' — '+sh.alt.toLocaleString()+' km',CX+r*.7+5,earthY-r*.7);
+      }
+    }
+  }
+  
+  // Satellites
+  for(const s of sats){
+    s.angle+=s.speed;
+    const r=earthR+kmToPixels(s.alt,viewAlt);
+    if(r<3||r>Math.max(W,H)*3)continue;
+    const x=CX+r*Math.cos(s.angle);
+    const y=earthY+r*Math.sin(s.angle);
+    if(x<-50||x>W+50||y<-50||y>H+50)continue;
+    
+    const sz=Math.min(2.5,Math.max(.5,kmToPixels(s.type==='geo'?50:20,viewAlt)));
+    const cols={leo:'rgba(92,224,214,0.5)',meo:'rgba(111,207,151,0.5)',geo:'rgba(246,173,85,0.5)'};
+    cx.beginPath();cx.arc(x,y,sz,0,T2);cx.fillStyle=cols[s.type];cx.fill();
+  }
+  
+  // Moon
+  if(viewAlt>10000){
+    const moonR=kmToPixels(1737,viewAlt);
+    const moonDist=earthR+kmToPixels(384400,viewAlt);
+    const moonAngle=-Math.PI/4+now*.000001;
+    const mx=CX+moonDist*Math.cos(moonAngle);
+    const my=earthY+moonDist*Math.sin(moonAngle);
+    if(moonR>.5&&mx>-200&&mx<W+200&&my>-200&&my<H+200){
+      cx.beginPath();cx.arc(mx,my,Math.max(2,moonR),0,T2);
+      cx.fillStyle='#888';cx.fill();
+      if(moonR>5){cx.font='500 8px "JetBrains Mono"';cx.fillStyle='rgba(200,200,200,0.3)';cx.textAlign='center';cx.fillText('MOON',mx,my+moonR+12)}
+    }
+  }
+  
+  // Altitude lines
+  if(viewAlt>5&&viewAlt<200){
+    const kl=kmToPixels(100,viewAlt);
+    const ky=CY-kl+kmToPixels(viewAlt,viewAlt);// Adjust
+    if(ky>0&&ky<H){
+      cx.beginPath();cx.moveTo(0,CY-kmToPixels(100-viewAlt*.5,viewAlt));
+      cx.lineTo(W,CY-kmToPixels(100-viewAlt*.5,viewAlt));
+      cx.strokeStyle='rgba(183,148,244,0.15)';cx.lineWidth=.5;cx.setLineDash([4,6]);cx.stroke();cx.setLineDash([]);
+    }
+  }
+  
+  // Update HUD
+  const altStr=viewAlt<1?(viewAlt*1000).toFixed(0)+' m':viewAlt<1000?viewAlt.toFixed(0)+' km':viewAlt<1000000?(viewAlt/1000).toFixed(0)+'k km':viewAlt.toFixed(0)+' km';
+  document.getElementById('altVal').textContent=lv.label;
+  document.getElementById('altLabel').textContent=lv.title;
+  document.getElementById('scaleVal').textContent=lv.scale;
+  document.getElementById('icTitle').textContent=lv.title;
+  document.getElementById('icDesc').textContent=lv.desc;
+  
+  requestAnimationFrame(render);
+}
+
+// Zoom controls
+document.getElementById('zoomSlider').addEventListener('input',e=>{targetZoom=e.target.value/1000});
+addEventListener('wheel',e=>{
+  e.preventDefault();
+  targetZoom=Math.max(0,Math.min(1,targetZoom+e.deltaY*.0008));
+  document.getElementById('zoomSlider').value=targetZoom*1000;
+},{passive:false});
+
+// Touch zoom
+let lastTouchDist=0;
+addEventListener('touchstart',e=>{if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);lastTouchDist=d}},{passive:true});
+addEventListener('touchmove',e=>{if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);const delta=(lastTouchDist-d)*.003;targetZoom=Math.max(0,Math.min(1,targetZoom+delta));document.getElementById('zoomSlider').value=targetZoom*1000;lastTouchDist=d}},{passive:true});
+
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Zoom Out',project:'Satellites in the Sky'},fr:{title:'Vue Éloignée',project:'Satellites dans le Ciel'},ar:{title:'تصغير المنظور',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){};if(typeof render==='function')try{render()}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

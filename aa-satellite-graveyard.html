@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Graveyard — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020408;--card:#080c18;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--ghost:#4a5a6e;--text:#c8d0e0;--text-dim:#5a6a7e;--text-muted:#2a3a4e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden}
+
+/* Full-width sections */
+.section{padding:80px 30px;max-width:900px;margin:0 auto}
+.section.full{max-width:100%;padding:80px 30px;text-align:center}
+
+header{text-align:center;padding:60px 30px 20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(74,90,110,0.1);border:1px solid rgba(74,90,110,0.15);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--ghost);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:12px;line-height:1.1}
+header h1 span{color:var(--ghost)}
+header p{font-size:.9rem;color:var(--text-dim);max-width:520px;margin:0 auto;line-height:1.6}
+
+.stat-strip{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:30px 20px;max-width:800px;margin:0 auto}
+.ss-item{background:var(--card);border:1px solid rgba(74,90,110,0.1);border-radius:12px;padding:16px 22px;text-align:center;min-width:120px}
+.ss-item .ssv{font-family:var(--mono);font-size:1.6rem;font-weight:500;line-height:1}
+.ss-item .ssl{font-size:.48rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+
+/* Fate cards */
+h2{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:10px}
+.subtitle{font-size:.85rem;color:var(--text-dim);margin-bottom:30px;max-width:550px}
+.section.full .subtitle{margin:0 auto 30px}
+
+.fates{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:900px;margin:0 auto}
+@media(max-width:700px){.fates{grid-template-columns:1fr}}
+.fate{background:var(--card);border:1px solid rgba(74,90,110,0.08);border-radius:14px;padding:22px;position:relative;overflow:hidden;transition:all .4s}
+.fate:hover{border-color:rgba(74,90,110,0.15);transform:translateY(-2px)}
+.fate::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.fate:nth-child(1)::before{background:var(--red)}.fate:nth-child(2)::before{background:var(--ghost)}.fate:nth-child(3)::before{background:var(--blue)}
+.fate .fi{font-size:2rem;margin-bottom:10px}
+.fate h3{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:4px}
+.fate .fst{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);margin-bottom:8px}
+.fate p{font-size:.76rem;color:var(--text-dim);line-height:1.55}
+.fate strong{font-weight:600}
+
+/* Point Nemo */
+.nemo-card{background:var(--card);border:1px solid rgba(110,140,255,0.08);border-radius:16px;padding:28px;max-width:600px;margin:0 auto;text-align:left}
+.nemo-card h3{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--blue);margin-bottom:8px}
+.nemo-card .coords{font-family:var(--mono);font-size:.6rem;color:var(--text-muted);margin-bottom:10px}
+.nemo-card p{font-size:.82rem;color:var(--text-dim);line-height:1.6;margin-bottom:10px}
+.nemo-card .nemo-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.ns{background:rgba(110,140,255,0.03);border-radius:6px;padding:6px 10px}
+.ns .nsl{font-family:var(--mono);font-size:.4rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.ns .nsv{font-family:var(--mono);font-size:.65rem;color:var(--blue);font-weight:500}
+
+/* Ghost gallery */
+.ghosts{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;max-width:900px;margin:0 auto}
+.ghost{background:var(--card);border:1px solid rgba(74,90,110,0.06);border-radius:12px;padding:16px;opacity:.7;transition:all .3s}
+.ghost:hover{opacity:1;border-color:rgba(74,90,110,0.12)}
+.ghost .gi{font-size:1.4rem;margin-bottom:6px;filter:grayscale(.5)}
+.ghost h4{font-size:.8rem;font-weight:600;color:var(--ghost);margin-bottom:2px}
+.ghost .gy{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);margin-bottom:6px}
+.ghost p{font-size:.68rem;color:var(--text-dim);line-height:1.45}
+
+/* Heritage */
+.heritage{background:rgba(232,193,112,0.02);border:1px solid rgba(232,193,112,0.08);border-radius:14px;padding:24px;max-width:600px;margin:0 auto;text-align:left}
+.heritage h3{font-family:var(--serif);font-size:.95rem;color:var(--gold);margin-bottom:8px}
+.heritage p{font-size:.78rem;color:var(--text-dim);line-height:1.6}
+.heritage strong{color:var(--gold)}
+
+footer{text-align:center;padding:60px 30px;font-size:.6rem;color:var(--text-muted)}
+footer .ft{font-family:var(--serif);font-style:italic;color:var(--ghost);font-size:.78rem;margin-bottom:6px}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="💀 The End of the Line" data-fr="💀 La fin de la ligne" data-ar="💀 نهاية المطاف">💀 The End of the Line</span></div>
+  <h1>The Satellite <span><span data-en="Graveyard" data-fr="Cimetière" data-ar="المقبرة">Graveyard</span></span></h1>
+  <p>Every satellite dies. Some burn up in a blaze of glory. Some are banished to a graveyard orbit. Some sink to the most remote place on Earth. And some drift forever — silent ghosts in the void.</p>
+</header>
+
+<div class="stat-strip">
+  <div class="ss-item"><div class="ssv" style="color:var(--ghost)">~12,000</div><div class="ssl"><span data-en="Dead Satellites" data-fr="Satellites morts" data-ar="أقمار ميتة">Dead Satellites</span></div></div>
+  <div class="ss-item"><div class="ssv" style="color:var(--red)">~36,500</div><div class="ssl"><span data-en="Tracked Objects" data-fr="Objets suivis" data-ar="أجسام متتبعة">Tracked Objects</span></div></div>
+  <div class="ss-item"><div class="ssv" style="color:var(--orange)">~130M</div><div class="ssl"><span data-en="Debris Pieces (est.)" data-fr="Morceaux de débris (est.)" data-ar="قطع الحطام (تقديري)">Debris Pieces (est.)</span></div></div>
+  <div class="ss-item"><div class="ssv" style="color:var(--blue)">~300</div><div class="ssl">In Graveyard Orbit</div></div>
+</div>
+
+<div class="section full">
+  <h2>Three Ways to Die</h2>
+  <p class="subtitle">When a satellite reaches end-of-life, there are only three options. The choice depends on altitude.</p>
+  <div class="fates">
+    <div class="fate">
+      <div class="fi">🔥</div>
+      <h3>Controlled De-orbit</h3>
+      <div class="fst">LEO satellites (200–2,000 km)</div>
+      <p>Fire thrusters to lower the orbit. The satellite hits the upper atmosphere at <strong>28,000 km/h</strong>, heating to 1,500°C. Most burns up. Surviving pieces target Point Nemo — the most remote spot in the Pacific Ocean.</p>
+      <p style="margin-top:6px">The ISS will be de-orbited this way around <strong>2031</strong>. It will be the largest object ever to re-enter.</p>
+    </div>
+    <div class="fate">
+      <div class="fi">👻</div>
+      <h3><span data-en="Graveyard Orbit" data-fr="Orbite cimetière" data-ar="مدار المقبرة">Graveyard Orbit</span></h3>
+      <div class="fst">GEO satellites (~35,786 km)</div>
+      <p>GEO satellites are too high to de-orbit (it would take too much fuel). Instead, they boost <strong>300 km higher</strong> into a "graveyard orbit" — a junkyard ring above the Clarke Belt. They'll drift there for <strong>millions of years</strong>.</p>
+      <p style="margin-top:6px">~300 dead satellites already orbit in this ghostly ring, silent and tumbling in the dark.</p>
+    </div>
+    <div class="fate">
+      <div class="fi">🎲</div>
+      <h3>Uncontrolled Decay</h3>
+      <div class="fst">Failed or abandoned satellites</div>
+      <p>If a satellite dies before it can de-orbit, atmospheric drag slowly pulls it down over <strong>months to centuries</strong>. It eventually burns up — but nobody controls where the debris falls. In 2022, SpaceX lost 40 Starlinks to a solar storm.</p>
+      <p style="margin-top:6px">Some dead satellites will orbit for <strong>10,000+ years</strong> before finally decaying.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section full">
+  <h2>Point Nemo — The Spacecraft Cemetery</h2>
+  <p class="subtitle">The most remote point on Earth, chosen specifically as a graveyard for satellites and space stations.</p>
+  <div class="nemo-card">
+    <h3>🌊 Oceanic Pole of Inaccessibility</h3>
+    <div class="coords">48°52.6′S 123°23.6′W — South Pacific Ocean</div>
+    <p>Point Nemo is <strong>2,688 km from the nearest land</strong> in every direction. The closest humans are often the astronauts on the ISS, 408 km overhead. It is the safest place on Earth to crash a spacecraft.</p>
+    <p>Since 1971, over <strong>263 spacecraft</strong> have been targeted here — including Russia's Mir station (2001), ESA's ATV cargo vehicles, and dozens of Progress supply ships. The ISS will join them around 2031.</p>
+    <div class="nemo-stats">
+      <div class="ns"><div class="nsl">Distance to Land</div><div class="nsv">2,688 km</div></div>
+      <div class="ns"><div class="nsl">Spacecraft Buried</div><div class="nsv">263+</div></div>
+      <div class="ns"><div class="nsl">Largest Object</div><div class="nsv">Mir (120 tons)</div></div>
+      <div class="ns"><div class="nsl">Named After</div><div class="nsv">Captain Nemo (Verne)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section full">
+  <h2>The Ghost Gallery</h2>
+  <p class="subtitle">Famous dead satellites still orbiting — silent, tumbling, unreachable.</p>
+  <div class="ghosts">
+    <div class="ghost"><div class="gi">🛰️</div><h4>Vanguard 1</h4><div class="gy">Launched 1958 · Dead since 1964</div><p>The oldest human object in orbit. 1.5 kg. Will orbit for <strong>240+ years</strong>. Still up there, silent, circling.</p></div>
+    <div class="ghost"><div class="gi">📡</div><h4>Envisat</h4><div class="gy">Died 2012 · 8 tons</div><p>Europe's largest Earth observation sat. Died suddenly. Too big to de-orbit. A <strong>collision risk for centuries</strong>.</p></div>
+    <div class="ghost"><div class="gi">🔭</div><h4>IRAS</h4><div class="gy">Died 1983 · Infrared telescope</div><p>First infrared space telescope. Nearly <strong>collided with a dead satellite</strong> in 2020 — missing by 47 meters.</p></div>
+    <div class="ghost"><div class="gi">⚡</div><h4>Fengyun-1C Debris</h4><div class="gy">Destroyed 2007 · 3,500+ pieces</div><p>China's ASAT test. Still the <strong>largest debris cloud</strong> in LEO. Will persist for decades.</p></div>
+    <div class="ghost"><div class="gi">📻</div><h4>Cosmos 954</h4><div class="gy">Crashed 1978 · Nuclear reactor</div><p>Soviet nuclear-powered sat crashed in northern Canada. Spread radioactive debris across <strong>124,000 km²</strong>.</p></div>
+    <div class="ghost"><div class="gi">🇺🇸</div><h4>Skylab</h4><div class="gy">Crashed 1979 · 77 tons</div><p>America's first space station. Re-entered over Australia. The town of Esperance <strong>fined NASA $400 for littering</strong>.</p></div>
+  </div>
+</div>
+
+<div class="section full">
+  <div class="heritage">
+    <h3><span data-en="☽ Heritage Reflection" data-fr="☽ Réflexion patrimoniale" data-ar="☽ تأمل تراثي">☽ Heritage Reflection</span></h3>
+    <p>For a thousand years, the sky was pristine. <strong>Al-Sufi</strong> (964 CE) cataloged 1,018 stars against a perfectly clear firmament. <strong>Ulugh Beg</strong> (1420 CE) measured their positions with naked-eye precision that wouldn't be exceeded for centuries.</p>
+    <p style="margin-top:8px">Today, 36,500+ objects orbit overhead. Astronomers struggle to photograph through the Starlink trains. The sky that inspired <strong>al-Battani, Ibn al-Haytham, and al-Zarqali</strong> is being transformed by the technology their work made possible.</p>
+    <p style="margin-top:8px">The satellite graveyard raises a question the medieval astronomers never imagined: <strong>who is responsible for keeping the sky clean?</strong></p>
+  </div>
+</div>
+
+<footer>
+  <div class="ft">"The sky that inspired a thousand years of science is being filled by the science it inspired."</div>
+  Part of the Satellites in the Sky project
+</footer>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Satellite Graveyard',project:'Satellites in the Sky'},fr:{title:'Cimetière de Satellites',project:'Satellites dans le Ciel'},ar:{title:'مقبرة الأقمار',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

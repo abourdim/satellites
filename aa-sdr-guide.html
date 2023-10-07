@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDR Satellite Guide — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(183,148,244,.06);border:1px solid rgba(183,148,244,.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--purple);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--purple)}
+header p{font-size:.82rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.6}
+
+.content{max-width:720px;margin:0 auto}
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap;justify-content:center}
+.tab{font-family:'JetBrains Mono',monospace;font-size:.5rem;padding:6px 12px;border-radius:20px;border:1px solid rgba(183,148,244,.1);background:transparent;color:var(--dim);cursor:pointer}
+.tab.active{background:rgba(183,148,244,.08);border-color:rgba(183,148,244,.2);color:var(--purple)}
+.section{display:none}.section.active{display:block}
+
+.card{background:var(--card);border:1px solid rgba(110,140,255,.06);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.card h3{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.card p{font-size:.74rem;color:var(--dim);line-height:1.6;margin-bottom:6px}
+.card strong{font-weight:600;color:var(--text)}
+
+.equip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:10px}
+.equip{background:var(--card);border:1px solid rgba(183,148,244,.06);border-radius:10px;padding:12px;text-align:center}
+.equip .ei{font-size:1.6rem;margin-bottom:4px}
+.equip .en{font-size:.78rem;font-weight:600;color:#fff}
+.equip .ed{font-size:.62rem;color:var(--dim);line-height:1.4;margin:2px 0}
+.equip .ep{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--green);font-weight:500}
+
+.freq-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:.66rem}
+.freq-table th{font-family:'JetBrains Mono',monospace;font-size:.4rem;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);text-transform:uppercase;letter-spacing:.06em}
+.freq-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.02);color:var(--dim)}
+.freq-table td:first-child{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:.6rem}
+.freq-table .diff-e{color:var(--green)}.freq-table .diff-m{color:var(--orange)}.freq-table .diff-h{color:var(--red)}
+
+/* Waterfall simulation */
+.waterfall{width:100%;height:120px;border-radius:8px;display:block;margin:8px 0}
+
+.step-list{counter-reset:stp}
+.stp{counter-increment:stp;padding:10px 0 10px 32px;border-left:2px solid rgba(183,148,244,.08);margin-left:8px;position:relative;font-size:.74rem;color:var(--dim);line-height:1.55}
+.stp::before{content:counter(stp);position:absolute;left:-11px;top:10px;width:20px;height:20px;border-radius:50%;background:var(--bg);border:2px solid rgba(183,148,244,.15);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.4rem;color:var(--purple)}
+.stp strong{font-weight:600;color:var(--text)}
+.stp code{font-family:'JetBrains Mono',monospace;font-size:.62rem;background:rgba(92,224,214,.04);padding:1px 5px;border-radius:3px;color:var(--cyan)}
+
+.antenna-card{background:rgba(232,193,112,.02);border:1px solid rgba(232,193,112,.06);border-radius:10px;padding:14px;margin-bottom:8px}
+.antenna-card h4{font-size:.78rem;font-weight:700;color:#fff;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.antenna-card p{font-size:.7rem;color:var(--dim);line-height:1.5}
+.antenna-card .dims{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--gold);margin-top:4px}
+
+.tip{display:flex;gap:8px;padding:8px 10px;background:rgba(232,193,112,.02);border:1px solid rgba(232,193,112,.06);border-radius:8px;margin-top:6px}
+.tip .ti{font-size:.8rem;flex-shrink:0}.tip .tt{font-size:.68rem;color:var(--dim);line-height:1.45}
+
+.pipeline{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:8px 0}
+.pipe-step{background:rgba(183,148,244,.04);border:1px solid rgba(183,148,244,.08);border-radius:6px;padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:.45rem;color:var(--purple)}
+.pipe-arrow{color:var(--muted);font-size:.6rem}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge"><span data-en="📡 SDR" data-fr="📡 SDR" data-ar="📡 SDR">📡 SDR</span></div>
+  <h1>SDR Satellite <span><span data-en="Guide" data-fr="Guide" data-ar="الدليل">Guide</span></span></h1>
+  <p>Receive real satellite signals with a $30 radio dongle. Weather images from NOAA, voice from the ISS, aircraft positions, and more — all from your window.</p>
+</header>
+<div class="content">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab(0)"><span data-en="🛒 Equipment" data-fr="🛒 Équipement" data-ar="🛒 المعدات">🛒 Equipment</span></button>
+    <button class="tab" onclick="showTab(1)"><span data-en="📡 Antennas" data-fr="📡 Antennes" data-ar="📡 الهوائيات">📡 Antennas</span></button>
+    <button class="tab" onclick="showTab(2)"><span data-en="📻 Frequencies" data-fr="📻 Fréquences" data-ar="📻 الترددات">📻 Frequencies</span></button>
+    <button class="tab" onclick="showTab(3)">🌤️ NOAA Weather</button>
+    <button class="tab" onclick="showTab(4)"><span data-en="🏗️ ISS Voice" data-fr="🏗️ Voix ISS" data-ar="🏗️ صوت محطة الفضاء">🏗️ ISS Voice</span></button>
+    <button class="tab" onclick="showTab(5)">✈️ ADS-B</button>
+    <button class="tab" onclick="showTab(6)"><span data-en="🔧 Software" data-fr="🔧 Logiciel" data-ar="🔧 البرمجيات">🔧 Software</span></button>
+  </div>
+
+  <!-- EQUIPMENT -->
+  <div class="section active" id="s0">
+    <div class="equip-grid">
+      <div class="equip">
+        <div class="ei">📻</div>
+        <div class="en">RTL-SDR Blog V4</div>
+        <div class="ed">The gold standard. 24-1766 MHz range. Includes antenna kit. TCXO for stable frequency.</div>
+        <div class="ep">~$30 / £25</div>
+      </div>
+      <div class="equip">
+        <div class="ei">📡</div>
+        <div class="en">V-Dipole Antenna</div>
+        <div class="ed">Included with RTL-SDR V4. Two telescoping elements in a V shape. Good for NOAA/Meteor at 137 MHz.</div>
+        <div class="ep"><span data-en="Included" data-fr="Inclus" data-ar="مضمّن">Included</span></div>
+      </div>
+      <div class="equip">
+        <div class="ei">💻</div>
+        <div class="en"><span data-en="Computer" data-fr="Ordinateur" data-ar="حاسوب">Computer</span></div>
+        <div class="ed">Windows, Mac, or Linux. USB port required. Raspberry Pi also works for dedicated stations.</div>
+        <div class="ep">You have one</div>
+      </div>
+      <div class="equip">
+        <div class="ei">🔌</div>
+        <div class="en">USB Extension</div>
+        <div class="ed">3-5m cable lets you put the antenna outside/on windowsill while dongle stays at computer.</div>
+        <div class="ep">~$5</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>💰 Total Cost: ~$35</h3>
+      <p>That's it. For $35 you can receive weather satellite images, listen to the ISS, track aircraft, and decode dozens of other signals. The RTL-SDR V4 kit includes everything to start.</p>
+    </div>
+  </div>
+
+  <!-- ANTENNAS -->
+  <div class="section" id="s1">
+    <div class="antenna-card">
+      <h4>📐 V-Dipole (Easiest)</h4>
+      <p>Two telescoping elements at <strong>120° angle</strong>, mounted horizontally. Point them north-south. Place outdoors or on a windowsill. Best for <strong>137 MHz</strong> (NOAA, Meteor).</p>
+      <div class="dims">Each element: 53.4 cm (λ/4 at 137 MHz) · Angle: 120°</div>
+    </div>
+    <div class="antenna-card">
+      <h4>🌀 QFH — Quadrifilar Helix (Best for satellites)</h4>
+      <p>Circular polarization captures satellite signals from all angles as they pass overhead. <strong>The best antenna for weather satellites.</strong> Build from coax cable and PVC pipe. Many online guides.</p>
+      <div class="dims">Height: ~50 cm for 137 MHz · Material: RG58 coax + PVC</div>
+    </div>
+    <div class="antenna-card">
+      <h4>📏 Yagi-Uda (Best gain, directional)</h4>
+      <p>High-gain directional antenna. Must be <strong>pointed at the satellite</strong> as it passes. Best for weak signals: ISS SSTV, amateur satellites, LEO voice contacts. 3-7 elements.</p>
+      <div class="dims">Length: ~1m for 145 MHz · Gain: 8-12 dBi</div>
+    </div>
+    <div class="tip"><span class="ti">💡</span><span class="tt">Start with the included V-dipole. Upgrade to QFH when you want better NOAA images. Yagi for ISS contacts.</span></div>
+  </div>
+
+  <!-- FREQUENCIES -->
+  <div class="section" id="s2">
+    <canvas class="waterfall" id="wf" width="700" height="120"></canvas>
+    <table class="freq-table">
+      <tr><th><span data-en="Frequency" data-fr="Fréquence" data-ar="التردد">Frequency</span></th><th>Signal</th><th><span data-en="Mode" data-fr="Mode" data-ar="الوضع">Mode</span></th><th>What You Get</th><th><span data-en="Difficulty" data-fr="Difficulté" data-ar="الصعوبة">Difficulty</span></th></tr>
+      <tr><td>137.1 MHz</td><td>NOAA 19 APT</td><td>FM → decode</td><td>Weather images</td><td class="diff-e"><span data-en="Easy" data-fr="Facile" data-ar="سهل">Easy</span></td></tr>
+      <tr><td>137.9 MHz</td><td>NOAA 18 APT</td><td>FM → decode</td><td>Weather images</td><td class="diff-e"><span data-en="Easy" data-fr="Facile" data-ar="سهل">Easy</span></td></tr>
+      <tr><td>137.6 MHz</td><td>Meteor-M2 LRPT</td><td>QPSK decode</td><td>Color images</td><td class="diff-m"><span data-en="Medium" data-fr="Moyen" data-ar="متوسط">Medium</span></td></tr>
+      <tr><td>145.800 MHz</td><td>ISS Voice/APRS</td><td>FM</td><td>Astronaut voice</td><td class="diff-e"><span data-en="Easy" data-fr="Facile" data-ar="سهل">Easy</span></td></tr>
+      <tr><td>145.800 MHz</td><td>ISS SSTV</td><td>FM → SSTV</td><td>Space photos</td><td class="diff-m"><span data-en="Medium" data-fr="Moyen" data-ar="متوسط">Medium</span></td></tr>
+      <tr><td>162.0 MHz</td><td>NOAA Weather Radio</td><td>FM</td><td><span data-en="Forecasts" data-fr="Prévisions" data-ar="التوقعات">Forecasts</span></td><td class="diff-e">Easy</td></tr>
+      <tr><td>1090 MHz</td><td>ADS-B Aircraft</td><td>Mode-S</td><td>Flight tracking</td><td class="diff-e">Easy</td></tr>
+      <tr><td>406 MHz</td><td>Radiosondes</td><td><span data-en="Digital" data-fr="Numérique" data-ar="رقمي">Digital</span></td><td>Weather data</td><td class="diff-m"><span data-en="Medium" data-fr="Moyen" data-ar="متوسط">Medium</span></td></tr>
+      <tr><td>1575.42 MHz</td><td>GPS L1</td><td>Spread spectrum</td><td><span data-en="Navigation" data-fr="Navigation" data-ar="الملاحة">Navigation</span></td><td class="diff-h"><span data-en="Hard" data-fr="Difficile" data-ar="صعب">Hard</span></td></tr>
+      <tr><td>1544 MHz</td><td>Inmarsat</td><td><span data-en="Digital" data-fr="Numérique" data-ar="رقمي">Digital</span></td><td>Maritime data</td><td class="diff-h"><span data-en="Hard" data-fr="Difficile" data-ar="صعب">Hard</span></td></tr>
+    </table>
+  </div>
+
+  <!-- NOAA WEATHER -->
+  <div class="section" id="s3">
+    <div class="card">
+      <h3><span data-en="🌤️ Receive NOAA Weather Images" data-fr="🌤️ Recevoir images météo NOAA" data-ar="🌤️ استقبال صور الطقس">🌤️ Receive NOAA Weather Images</span></h3>
+      <p>This is the <strong>#1 beginner SDR satellite project</strong>. NOAA 18 and 19 broadcast live weather images as they pass overhead. The signal is analog — you record audio and decode it into an image. Each pass gives a ~2000 km wide swath of your region.</p>
+    </div>
+    <div class="card">
+      <h3><span data-en="📋 Step-by-Step" data-fr="📋 Étape par étape" data-ar="📋 خطوة بخطوة">📋 Step-by-Step</span></h3>
+      <div class="step-list">
+        <div class="stp"><strong>Find the pass.</strong> Use <code>heavens-above.com</code> or the <code>Look4Sat</code> app. NOAA 18/19 pass every ~2 hours. You need passes above 20° elevation. Higher = better signal.</div>
+        <div class="stp"><strong>Set up antenna.</strong> V-dipole at 120°, elements at 53.4 cm each. Place horizontally outdoors or on a windowsill. Point elements roughly north-south.</div>
+        <div class="stp"><strong>Tune your SDR.</strong> Open SDR# (Windows) or GQRX (Mac/Linux). Set frequency: <code>137.1000 MHz</code> for NOAA 19, <code>137.9125 MHz</code> for NOAA 18. Mode: <code>WFM</code> (Wide FM). Bandwidth: <code>40 kHz</code>.</div>
+        <div class="stp"><strong>Record the pass.</strong> When the satellite appears, you'll see a signal on the waterfall. Record the audio as a <code>.wav</code> file. The pass lasts <strong>10-15 minutes</strong>. You'll hear a characteristic "tick-tock" warbling sound.</div>
+        <div class="stp"><strong>Decode the image.</strong> Open the .wav in <code>WXtoImg</code> (free) or <code>SatDump</code>. It converts the audio into a weather image — visible or infrared, depending on time of day.</div>
+        <div class="stp"><strong>Admire your image.</strong> You just received a live satellite photo directly from space. No internet needed. You literally captured photons reflected off clouds, digitized by a satellite, broadcast as radio waves, and decoded on your computer.</div>
+      </div>
+      <div class="pipeline">
+        <span class="pipe-step">☀️ Sunlight</span><span class="pipe-arrow">→</span>
+        <span class="pipe-step">🌍 Earth</span><span class="pipe-arrow">→</span>
+        <span class="pipe-step">🛰️ NOAA sensor</span><span class="pipe-arrow">→</span>
+        <span class="pipe-step">📡 137 MHz signal</span><span class="pipe-arrow">→</span>
+        <span class="pipe-step"><span data-en="📻 Your SDR" data-fr="📻 Votre SDR" data-ar="📻 جهاز SDR الخاص بك">📻 Your SDR</span></span><span class="pipe-arrow">→</span>
+        <span class="pipe-step">🔊 Audio .wav</span><span class="pipe-arrow">→</span>
+        <span class="pipe-step">🖼️ Weather image</span>
+      </div>
+    </div>
+    <div class="tip"><span class="ti">⚡</span><span class="tt"><strong>Pro tip:</strong> Record in stereo. One channel = audio, other channel = Doppler correction. SatDump handles this automatically. Your first image WILL be noisy — that's normal. Better antenna = better images.</span></div>
+  </div>
+
+  <!-- ISS -->
+  <div class="section" id="s4">
+    <div class="card">
+      <h3>🏗️ Listen to the ISS</h3>
+      <p>The ISS has an amateur radio on <strong>145.800 MHz</strong>. Sometimes astronauts make live voice contacts with schools and ham operators. The station also transmits <strong>SSTV (Slow Scan TV)</strong> images during special events — actual photos from space!</p>
+    </div>
+    <div class="card">
+      <h3>📋 How to Listen</h3>
+      <div class="step-list">
+        <div class="stp"><strong>Find ISS pass.</strong> Use <code>ISS Detector</code> app or <code>heavens-above.com</code>. You need a pass above 30° for decent reception. Pass lasts ~6-10 minutes.</div>
+        <div class="stp"><strong>Tune to 145.800 MHz.</strong> Mode: <code>NFM</code> (Narrow FM). Bandwidth: <code>12 kHz</code>. The signal will Doppler-shift ±3.5 kHz during the pass — adjust manually or use Doppler correction.</div>
+        <div class="stp"><strong>Listen.</strong> If astronauts are transmitting, you'll hear voice. The APRS beacon sends digital packets (sounds like "brrzt"). During SSTV events, you hear warbling tones — decode with <code>MMSSTV</code> or phone apps like <code>Robot36</code>.</div>
+      </div>
+    </div>
+    <div class="tip"><span class="ti">📅</span><span class="tt"><strong>SSTV events</strong> happen a few times per year (check ARISS.org). During events, the ISS continuously transmits images for days. Even a simple V-dipole can receive them. Point your phone's mic at the speaker and Robot36 app decodes it in real time!</span></div>
+  </div>
+
+  <!-- ADS-B -->
+  <div class="section" id="s5">
+    <div class="card">
+      <h3>✈️ Track Aircraft with ADS-B</h3>
+      <p>Every commercial aircraft broadcasts its position, altitude, speed, and callsign on <strong>1090 MHz</strong>. Your RTL-SDR can receive these signals and plot aircraft on a live map — like FlightRadar24, but running locally from your own antenna.</p>
+    </div>
+    <div class="card">
+      <h3><span data-en="📋 Quick Setup" data-fr="📋 Installation rapide" data-ar="📋 إعداد سريع">📋 Quick Setup</span></h3>
+      <div class="step-list">
+        <div class="stp"><strong>Install dump1090.</strong> Free software: <code>dump1090</code> (Windows/Linux) or <code>tar1090</code> (Raspberry Pi). One command to start.</div>
+        <div class="stp"><strong>Use the included antenna</strong> at full extension, or build a simple <code>1/4-wave ground plane</code> (6.9 cm element + 4 ground radials).</div>
+        <div class="stp"><strong>Launch and watch.</strong> Open <code>localhost:8080</code> in your browser. Aircraft appear on a map with live positions. Range: <strong>100-400 km</strong> depending on antenna height and line of sight.</div>
+      </div>
+      <p>This is the <strong>easiest SDR project</strong>. Literally plug in, run one program, see aircraft. Works indoors if near a window.</p>
+    </div>
+  </div>
+
+  <!-- SOFTWARE -->
+  <div class="section" id="s6">
+    <div class="card">
+      <h3>🔧 Software Guide</h3>
+      <p>All software is <strong>free and open source</strong>.</p>
+    </div>
+    <div class="card">
+      <h3>📻 SDR Receivers</h3>
+      <p><strong>SDR# (Windows)</strong> — Most popular. Clean interface. Plugin ecosystem. Download from airspy.com.</p>
+      <p><strong>SDR++ (All platforms)</strong> — Modern, fast, cross-platform. Excellent waterfall. Recommended for Mac/Linux.</p>
+      <p><strong>GQRX (Mac/Linux)</strong> — Mature, reliable. Gnuradio-based.</p>
+      <p><strong>CubicSDR (All)</strong> — Simple, beginner-friendly.</p>
+    </div>
+    <div class="card">
+      <h3>🛰️ Satellite Decoders</h3>
+      <p><strong>SatDump</strong> — All-in-one decoder for NOAA, Meteor, GOES, and more. Active development. Recommended.</p>
+      <p><strong>WXtoImg</strong> — Classic NOAA APT decoder. No longer developed but still works.</p>
+      <p><strong>MeteorDemod</strong> — Specialized Meteor-M2 LRPT decoder.</p>
+    </div>
+    <div class="card">
+      <h3><span data-en="✈️ Aircraft Tracking" data-fr="✈️ Suivi d'avions" data-ar="✈️ تتبع الطائرات">✈️ Aircraft Tracking</span></h3>
+      <p><strong>dump1090</strong> — The original ADS-B decoder. Run from command line.</p>
+      <p><strong>tar1090</strong> — Beautiful web interface for dump1090. Raspberry Pi friendly.</p>
+      <p><strong>FlightAware PiAware</strong> — Complete Raspberry Pi image. Plug and play.</p>
+    </div>
+    <div class="card">
+      <h3><span data-en="📅 Pass Prediction" data-fr="📅 Prédiction de passage" data-ar="📅 توقع المرور">📅 Pass Prediction</span></h3>
+      <p><strong>Look4Sat (Android)</strong> — Best mobile pass predictor. Free.</p>
+      <p><strong>Heavens-Above (web)</strong> — Classic. Reliable. Shows exact pass paths.</p>
+      <p><strong>Gpredict (desktop)</strong> — Full satellite tracking with Doppler control.</p>
+    </div>
+  </div>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+function showTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i))}
+
+// Waterfall animation
+const wf=document.getElementById('wf'),wc=wf.getContext('2d');
+function drawWF(){
+  const d=wc.getImageData(0,0,700,120);
+  // Scroll down
+  for(let y=119;y>0;y--)for(let x=0;x<700;x++){const i=(y*700+x)*4,j=((y-1)*700+x)*4;d.data[i]=d.data[j];d.data[i+1]=d.data[j+1];d.data[i+2]=d.data[j+2];d.data[i+3]=d.data[j+3]}
+  // New line
+  for(let x=0;x<700;x++){
+    let v=Math.random()*20;// noise floor
+    // Signal peaks
+    const signals=[{f:137,w:3},{f:145,w:2},{f:162,w:2},{f:400,w:4},{f:1090,w:3}];
+    signals.forEach(s=>{const pos=(s.f-100)/1500*700;if(Math.abs(x-pos)<s.w*3)v+=60*Math.exp(-Math.pow((x-pos)/s.w,2))});
+    const i=x*4;
+    if(v>50){d.data[i]=100;d.data[i+1]=50+v;d.data[i+2]=200+v*.3}
+    else if(v>30){d.data[i]=20;d.data[i+1]=50+v;d.data[i+2]=100+v}
+    else{d.data[i]=3+v*.3;d.data[i+1]=5+v*.5;d.data[i+2]=16+v*.8}
+    d.data[i+3]=255;
+  }
+  wc.putImageData(d,0,0);
+  requestAnimationFrame(drawWF);
+}
+drawWF();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'SDR Satellite Guide',project:'Satellites in the Sky'},fr:{title:'Guide SDR Satellite',project:'Satellites dans le Ciel'},ar:{title:'دليل SDR للأقمار',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

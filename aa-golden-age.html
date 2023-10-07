@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Golden Age — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(232,193,112,.06);border:1px solid rgba(232,193,112,.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--gold)}
+header p{font-size:.82rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.6}
+.intro{max-width:600px;margin:0 auto 20px;text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:.88rem;color:rgba(232,193,112,.4);line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;max-width:700px;margin:0 auto 20px}
+.scholar{background:var(--card);border:1px solid rgba(232,193,112,.06);border-radius:14px;padding:16px;transition:all .3s;cursor:pointer}
+.scholar:hover{border-color:rgba(232,193,112,.12);transform:translateY(-2px)}
+.scholar.open{border-color:rgba(232,193,112,.15)}
+.s-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.s-icon{font-size:1.6rem;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(232,193,112,.04)}
+.s-info h3{font-size:.88rem;font-weight:700;color:#fff;line-height:1.2}
+.s-info .s-dates{font-family:'JetBrains Mono',monospace;font-size:.42rem;color:var(--gold)}
+.s-field{font-family:'JetBrains Mono',monospace;font-size:.36rem;padding:2px 6px;border-radius:3px;margin-left:auto;color:var(--cyan);background:rgba(92,224,214,.06)}
+.s-brief{font-size:.74rem;color:var(--dim);line-height:1.5;margin-bottom:6px}
+.s-detail{display:none;font-size:.72rem;color:var(--dim);line-height:1.55;border-top:1px solid rgba(255,255,255,.03);padding-top:8px;margin-top:6px}
+.scholar.open .s-detail{display:block}
+.s-detail strong{font-weight:600;color:var(--text)}
+.s-link{display:flex;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;border-radius:6px;background:rgba(92,224,214,.03);border:1px solid rgba(92,224,214,.06)}
+.s-link .arrow{font-size:.7rem;color:var(--cyan)}
+.s-link .lt{font-size:.6rem;color:var(--dim)}
+.s-link .lv{font-size:.65rem;font-weight:600;color:var(--cyan)}
+
+.closing{max-width:600px;margin:20px auto 0;text-align:center;background:var(--card);border:1px solid rgba(232,193,112,.08);border-radius:14px;padding:18px 20px}
+.closing h3{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#fff;margin-bottom:6px}
+.closing p{font-size:.76rem;color:var(--dim);line-height:1.6}
+.closing strong{font-weight:600}
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted);max-width:700px;margin:0 auto}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge" data-en="✨ Heritage" data-fr="✨ Patrimoine" data-ar="✨ التراث">✨ Heritage</div>
+  <h1>The <span><span data-en="Golden Age" data-fr="L'Âge d'Or" data-ar="العصر الذهبي">Golden Age</span></span></h1>
+  <p>From the 8th to 14th century, Arab and Muslim scholars built the mathematical and scientific foundations that made modern satellites possible.</p>
+</header>
+<div class="intro">"The ink of the scholar is holier than the blood of the martyr."</div>
+<div class="grid" id="grid"></div>
+<div class="closing">
+  <h3 data-en="A Continuous Thread" data-fr="Un fil continu" data-ar="خيط متواصل">A Continuous Thread</h3>
+  <p>Every GPS fix uses <strong>al-Khwarizmi's algebra</strong>. Every satellite orbit was predicted by <strong>al-Tusi's models</strong>. Every telescope lens follows <strong>Ibn al-Haytham's optics</strong>. Every star we navigate by carries <strong>al-Sufi's Arabic name</strong>. The Golden Age didn't end — its knowledge flows through every satellite above us today.</p>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+const S=[
+  {icon:'🔢',name:'al-Khwarizmi',name_fr:'al-Khwarizmi',name_ar:'الخوارزمي',dates:'780–850 CE',field:'Mathematics',place:'Baghdad',
+    brief:'Father of algebra. Invented the algorithm. His systematic methods are the basis of every computer on Earth — and in orbit.',
+    detail:'<strong>Muhammad ibn Musa al-Khwarizmi</strong> wrote "Kitab al-Jabr" — the book that gave us the word "algebra." The word "algorithm" comes from the Latin form of his name. His methods for solving equations are the foundation of all orbital mechanics calculations. Every time a GPS receiver solves 4 simultaneous equations to find your position, it uses techniques al-Khwarizmi pioneered 1,200 years ago.',
+    link:'GPS algorithms',linkTo:'Every GPS position fix'},
+  {icon:'🌍',name:'al-Biruni',name_fr:'al-Biruni',name_ar:'البيروني',dates:'973–1048 CE',field:'Geodesy',place:'Khwarezm',
+    brief:'Calculated Earth\'s circumference to within 1% accuracy using a mountain and trigonometry. Conceptualized Earth\'s rotation.',
+    detail:'<strong>Abu Rayhan al-Biruni</strong> measured Earth\'s circumference at 40,233 km — the actual value is 40,075 km. He used a peak in what is now Pakistan and brilliant trigonometry. He also theorized that Earth rotates on its axis (600 years before Copernicus became famous for it). His geodetic methods are direct ancestors of satellite geodesy — measuring Earth\'s shape from orbit.',
+    link:'Satellite geodesy',linkTo:'Measuring Earth from space'},
+  {icon:'💡',name:'Ibn al-Haytham',name_fr:'Ibn al-Haytham',name_ar:'ابن الهيثم',dates:'965–1040 CE',field:'Optics',place:'Basra/Cairo',
+    brief:'Father of optics. Invented the scientific method. His theory of light underpins every camera lens and telescope — on Earth and in orbit.',
+    detail:'<strong>Abu Ali al-Hasan ibn al-Haytham</strong> (known in Latin as Alhazen) wrote "Kitab al-Manazir" — the most important book on optics before Newton. He proved light travels in straight lines, explained reflection and refraction, and pioneered the camera obscura. He also effectively invented the <strong>scientific method</strong>: hypothesis, experiment, conclusion. Every satellite camera, every telescope mirror (including JWST), every optical sensor descends from his work.',
+    link:'Satellite cameras',linkTo:'Earth observation optics'},
+  {icon:'⭐',name:'al-Sufi',name_fr:'al-Soufi',name_ar:'الصوفي',dates:'903–986 CE',field:'Astronomy',place:'Isfahan',
+    brief:'Created the most accurate star catalog of the medieval world. 200+ Arabic star names still used today: Aldebaran, Betelgeuse, Rigel, Vega.',
+    detail:'<strong>Abd al-Rahman al-Sufi</strong> wrote the "Book of Fixed Stars," carefully revising Ptolemy\'s star catalog with naked-eye observations of unprecedented accuracy. He was the first to record the Andromeda Galaxy and the Large Magellanic Cloud. Over <strong>200 star names</strong> used by modern astronomers are Arabic: Aldebaran (الدبران, "the follower"), Betelgeuse (بيت الجوزاء), Rigel (رجل), Altair (الطائر), Deneb (ذنب). Star trackers on satellites use these same stars for navigation.',
+    link:'Star trackers',linkTo:'Satellite attitude determination'},
+  {icon:'🪐',name:'al-Tusi',name_fr:'al-Tusi',name_ar:'الطوسي',dates:'1201–1274 CE',field:'Planetary Models',place:'Maragheh',
+    brief:'Created mathematical models of planetary motion. His "Tusi couple" solved problems Ptolemy couldn\'t. Copernicus used his work.',
+    detail:'<strong>Nasir al-Din al-Tusi</strong> built the Maragheh Observatory — the most advanced in the world. His mathematical device, the "Tusi couple," converts circular motion to linear motion and appears (nearly identically) in Copernicus\'s work 250 years later. His precise planetary models paved the way for Kepler\'s laws of planetary motion — which are the exact equations we use to calculate satellite orbits today.',
+    link:'Orbital mechanics',linkTo:'Kepler\'s laws for satellite orbits'},
+  {icon:'🧭',name:'Ibn Majid',name_fr:'Ibn Majid',name_ar:'ابن ماجد',dates:'1421–1500 CE',field:'Navigation',place:'Oman',
+    brief:'Master navigator of the Indian Ocean. His celestial navigation techniques — measuring star angles — are the ancestor of satellite navigation.',
+    detail:'<strong>Ahmad ibn Majid</strong>, known as the "Lion of the Sea," wrote over 40 works on navigation. He used star altitudes measured with a kamal (wooden card + string) to determine latitude with remarkable precision. His methods of measuring angles to known celestial objects are conceptually identical to how GPS works: measuring "distances" to known satellites to determine your position. The jump from stars to satellites is smaller than it seems.',
+    link:'GPS/GNSS',linkTo:'Satellite-based navigation'},
+];
+
+const grid=document.getElementById('grid');
+S.forEach(s=>{
+  grid.innerHTML+=`<div class="scholar" onclick="this.classList.toggle('open')">
+    <div class="s-top"><div class="s-icon">${s.icon}</div><div class="s-info"><h3>${s.name}</h3><div class="s-dates">${s.dates} · ${s.place}</div></div><span class="s-field">${s.field}</span></div>
+    <div class="s-brief">${s.brief}</div>
+    <div class="s-detail">${s.detail}
+      <div class="s-link"><span class="arrow">→</span><div><div class="lt">Modern connection</div><div class="lv">${s.linkTo}</div></div></div>
+    </div>
+  </div>`;
+});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Golden Age',project:'Satellites in the Sky'},fr:{title:'Golden Age',project:'Satellites dans le Ciel'},ar:{title:'Golden Age',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

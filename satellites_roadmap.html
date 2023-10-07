@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellites in the Sky — Project Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #04060d;
+    --bg-card: #0a0f1e;
+    --bg-card-hover: #0f1730;
+    --border: rgba(110, 140, 255, 0.08);
+    --border-glow: rgba(110, 140, 255, 0.2);
+    --space-blue: #6e8cff;
+    --space-light: #a4b8ff;
+    --gold: #e8c170;
+    --gold-dim: rgba(232, 193, 112, 0.12);
+    --green: #6fcf97;
+    --green-dim: rgba(111, 207, 151, 0.10);
+    --purple: #b794f4;
+    --purple-dim: rgba(183, 148, 244, 0.10);
+    --red: #fc8181;
+    --red-dim: rgba(252, 129, 129, 0.10);
+    --orange: #f6ad55;
+    --orange-dim: rgba(246, 173, 85, 0.10);
+    --cyan: #63e2e2;
+    --cyan-dim: rgba(99, 226, 226, 0.10);
+    --text: #dde2f0;
+    --text-dim: #7e8da6;
+    --text-muted: #4a5568;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Outfit', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ========== STARFIELD ========== */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(1px 1px at 5% 15%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 12% 68%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1px 1px at 18% 42%, rgba(255,255,255,0.2), transparent),
+      radial-gradient(1.2px 1.2px at 25% 88%, rgba(110,140,255,0.4), transparent),
+      radial-gradient(1px 1px at 32% 22%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 40% 55%, rgba(255,255,255,0.15), transparent),
+      radial-gradient(1.5px 1.5px at 48% 8%, rgba(232,193,112,0.35), transparent),
+      radial-gradient(1px 1px at 55% 75%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 62% 35%, rgba(255,255,255,0.25), transparent),
+      radial-gradient(1.2px 1.2px at 70% 90%, rgba(183,148,244,0.3), transparent),
+      radial-gradient(1px 1px at 78% 12%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 85% 52%, rgba(255,255,255,0.2), transparent),
+      radial-gradient(1px 1px at 92% 38%, rgba(255,255,255,0.45), transparent),
+      radial-gradient(1.3px 1.3px at 95% 70%, rgba(99,226,226,0.3), transparent),
+      radial-gradient(0.8px 0.8px at 8% 30%, rgba(255,255,255,0.15), transparent),
+      radial-gradient(0.8px 0.8px at 22% 55%, rgba(255,255,255,0.1), transparent),
+      radial-gradient(0.8px 0.8px at 37% 80%, rgba(255,255,255,0.12), transparent),
+      radial-gradient(0.8px 0.8px at 52% 18%, rgba(255,255,255,0.1), transparent),
+      radial-gradient(0.8px 0.8px at 67% 62%, rgba(255,255,255,0.15), transparent),
+      radial-gradient(0.8px 0.8px at 82% 25%, rgba(255,255,255,0.1), transparent);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ========== ANIMATED ORBIT LINES ========== */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 200vmax;
+    height: 200vmax;
+    transform: translate(-50%, -50%);
+    background:
+      radial-gradient(ellipse 600px 600px at 50% 50%, transparent 98%, rgba(110,140,255,0.03) 99%, transparent 100%),
+      radial-gradient(ellipse 900px 350px at 50% 50%, transparent 98%, rgba(183,148,244,0.025) 99%, transparent 100%),
+      radial-gradient(ellipse 1200px 500px at 50% 50%, transparent 98%, rgba(99,226,226,0.02) 99%, transparent 100%);
+    z-index: 0;
+    pointer-events: none;
+    animation: rotateOrbits 120s linear infinite;
+  }
+
+  @keyframes rotateOrbits {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  /* ========== NAV ========== */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(4, 6, 13, 0.88);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  nav .logo {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--space-blue);
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  nav .logo .logo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--space-blue);
+    box-shadow: 0 0 10px var(--space-blue), 0 0 20px rgba(110,140,255,0.3);
+    animation: pulse 3s infinite;
+  }
+
+  nav .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+
+  nav .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+
+  nav .nav-links a:hover { color: var(--space-blue); }
+
+  /* ========== HERO ========== */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -300px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1000px;
+    height: 1000px;
+    background: radial-gradient(circle, rgba(110,140,255,0.05) 0%, rgba(183,148,244,0.02) 40%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(110, 140, 255, 0.06);
+    border: 1px solid rgba(110, 140, 255, 0.12);
+    border-radius: 50px;
+    padding: 8px 22px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--space-blue);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    animation: fadeDown 1s ease;
+  }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 6vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    animation: fadeDown 1s ease 0.1s both;
+  }
+
+  .hero h1 .highlight {
+    background: linear-gradient(135deg, var(--space-blue), var(--purple), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 620px;
+    font-weight: 400;
+    margin-bottom: 52px;
+    animation: fadeDown 1s ease 0.2s both;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 52px;
+    animation: fadeDown 1s ease 0.3s both;
+  }
+
+  .hero-stat { text-align: center; }
+
+  .hero-stat .num {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--space-blue);
+  }
+
+  .hero-stat .label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    animation: pulse 2.5s infinite;
+  }
+
+  .scroll-hint .arrow {
+    width: 1px;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--text-muted), transparent);
+  }
+
+  /* ========== SECTIONS ========== */
+  section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 100px 40px;
+  }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 16px;
+  }
+
+  .section-label .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--space-blue);
+    box-shadow: 0 0 8px rgba(110,140,255,0.4);
+  }
+
+  section h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  section .section-desc {
+    font-size: 1.02rem;
+    color: var(--text-dim);
+    max-width: 680px;
+    margin-bottom: 56px;
+    font-weight: 400;
+  }
+
+  /* ========== VISION GRID ========== */
+  .vision-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .vision-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    transition: all 0.4s ease;
+  }
+
+  .vision-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+  }
+
+  .vision-card .v-icon { font-size: 1.8rem; margin-bottom: 16px; }
+
+  .vision-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #fff;
+  }
+
+  .vision-card p {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* ========== 4 MODES ========== */
+  .modes-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .mode-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 22px;
+    text-align: center;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mode-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .mode-card:nth-child(1)::before { background: var(--space-blue); }
+  .mode-card:nth-child(2)::before { background: var(--cyan); }
+  .mode-card:nth-child(3)::before { background: var(--orange); }
+  .mode-card:nth-child(4)::before { background: var(--purple); }
+
+  .mode-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-3px);
+  }
+
+  .mode-icon { font-size: 2.2rem; margin-bottom: 14px; }
+
+  .mode-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .mode-card .age {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+  }
+
+  .mode-features { list-style: none; text-align: left; }
+
+  .mode-features li {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.025);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .mode-features li::before {
+    content: '→';
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .mode-features li:last-child { border: none; }
+
+  /* ========== PHASES TIMELINE ========== */
+  .timeline {
+    position: relative;
+    padding-left: 60px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--space-blue), var(--cyan), var(--orange), var(--purple), var(--gold));
+  }
+
+  .phase {
+    position: relative;
+    margin-bottom: 72px;
+  }
+
+  .phase:last-child { margin-bottom: 0; }
+
+  .phase-dot {
+    position: absolute;
+    left: -48px;
+    top: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid;
+    background: var(--bg-deep);
+  }
+
+  .phase:nth-child(1) .phase-dot { border-color: var(--space-blue); box-shadow: 0 0 14px rgba(110,140,255,0.5); }
+  .phase:nth-child(2) .phase-dot { border-color: var(--cyan); box-shadow: 0 0 14px rgba(99,226,226,0.5); }
+  .phase:nth-child(3) .phase-dot { border-color: var(--orange); box-shadow: 0 0 14px rgba(246,173,85,0.5); }
+  .phase:nth-child(4) .phase-dot { border-color: var(--purple); box-shadow: 0 0 14px rgba(183,148,244,0.5); }
+  .phase:nth-child(5) .phase-dot { border-color: var(--gold); box-shadow: 0 0 14px rgba(232,193,112,0.5); }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+
+  .phase-tag {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 4px;
+  }
+
+  .package-tag {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .phase:nth-child(1) .phase-tag { background: rgba(110,140,255,0.1); color: var(--space-blue); }
+  .phase:nth-child(2) .phase-tag { background: var(--cyan-dim); color: var(--cyan); }
+  .phase:nth-child(3) .phase-tag { background: var(--orange-dim); color: var(--orange); }
+  .phase:nth-child(4) .phase-tag { background: var(--purple-dim); color: var(--purple); }
+  .phase:nth-child(5) .phase-tag { background: var(--gold-dim); color: var(--gold); }
+
+  .phase h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .phase > p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    max-width: 620px;
+    margin-top: 8px;
+  }
+
+  .phase-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .phase-feature {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.83rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.3s;
+  }
+
+  .phase-feature:hover { border-color: var(--border-glow); }
+
+  .phase-feature .pf-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  /* ========== ISLAMIC HERITAGE ========== */
+  .heritage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .heritage-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .heritage-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  .heritage-card:hover {
+    border-color: rgba(232, 193, 112, 0.18);
+    transform: translateY(-2px);
+  }
+
+  .heritage-card .h-date {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+
+  .heritage-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .heritage-card p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  .heritage-connection {
+    background: linear-gradient(135deg, rgba(232,193,112,0.05), rgba(110,140,255,0.03));
+    border: 1px solid rgba(232, 193, 112, 0.1);
+    border-radius: 16px;
+    padding: 32px;
+  }
+
+  .heritage-connection h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .heritage-connection p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    line-height: 1.7;
+  }
+
+  .heritage-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .heritage-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: var(--gold-dim);
+    color: var(--gold);
+    letter-spacing: 0.04em;
+  }
+
+  /* ========== GENIUS IDEAS ========== */
+  .ideas-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .idea-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: all 0.4s ease;
+  }
+
+  .idea-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+  }
+
+  .idea-card.wide { grid-column: span 2; }
+
+  .idea-card h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .idea-tag {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .idea-tag.physics { background: rgba(110,140,255,0.1); color: var(--space-blue); }
+  .idea-tag.culture { background: var(--gold-dim); color: var(--gold); }
+  .idea-tag.data { background: var(--purple-dim); color: var(--purple); }
+  .idea-tag.sound { background: var(--green-dim); color: var(--green); }
+  .idea-tag.time { background: var(--orange-dim); color: var(--orange); }
+  .idea-tag.math { background: var(--red-dim); color: var(--red); }
+  .idea-tag.ar { background: var(--cyan-dim); color: var(--cyan); }
+
+  .idea-card p {
+    font-size: 0.83rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  .idea-bullets {
+    list-style: none;
+    margin-top: 10px;
+  }
+
+  .idea-bullets li {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .idea-bullets li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
+  }
+
+  /* ========== TECH STACK ========== */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .tech-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .tech-card h4 {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--space-blue);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .tech-card p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 80px 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  footer p {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+
+  footer .footer-tagline {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  /* ========== DIVIDER ========== */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ========== ANIMATIONS ========== */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 900px) {
+    .modes-container { grid-template-columns: 1fr 1fr; }
+    .heritage-grid { grid-template-columns: 1fr; }
+    .tech-grid { grid-template-columns: 1fr; }
+    .phase-features { grid-template-columns: 1fr; }
+    .ideas-grid { grid-template-columns: 1fr; }
+    .idea-card.wide { grid-column: span 1; }
+  }
+
+  @media (max-width: 600px) {
+    .modes-container { grid-template-columns: 1fr; }
+    .vision-grid { grid-template-columns: 1fr; }
+    .hero-stats { flex-direction: column; gap: 20px; }
+    nav .nav-links { display: none; }
+    section { padding: 60px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo"><span class="logo-dot"></span> Satellites in the Sky</div>
+  <ul class="nav-links">
+    <li><a href="#vision">Vision</a></li>
+    <li><a href="#modes">Modes</a></li>
+    <li><a href="#phases">Phases</a></li>
+    <li><a href="#heritage">Heritage</a></li>
+    <li><a href="#ideas">Ideas</a></li>
+    <li><a href="#tech">Tech</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-badge">
+    <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--space-blue);box-shadow:0 0 8px var(--space-blue);"></span>
+    Project Roadmap — v1.0
+  </div>
+  <h1>Satellites in <br>the <span class="highlight">Sky</span></h1>
+  <p class="subtitle">Thousands of objects orbit above you right now. You just can't see them — until now. Real satellites, real data, real wonder — for curious, serious kids.</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="num">4</div>
+      <div class="label">Modes</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">5</div>
+      <div class="label">Phases</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">60+</div>
+      <div class="label">Features</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">10k+</div>
+      <div class="label">Tracked Objects</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">4–15</div>
+      <div class="label">Age Range</div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    Scroll to explore
+    <div class="arrow"></div>
+  </div>
+</header>
+
+<!-- VISION -->
+<section id="vision">
+  <div class="section-label"><span class="dot"></span> 01 — Vision</div>
+  <h2>What We're Building</h2>
+  <p class="section-desc">Not a satellite tracker. Not a toy. A beautiful, real instrument that reveals the invisible architecture of space above your head — powered by live orbital data.</p>
+
+  <div class="vision-grid">
+    <div class="vision-card">
+      <div class="v-icon">🌌</div>
+      <h3>The Night Sky, Not a Map</h3>
+      <p>Look up, not down. A fullscreen starfield — real constellations, real positions, invisible satellites revealed as glowing dots crossing silently overhead. Use your phone's gyroscope as a magic window to space.</p>
+    </div>
+    <div class="vision-card">
+      <div class="v-icon">📡</div>
+      <h3>Real Data, Not Fiction</h3>
+      <p>Every dot on screen is a real satellite at its real position in its real orbit. Live TLE data from CelesTrak, propagated in real time using SGP4. Actual names, missions, altitudes, orbital periods.</p>
+    </div>
+    <div class="vision-card">
+      <div class="v-icon">🧠</div>
+      <h3>Progressive Depth</h3>
+      <p>A 4-year-old sees glowing dots and learns "that's the Space Station — 6 people live there." A 14-year-old parses Keplerian elements and calculates orbital decay. Same sky, four levels of depth.</p>
+    </div>
+    <div class="vision-card">
+      <div class="v-icon">🕌</div>
+      <h3>Islamic Heritage — Woven In</h3>
+      <p>Islamic astronomers mapped the stars that satellites now use for orientation. Arabic names fill the sky. Al-Sufi's star catalog, Al-Biruni's Earth, Al-Tusi's orbital math — not a museum tab, a living presence.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MODES -->
+<section id="modes">
+  <div class="section-label"><span class="dot"></span> 02 — Modes</div>
+  <h2>Four Levels of Depth</h2>
+  <p class="section-desc">Every kid picks their own depth. No one is overwhelmed. No one is bored. The sky grows with you.</p>
+
+  <div class="modes-container">
+    <div class="mode-card">
+      <div class="mode-icon">🌌</div>
+      <h3>Sky View</h3>
+      <div class="age">Age 4+</div>
+      <ul class="mode-features">
+        <li>Beautiful animated starfield</li>
+        <li>Real satellites gliding as dots</li>
+        <li>Tap → "That's the Space Station!"</li>
+        <li>Satellite counter</li>
+        <li>ISS always highlighted</li>
+        <li>Shooting star vs satellite</li>
+        <li>"6 people live up there right now"</li>
+      </ul>
+    </div>
+    <div class="mode-card">
+      <div class="mode-icon">🛰️</div>
+      <h3>Explorer</h3>
+      <div class="age">Age 7+</div>
+      <ul class="mode-features">
+        <li>Name, type, country, mission</li>
+        <li>Altitude scale (plane → ISS → GPS → Moon)</li>
+        <li>Orbit trail drawn as arc</li>
+        <li>Launch date & rocket used</li>
+        <li>"This one helps your phone know where you are"</li>
+        <li>Next visible pass prediction</li>
+        <li>Size comparison cards</li>
+      </ul>
+    </div>
+    <div class="mode-card">
+      <div class="mode-icon">📡</div>
+      <h3>Pro</h3>
+      <div class="age">Age 10+</div>
+      <ul class="mode-features">
+        <li>Orbital elements visualized</li>
+        <li>LEO / MEO / GEO categories</li>
+        <li>Ground track projection</li>
+        <li>Constellation groupings</li>
+        <li>Apogee & perigee display</li>
+        <li>Inclination & period</li>
+        <li>Sun illumination angle</li>
+        <li>Pass timeline for tonight</li>
+        <li>Conjunction warnings</li>
+      </ul>
+    </div>
+    <div class="mode-card">
+      <div class="mode-icon">🔬</div>
+      <h3>Expert</h3>
+      <div class="age">Age 13+</div>
+      <ul class="mode-features">
+        <li>Raw TLE data decoded</li>
+        <li>Keplerian elements parsed</li>
+        <li>SGP4 propagation explained</li>
+        <li>Doppler shift calculation</li>
+        <li>Orbital decay visualization</li>
+        <li>Perturbation forces (J2, drag)</li>
+        <li>Re-entry prediction</li>
+        <li>Space debris field</li>
+        <li>Signal frequency bands</li>
+        <li>Link budget basics</li>
+        <li>Iridium flare prediction</li>
+        <li>CSV data export</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PHASES -->
+<section id="phases">
+  <div class="section-label"><span class="dot"></span> 03 — Development Phases</div>
+  <h2>The Build Plan</h2>
+  <p class="section-desc">Five phases. Each delivers a complete, usable product. Each adds a new layer of depth and wonder. Each is a named package.</p>
+
+  <div class="timeline">
+
+    <!-- Phase 1 -->
+    <div class="phase">
+      <div class="phase-dot"></div>
+      <div class="phase-header">
+        <span class="phase-tag">Phase 1 ✅</span>
+        <span class="package-tag">aa-night-sky-window-phase1</span>
+        <h3>The Core — Night Sky Window</h3>
+      </div>
+      <p>The foundation. A beautiful starfield with real satellites. GPS location. Tap to discover. ISS always highlighted. Mode toggle between Sky View and Explorer.</p>
+      <div class="phase-features">
+        <div class="phase-feature"><span class="pf-icon">🌌</span> Animated starfield (real constellation positions)</div>
+        <div class="phase-feature"><span class="pf-icon">📍</span> GPS location or city picker</div>
+        <div class="phase-feature"><span class="pf-icon">🛰️</span> Live satellites from CelesTrak TLE data</div>
+        <div class="phase-feature"><span class="pf-icon">📐</span> SGP4 propagation (real-time position calc)</div>
+        <div class="phase-feature"><span class="pf-icon">👆</span> Tap satellite → info card (name, mission, altitude)</div>
+        <div class="phase-feature"><span class="pf-icon">🚀</span> ISS always highlighted with crew count</div>
+        <div class="phase-feature"><span class="pf-icon">📏</span> Altitude scale (plane → ISS → GPS → GEO → Moon)</div>
+        <div class="phase-feature"><span class="pf-icon">🧭</span> Gyroscope / compass magic window</div>
+        <div class="phase-feature"><span class="pf-icon">🔢</span> Live satellite counter</div>
+        <div class="phase-feature"><span class="pf-icon">✨</span> Orbit trail rendering</div>
+        <div class="phase-feature"><span class="pf-icon">🔀</span> Mode toggle (Sky View ↔ Explorer)</div>
+        <div class="phase-feature"><span class="pf-icon">⏰</span> "ISS visible in 23 min — look northwest!"</div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase">
+      <div class="phase-dot"></div>
+      <div class="phase-header">
+        <span class="phase-tag">Phase 2 ✅</span>
+        <span class="package-tag">aa-explorer-depth-phase2</span>
+        <h3>Explorer Depth — The Universe Comes to You</h3>
+      </div>
+      <p>Rich satellite data, mission cards, cultural connections, smart comparisons. Every satellite becomes a science and geography lesson.</p>
+      <div class="phase-features">
+        <div class="phase-feature"><span class="pf-icon">🌍</span> Orbit visualized on mini 3D globe</div>
+        <div class="phase-feature"><span class="pf-icon">🏳️</span> Country of origin & agency (NASA, ESA, ISRO…)</div>
+        <div class="phase-feature"><span class="pf-icon">🎯</span> Mission type cards (comms, weather, spy, science)</div>
+        <div class="phase-feature"><span class="pf-icon">🚀</span> Launch vehicle & date</div>
+        <div class="phase-feature"><span class="pf-icon">📏</span> Size comparison (car, bus, football field)</div>
+        <div class="phase-feature"><span class="pf-icon">⏱️</span> Next visible pass predictor</div>
+        <div class="phase-feature"><span class="pf-icon">📊</span> Live stats (count by type, oldest, fastest)</div>
+        <div class="phase-feature"><span class="pf-icon">🔊</span> Ambient space audio (optional, togglable)</div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase">
+      <div class="phase-dot"></div>
+      <div class="phase-header">
+        <span class="phase-tag">Phase 3 ✅</span>
+        <span class="package-tag">aa-mission-control-phase3</span>
+        <h3>Pro Mode — Mission Control</h3>
+      </div>
+      <p>Toggle to a mission control view. See orbital elements, constellation groupings, ground tracks. Think like a satellite operator.</p>
+      <div class="phase-features">
+        <div class="phase-feature"><span class="pf-icon">📡</span> Mission control dark UI (blinking dots, data readouts)</div>
+        <div class="phase-feature"><span class="pf-icon">📐</span> Orbital elements display (a, e, i, Ω, ω, ν)</div>
+        <div class="phase-feature"><span class="pf-icon">🌐</span> Ground track projection (where satellite passes over)</div>
+        <div class="phase-feature"><span class="pf-icon">🔗</span> Constellation view (all 30 GPS sats, all Starlink)</div>
+        <div class="phase-feature"><span class="pf-icon">📈</span> Apogee / perigee / period / inclination</div>
+        <div class="phase-feature"><span class="pf-icon">☀️</span> Sun illumination & eclipse entry/exit</div>
+        <div class="phase-feature"><span class="pf-icon">⚠️</span> Conjunction warnings (near-miss visualization)</div>
+        <div class="phase-feature"><span class="pf-icon">📻</span> Signal footprint (area a satellite can "see")</div>
+        <div class="phase-feature"><span class="pf-icon">📊</span> LEO / MEO / GEO layer cross-section</div>
+        <div class="phase-feature"><span class="pf-icon">📈</span> Operator frequency chart</div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase">
+      <div class="phase-dot"></div>
+      <div class="phase-header">
+        <span class="phase-tag">Phase 4 ✅</span>
+        <span class="package-tag">aa-orbital-science-phase4</span>
+        <h3>Expert Mode — Orbital Science</h3>
+      </div>
+      <p>Real orbital mechanics, perturbation physics, space debris analysis, signal engineering. Data export for school projects. The deepest layer.</p>
+      <div class="phase-features">
+        <div class="phase-feature"><span class="pf-icon">📄</span> Raw TLE parsing & Keplerian element decode</div>
+        <div class="phase-feature"><span class="pf-icon">🔬</span> Perturbation forces (atmospheric drag, J2, solar pressure)</div>
+        <div class="phase-feature"><span class="pf-icon">📉</span> Orbital decay visualization & re-entry prediction</div>
+        <div class="phase-feature"><span class="pf-icon">🗑️</span> Space debris field (23,000+ tracked objects)</div>
+        <div class="phase-feature"><span class="pf-icon">💫</span> Iridium flare prediction (time, magnitude, direction)</div>
+        <div class="phase-feature"><span class="pf-icon">📻</span> Doppler shift calculation (frequency change as sat passes)</div>
+        <div class="phase-feature"><span class="pf-icon">📡</span> Link budget basics (signal strength vs distance)</div>
+        <div class="phase-feature"><span class="pf-icon">📶</span> Frequency bands (L, S, C, X, Ku, Ka)</div>
+        <div class="phase-feature"><span class="pf-icon">🌡️</span> Atmospheric layers (thermosphere, exosphere)</div>
+        <div class="phase-feature"><span class="pf-icon">📊</span> Heatmaps, histograms, orbital density charts</div>
+        <div class="phase-feature"><span class="pf-icon">💾</span> CSV / JSON data export</div>
+        <div class="phase-feature"><span class="pf-icon">⛓️</span> Kessler Syndrome simulation</div>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase">
+      <div class="phase-dot"></div>
+      <div class="phase-header">
+        <span class="phase-tag">Phase 5 ✅</span>
+        <span class="package-tag">aa-islamic-heritage-phase5</span>
+        <h3>Islamic Heritage & Deep Learning</h3>
+      </div>
+      <p>Living connections between Islamic Golden Age astronomy and modern space science. Not a side tab — woven into the live experience of tracking every satellite.</p>
+      <div class="phase-features">
+        <div class="phase-feature"><span class="pf-icon">🕌</span> Heritage cards linked to live satellite events</div>
+        <div class="phase-feature"><span class="pf-icon">📖</span> Pioneers timeline (Al-Sufi → Hubble → today)</div>
+        <div class="phase-feature"><span class="pf-icon">⭐</span> Arabic star names in real sky view</div>
+        <div class="phase-feature"><span class="pf-icon">🧮</span> Live math links (algorithm → orbital calculation)</div>
+        <div class="phase-feature"><span class="pf-icon">🧭</span> Astrolabe vs star-tracker interactive</div>
+        <div class="phase-feature"><span class="pf-icon">📝</span> Arabic-origin astronomy vocabulary</div>
+        <div class="phase-feature"><span class="pf-icon">🌍</span> Modern Islamic space programs</div>
+        <div class="phase-feature"><span class="pf-icon">🧠</span> Physics & orbital math deep dives</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ISLAMIC HERITAGE -->
+<section id="heritage">
+  <div class="section-label"><span class="dot"></span> 04 — Islamic Astronomy Heritage</div>
+  <h2>The Roots of Space</h2>
+  <p class="section-desc">Every satellite overhead exists because humans first learned to read the sky. For centuries, Islamic scholars mapped the stars, calculated orbits, and built instruments of breathtaking precision.</p>
+
+  <div class="heritage-grid">
+    <div class="heritage-card">
+      <div class="h-date">903 – 986 AD</div>
+      <h4>Al-Sufi</h4>
+      <p>Wrote the Book of Fixed Stars — the most accurate star catalog of the medieval world. First human to record the Andromeda Galaxy. Modern satellite star-trackers recognize the same patterns he mapped.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">780 – 850 AD</div>
+      <h4>Al-Khwarizmi</h4>
+      <p>Father of algebra and algorithms. The SGP4 algorithm that calculates every satellite position in real time runs on his mathematical legacy. The word "algorithm" comes from his name.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">965 – 1040 AD</div>
+      <h4>Ibn al-Haytham</h4>
+      <p>Father of optics. Explained how light travels, how lenses work, how the eye sees. Every telescope, every satellite camera, every optical sensor descends from his Book of Optics.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">973 – 1048 AD</div>
+      <h4>Al-Biruni</h4>
+      <p>Calculated Earth's radius to within 16 km of the true value using a mountain and trigonometry. Satellites need Earth's exact shape to maintain orbit. Also proposed Earth rotates on its axis.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">858 – 929 AD</div>
+      <h4>Al-Battani</h4>
+      <p>Refined the length of the year to within 2 minutes of the true value. Improved solar and lunar orbit calculations. His trigonometric methods predict satellite passes and eclipses today.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">1201 – 1274 AD</div>
+      <h4>Al-Tusi</h4>
+      <p>Created the "Tusi couple" — resolving circular into linear motion. Influenced Copernicus directly. Built the Maragheh Observatory. His work connects to understanding orbital mechanics.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">1394 – 1449 AD</div>
+      <h4>Ulugh Beg</h4>
+      <p>Built the Samarkand Observatory and produced a catalog of 1,018 stars with precision unmatched for 150 years. His catalog is the ancestor of digital star databases loaded into satellites today.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">1029 – 1087 AD</div>
+      <h4>Al-Zarqali</h4>
+      <p>Built the most advanced universal astrolabe — working at any latitude. Corrected Ptolemy's orbital models. The astrolabe was essentially an analog satellite tracker computing celestial positions in real time.</p>
+    </div>
+    <div class="heritage-card">
+      <div class="h-date">810 – 887 AD</div>
+      <h4>Abbas ibn Firnas</h4>
+      <p>First human flight attempt in Córdoba. Built a planetarium with mechanical planets and simulated weather. His dream of flight was the first step on the path from gliding to orbit.</p>
+    </div>
+  </div>
+
+  <div class="heritage-connection">
+    <h4>Living Connections in the App</h4>
+    <p>Islamic heritage is not a museum tab — it appears naturally in the live experience. When a pass is predicted, Al-Khwarizmi is credited. When a star-tracker is explained, Al-Sufi is acknowledged. When Arabic star names fill the sky, their origins are shown.</p>
+    <div class="heritage-tags">
+      <span class="heritage-tag">Algorithm → Al-Khwarizmi</span>
+      <span class="heritage-tag">Algebra → Al-jabr</span>
+      <span class="heritage-tag">Azimuth → al-samt</span>
+      <span class="heritage-tag">Nadir → nazir</span>
+      <span class="heritage-tag">Zenith → samt al-ra's</span>
+      <span class="heritage-tag">Aldebaran → al-Dabarān</span>
+      <span class="heritage-tag">Altair → al-Nasr al-Ṭā'ir</span>
+      <span class="heritage-tag">Betelgeuse → Yad al-Jawzā'</span>
+      <span class="heritage-tag">Rigel → Rijl al-Jawzā'</span>
+      <span class="heritage-tag">Vega → al-Wāqi'</span>
+      <span class="heritage-tag">Fomalhaut → Fam al-Ḥūt</span>
+      <span class="heritage-tag">Deneb → Dhanab al-Dajāja</span>
+      <span class="heritage-tag">Almanac → al-manākh</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GENIUS IDEAS -->
+<section id="ideas">
+  <div class="section-label"><span class="dot"></span> 05 — Genius Feature Ideas</div>
+  <h2>Beyond the Roadmap</h2>
+  <p class="section-desc">Ideas that could make this unforgettable. Each one a potential future feature — prioritized by impact and feasibility.</p>
+
+  <div class="ideas-grid">
+    <div class="idea-card">
+      <h4>Live Physics Lab <span class="idea-tag physics">Physics</span></h4>
+      <p>Real-time orbital mechanics on each satellite: gravitational pull, centripetal acceleration, orbital velocity. "This satellite travels at 7.66 km/s — why doesn't it fly away?" Interactive force diagrams.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Live Math Problems <span class="idea-tag math">Math</span></h4>
+      <p>"The ISS is 420 km up, moving at 27,600 km/h. How long is one orbit?" Kid calculates, app verifies with live data. Trigonometry, circular motion, real orbital math from real objects.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Time Machine Mode <span class="idea-tag time">Time</span></h4>
+      <p>Slider from 1957 (Sputnik, 1 object) → today (10,000+). Watch the sky fill decade by decade. The Cold War. The GPS era. The Starlink explosion. Feel how fast humanity filled space.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Orbital Music <span class="idea-tag sound">Sound</span></h4>
+      <p>Each satellite plays a tone based on altitude. LEO = low hum, MEO = mid, GEO = sustained high. ISS gets its own melody. Starlink trains become a rising scale. Orbits as ambient music.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Zoom Out to Orbits <span class="idea-tag data">Data</span></h4>
+      <p>Pinch to zoom: your sky → your city → Earth from space → full orbital shells. See the thin LEO ring, the GPS constellation at MEO, the GEO belt as a perfect ring. Understand why "space is crowded."</p>
+    </div>
+    <div class="idea-card">
+      <h4>Culture Cards <span class="idea-tag culture">Culture</span></h4>
+      <p>Satellite launched from Kazakhstan? → Baikonur history, Kazakh culture. From French Guiana? → Why Europe launches from South America. Every satellite is a geography and geopolitics lesson.</p>
+    </div>
+    <div class="idea-card wide">
+      <h4>Spot the Satellite — AR Guide <span class="idea-tag ar">AR</span></h4>
+      <p>Turns screen time into sky time.</p>
+      <ul class="idea-bullets">
+        <li>App calculates exactly when a satellite becomes visible to the naked eye</li>
+        <li>Points you to the right part of the sky: "Look northwest, 40° up, in 3 minutes"</li>
+        <li>Countdown timer, then: "THERE — did you see it?" — verification with real data</li>
+        <li>ISS spotting challenge with notification alerts before passes</li>
+      </ul>
+    </div>
+    <div class="idea-card">
+      <h4>Gravity Simulator <span class="idea-tag math">Math</span></h4>
+      <p>Drop a ball at different altitudes. At ground level, it falls. At 200 km, it falls and misses Earth — orbit. Too slow = crash, too fast = escape. Newton's cannonball, made interactive.</p>
+    </div>
+    <div class="idea-card">
+      <h4>My Sky Journal <span class="idea-tag data">Data</span></h4>
+      <p>Auto-generated nightly summaries. Monthly reports. Personal records ("rarest satellite you've spotted"). A real dataset about your sky over time. Export for school science projects.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Satellite Graveyard <span class="idea-tag culture">Culture</span></h4>
+      <p>Where do old satellites go? The graveyard orbit 300 km above GEO. Point Nemo — the spacecraft cemetery in the Pacific. How many dead satellites are still up there drifting forever.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Design Your Orbit <span class="idea-tag math">Math</span></h4>
+      <p>Pick altitude and inclination. App calculates period, speed, ground track. "Want it to pass over your house daily? Here's the orbit." Compare to real missions. Learn why polar orbits see everything.</p>
+    </div>
+    <div class="idea-card wide">
+      <h4>The Altitude Ladder <span class="idea-tag physics">Physics</span></h4>
+      <p>Everything to scale in one vertical visualization: your head (1.5m) → birds (300m) → clouds (2 km) → planes (11 km) → edge of space (100 km) → ISS (420 km) → GPS (20,200 km) → GEO (35,786 km) → Moon (384,400 km). A child suddenly grasps how thin the atmosphere is — and how far "space" really stretches.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Launch Countdown <span class="idea-tag time">Time</span></h4>
+      <p>"In 4 hours, a Falcon 9 launches from Cape Canaveral carrying 22 Starlink satellites." Anticipation. Then verification — tomorrow, new dots appear in your sky. Real-time space industry.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Eclipse Hunter <span class="idea-tag physics">Physics</span></h4>
+      <p>Satellites pass through Earth's shadow every orbit. Predict the exact second one vanishes and reappears with a flash. "Watch the ISS — it will disappear in 12 seconds." Dramatic and verifiable.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Space Junk Awareness <span class="idea-tag culture">Culture</span></h4>
+      <p>23,000+ tracked debris pieces. A fleck of paint at orbital speed hits like a bullet. Visualize collision risk. Kessler Syndrome — the chain reaction that could close space. The environmental message for orbit.</p>
+    </div>
+    <div class="idea-card">
+      <h4>Astrolabe vs Star-Tracker <span class="idea-tag culture">Culture</span></h4>
+      <p>Interactive comparison: use a virtual astrolabe to find your latitude, then watch a satellite star-tracker do it instantly. Same principle, 1000 years apart. Islamic innovation meets space tech.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <div class="section-label"><span class="dot"></span> 06 — Technical Foundation</div>
+  <h2>Tech Stack & APIs</h2>
+  <p class="section-desc">Built to be lightweight, fast, and accessible. Single HTML file for Phase 1, progressive enhancement for later phases.</p>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <h4>Frontend</h4>
+      <p>Single HTML/CSS/JS file. Canvas rendering for starfield and satellites. CSS animations for UI. No frameworks — pure, fast, portable. Progressive Web App (PWA) ready.</p>
+    </div>
+    <div class="tech-card">
+      <h4>Satellite Data</h4>
+      <p>CelesTrak API — free TLE (Two-Line Element) data for 10,000+ objects. Space-Track.org for deeper catalog access. Updated multiple times daily.</p>
+    </div>
+    <div class="tech-card">
+      <h4>Orbit Propagation</h4>
+      <p>SGP4 algorithm (satellite.js library). Calculates real-time position from TLE data client-side. No server needed. Sub-kilometer accuracy for LEO objects.</p>
+    </div>
+    <div class="tech-card">
+      <h4>Location & Orientation</h4>
+      <p>Browser Geolocation API for GPS. Device Orientation API for gyroscope/compass magic window. Manual city picker fallback. Horizon calculation for visible passes.</p>
+    </div>
+    <div class="tech-card">
+      <h4>Star Catalog</h4>
+      <p>Bright Star Catalogue (Yale BSC) for accurate star positions. Constellation line data. Arabic name database. Renders real sky matching your location and time.</p>
+    </div>
+    <div class="tech-card">
+      <h4>Audio</h4>
+      <p>Web Audio API for ambient space sounds, altitude-based tones, and pass alerts. All audio optional and togglable. Spatial audio for directional awareness.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<section style="text-align:center;padding:60px 40px">
+  <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(111,207,151,0.08);border:1px solid rgba(111,207,151,0.2);border-radius:50px;padding:12px 28px;margin-bottom:24px">
+    <span style="font-size:1.4rem">🎉</span>
+    <span style="font-family:var(--font-mono);font-size:0.85rem;color:var(--green);letter-spacing:0.06em;text-transform:uppercase;font-weight:500">ALL 5 PHASES COMPLETE</span>
+  </div>
+  <h2 style="font-family:var(--font-display);font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;margin-bottom:16px">The <span style="background:linear-gradient(135deg,var(--space-blue),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Ultimate Build</span> is Ready</h2>
+  <p style="color:var(--text-dim);font-size:1rem;max-width:550px;margin:0 auto 32px">All 5 phases merged into a single unified app: Sky View, Explorer, Pro radar, Expert science, and Islamic Heritage — one HTML file, zero dependencies.</p>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 24px;text-align:center">
+      <div style="font-family:var(--font-mono);font-size:1.6rem;color:var(--space-blue)">5</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Modes</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 24px;text-align:center">
+      <div style="font-family:var(--font-mono);font-size:1.6rem;color:var(--cyan)">~150</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Live Satellites</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 24px;text-align:center">
+      <div style="font-family:var(--font-mono);font-size:1.6rem;color:var(--gold)">9</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Scholars</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 24px;text-align:center">
+      <div style="font-family:var(--font-mono);font-size:1.6rem;color:var(--green)">1</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">HTML File</div>
+    </div>
+  </div>
+</section>
+<footer>
+  <p class="footer-tagline">"Every satellite carries centuries of stargazing."</p>
+  <p>Satellites in the Sky — Project Roadmap v1.0 — Built with wonder for the next generation.</p>
+  <p style="margin-top: 16px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.06em;">
+    aa-night-sky-window-phase1 · aa-explorer-depth-phase2 · aa-mission-control-phase3 · aa-orbital-science-phase4 · aa-islamic-heritage-phase5
+  </p>
+</footer>
+
+<!-- Scroll animations -->
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.vision-card, .mode-card, .phase, .heritage-card, .heritage-connection, .idea-card, .tech-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(24px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(el);
+  });
+
+  document.querySelectorAll('.vision-grid, .modes-container, .heritage-grid, .ideas-grid, .tech-grid').forEach(grid => {
+    const cards = grid.children;
+    Array.from(cards).forEach((card, i) => {
+      card.style.transitionDelay = `${i * 0.08}s`;
+    });
+  });
+
+  const navLinks = document.querySelectorAll('nav a');
+  const sections = document.querySelectorAll('section');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+      const top = section.offsetTop - 100;
+      if (window.scrollY >= top) current = section.id;
+    });
+    navLinks.forEach(link => {
+      link.style.color = link.getAttribute('href') === '#' + current ? 'var(--space-blue)' : '';
+    });
+  });
+</script>
+
+</body>
+</html>

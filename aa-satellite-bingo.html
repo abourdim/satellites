@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Bingo — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(111,207,151,0.06);border:1px solid rgba(111,207,151,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--green);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--green)}
+header p{font-size:.82rem;color:var(--text-dim);max-width:480px;margin:0 auto}
+
+.ctrl-row{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.ctrl-btn{font-family:var(--mono);font-size:.55rem;padding:7px 14px;border-radius:6px;border:1px solid rgba(111,207,151,0.15);background:rgba(111,207,151,0.04);color:var(--green);cursor:pointer;transition:all .3s}
+.ctrl-btn:hover{background:rgba(111,207,151,0.1)}
+.ctrl-btn.active{background:rgba(111,207,151,0.12);border-color:var(--green)}
+
+.bingo-wrap{max-width:520px;margin:0 auto}
+.bingo-title{text-align:center;font-family:var(--serif);font-size:1.8rem;font-weight:800;color:var(--green);letter-spacing:.05em;margin-bottom:4px}
+.bingo-subtitle{text-align:center;font-family:var(--mono);font-size:.52rem;color:var(--text-muted);margin-bottom:12px}
+
+.bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.bingo-header{background:rgba(111,207,151,0.1);border-radius:8px;padding:8px;text-align:center;font-family:var(--serif);font-size:1.1rem;font-weight:800;color:var(--green)}
+
+.bingo-cell{background:var(--card);border:2px solid rgba(110,140,255,0.06);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .3s;min-height:85px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;user-select:none}
+.bingo-cell:hover{border-color:rgba(111,207,151,0.15)}
+.bingo-cell.marked{background:rgba(111,207,151,0.08);border-color:rgba(111,207,151,0.25)}
+.bingo-cell.marked::after{content:'✓';position:absolute;top:4px;right:6px;font-size:.7rem;color:var(--green);font-weight:700}
+.bingo-cell.free{background:rgba(232,193,112,0.06);border-color:rgba(232,193,112,0.15)}
+.bingo-cell.free::after{content:'⭐';position:absolute;top:4px;right:6px;font-size:.6rem}
+.bc-icon{font-size:1.4rem}
+.bc-text{font-size:.58rem;color:var(--text-dim);line-height:1.3;font-weight:500}
+
+.score-bar{display:flex;justify-content:center;gap:16px;margin:16px 0}
+.sb-item{text-align:center}
+.sb-item .sbv{font-family:var(--mono);font-size:1.4rem;font-weight:500;color:var(--green)}
+.sb-item .sbl{font-size:.46rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+
+.bingo-alert{text-align:center;font-family:var(--serif);font-size:1.5rem;font-weight:800;color:var(--gold);padding:14px;display:none}
+.bingo-alert.show{display:block;animation:pulse 1s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+.tips{max-width:520px;margin:20px auto 0;background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:12px;padding:16px}
+.tips h3{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.tips p{font-size:.72rem;color:var(--text-dim);line-height:1.5;margin-bottom:4px}
+
+@media print{body{background:#fff;color:#222;padding:20px}.bingo-cell{border-color:#ccc;background:#fff;print-color-adjust:exact}.bingo-header{background:#e8f5e9}.badge,.ctrl-row,.tips,footer,.score-bar,.bingo-alert{display:none}header h1{color:#222}header h1 span{color:#2e7d32}}
+@media(max-width:480px){.bingo-cell{min-height:65px;padding:6px 4px}.bc-icon{font-size:1rem}.bc-text{font-size:.48rem}}
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--text-muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="🎯 Family Game Night" data-fr="🎯 Soirée jeux en famille" data-ar="🎯 ليلة ألعاب عائلية">🎯 Family Game Night</span></div>
+  <h1>Satellite <span><span data-en="Bingo!" data-fr="Bingo !" data-ar="بينغو!">Bingo!</span></span></h1>
+  <p>Take this card outside on a clear night. Spot satellites, planes, and sky events. Click to mark them off. Five in a row wins!</p>
+</header>
+
+<div class="ctrl-row">
+  <button class="ctrl-btn active" onclick="newCard('easy')">👶 Easy</button>
+  <button class="ctrl-btn" onclick="newCard('medium')">🔭 Medium</button>
+  <button class="ctrl-btn" onclick="newCard('hard')">🧑‍🚀 Expert</button>
+  <button class="ctrl-btn" onclick="newCard()"><span data-en="🔀 Shuffle" data-fr="🔀 Mélanger" data-ar="🔀 خلط">🔀 Shuffle</span></button>
+  <button class="ctrl-btn" onclick="window.print()"><span data-en="🖨️ Print" data-fr="🖨️ Imprimer" data-ar="🖨️ طباعة">🖨️ Print</span></button>
+</div>
+
+<div class="bingo-wrap">
+  <div class="bingo-title"><span data-en="B I N G O" data-fr="B I N G O" data-ar="ب ي ن غ و">B I N G O</span></div>
+  <div class="bingo-subtitle" id="cardTheme">Easy Mode — Great for beginners!</div>
+  <div class="bingo-grid" id="bingoGrid"></div>
+  <div class="bingo-alert" id="bingoAlert"><span data-en="🎉 BINGO! You win! 🎉" data-fr="🎉 BINGO ! Vous avez gagné ! 🎉" data-ar="🎉 بينغو! فزت! 🎉">🎉 BINGO! You win! 🎉</span></div>
+  <div class="score-bar">
+    <div class="sb-item"><div class="sbv" id="markedCount">0</div><div class="sbl"><span data-en="Spotted" data-fr="Observé" data-ar="رُصد">Spotted</span></div></div>
+    <div class="sb-item"><div class="sbv" id="linesCount">0</div><div class="sbl"><span data-en="Lines" data-fr="Lignes" data-ar="خطوط">Lines</span></div></div>
+  </div>
+</div>
+
+<div class="tips">
+  <h3><span data-en="📋 Spotting Tips" data-fr="📋 Conseils d'observation" data-ar="📋 نصائح الرصد">📋 Spotting Tips</span></h3>
+  <p>🕐 <strong>Best time:</strong> 30-90 minutes after sunset or before sunrise (satellites are sunlit but sky is dark).</p>
+  <p>👀 <strong>How to spot:</strong> Satellites look like slow-moving "stars" that don't blink. Aircraft blink.</p>
+  <p>🏗️ <strong>ISS:</strong> The brightest — brighter than any star, moves west to east in 3-5 minutes.</p>
+  <p>📶 <strong>Starlink:</strong> Look for a "train" of dots in a line, or individual faint moving points.</p>
+</div>
+
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const ITEMS={
+  easy:[
+    {icon:'🏗️',text:'ISS pass',text_fr:'Passage de l\'ISS',text_ar:'مرور محطة الفضاء'},
+    {icon:'✈️',text:'Airplane with blinking lights',text_fr:'Avion aux feux clignotants',text_ar:'طائرة بأضواء وامضة'},
+    {icon:'⭐',text:'Bright star (not moving)',text_fr:'Étoile brillante (fixe)',text_ar:'نجمة لامعة (ثابتة)'},
+    {icon:'🌙',text:'Moon visible',text_fr:'Lune visible',text_ar:'القمر مرئي'},
+    {icon:'💫',text:'Shooting star',text_fr:'Étoile filante',text_ar:'شهاب'},
+    {icon:'🛰️',text:'Any satellite (steady dot, moving)',text_fr:'Un satellite (point fixe, mobile)',text_ar:'أي قمر (نقطة ثابتة متحركة)'},
+    {icon:'📶',text:'Starlink train',text_fr:'Train Starlink',text_ar:'قطار ستارلينك'},
+    {icon:'☁️',text:'Cloud passes over Moon',text_fr:'Nuage devant la Lune',text_ar:'سحابة تمر أمام القمر'},
+    {icon:'🦇',text:'Bat or bird at dusk',text_fr:'Chauve-souris ou oiseau au crépuscule',text_ar:'خفاش أو طائر عند الغسق'},
+    {icon:'🌌',text:'See the Milky Way',text_fr:'Voir la Voie Lactée',text_ar:'شاهد درب التبانة'},
+    {icon:'🔴',text:'Red/orange star (Betelgeuse/Mars)',text_fr:'Étoile rouge/orange (Bételgeuse/Mars)',text_ar:'نجمة حمراء/برتقالية (منكب الجوزاء/المريخ)'},
+    {icon:'🪐',text:'Planet visible',text_fr:'Planète visible',text_ar:'كوكب مرئي'},
+    {icon:'📡',text:'2 satellites at same time',text_fr:'2 satellites en même temps',text_ar:'قمران في نفس الوقت'},
+    {icon:'🌅',text:'Beautiful sunset/sunrise colors',text_fr:'Beau coucher/lever de soleil',text_ar:'ألوان غروب/شروق جميلة'},
+    {icon:'🦉',text:'Hear an owl',text_fr:'Entendre un hibou',text_ar:'سماع بومة'},
+    {icon:'✨',text:'Star that twinkles a lot',text_fr:'Étoile très scintillante',text_ar:'نجمة كثيرة الوميض'},
+    {icon:'🌠',text:'Satellite fades/disappears',text_fr:'Satellite qui s\'efface',text_ar:'قمر يتلاشى/يختفي'},
+    {icon:'🧭',text:'Find North Star (Polaris)',text_fr:'Trouver l\'étoile polaire',text_ar:'اعثر على النجم القطبي'},
+    {icon:'🫖',text:'Find the Big Dipper',text_fr:'Trouver la Grande Ourse',text_ar:'اعثر على الدب الأكبر',text_fr:'Trouver la Grande Ourse',text_ar:'اعثر على الدب الأكبر'},
+    {icon:'💨',text:'See your breath in cold air',text_fr:'Voir son souffle dans le froid',text_ar:'شاهد أنفاسك في البرد'},
+    {icon:'🔭',text:'Use binoculars',text_fr:'Utiliser des jumelles',text_ar:'استخدم منظاراً'},
+    {icon:'📱',text:'Identify a satellite by app',text_fr:'Identifier un satellite par appli',text_ar:'حدد قمراً بتطبيق'},
+    {icon:'🤝',text:'Spot something with a friend',text_fr:'Observer avec un ami',text_ar:'اكتشف شيئاً مع صديق'},
+    {icon:'📸',text:'Take a sky photo',text_fr:'Prendre une photo du ciel',text_ar:'التقط صورة للسماء'},
+  ],
+  medium:[
+    {icon:'🏗️',text:'ISS overhead pass (mag <-3)',text_fr:'Passage ISS au zénith (mag <-3)',text_ar:'مرور المحطة فوقك (قدر <-3)'},
+    {icon:'📶',text:'Starlink satellite',text_fr:'Satellite Starlink',text_ar:'قمر ستارلينك'},
+    {icon:'🌦️',text:'Polar orbit sat (N-S path)',text_fr:'Satellite en orbite polaire (N-S)',text_ar:'قمر قطبي المدار (ش-ج)'},
+    {icon:'💥',text:'Tumbling rocket body (flashing)',text_fr:'Corps de fusée qui tourne (flash)',text_ar:'هيكل صاروخ يدور (وميض)'},
+    {icon:'🔭',text:'Hubble pass',text_fr:'Passage de Hubble',text_ar:'مرور هابل'},
+    {icon:'🇨🇳',text:'Tiangong pass',text_fr:'Passage de Tiangong',text_ar:'مرور تيانغونغ'},
+    {icon:'📡',text:'3+ satellites in 10 minutes'},
+    {icon:'🌑',text:'Satellite enters shadow (vanishes!)'},
+    {icon:'⚡',text:'Iridium-like brief brightening'},
+    {icon:'🛤️',text:'Two sats cross paths'},
+    {icon:'🧮',text:'Estimate a satellite\'s period'},
+    {icon:'🌌',text:'Find Orion\'s Belt'},
+    {icon:'⭐',text:'Name a star with Arabic origin'},
+    {icon:'🌙',text:'Earthshine on Moon'},
+    {icon:'🔴',text:'Mars or Jupiter visible'},
+    {icon:'📐',text:'Estimate pass elevation'},
+    {icon:'🕐',text:'Time a pass (start to end)'},
+    {icon:'🌊',text:'See a sun-sync sat at same time 2 nights'},
+    {icon:'👻',text:'Spot a dim satellite (mag 4+)'},
+    {icon:'📝',text:'Log 5 observations'},
+    {icon:'🧭',text:'Use stars to find compass direction'},
+    {icon:'🪐',text:'Saturn or Venus visible'},
+    {icon:'🔍',text:'Use binoculars on a satellite'},
+    {icon:'☽',text:'Recall an Islamic astronomer\'s name'},
+  ],
+  hard:[
+    {icon:'🏗️',text:'ISS + Dragon/Soyuz visible together'},
+    {icon:'💀',text:'Identify dead satellite/debris'},
+    {icon:'🌑',text:'Predict shadow entry within 10s'},
+    {icon:'📡',text:'5+ satellites in 10 minutes'},
+    {icon:'📶',text:'Identify Starlink vs OneWeb'},
+    {icon:'🔭',text:'GPS satellite (binoculars, very slow)'},
+    {icon:'🌦️',text:'NOAA weather sat (polar orbit)'},
+    {icon:'📐',text:'Estimate magnitude within 0.5'},
+    {icon:'🧮',text:'Calculate orbital period from timing'},
+    {icon:'⚡',text:'Catch a satellite re-entry'},
+    {icon:'🌙',text:'Satellite transits the Moon'},
+    {icon:'☀️',text:'Daytime ISS sighting'},
+    {icon:'💥',text:'Rocket body with 2+ sec flash period'},
+    {icon:'📝',text:'Log 10 observations in one session'},
+    {icon:'⭐',text:'Name 5 Arabic-origin star names'},
+    {icon:'🇨🇳',text:'Tiangong + ISS same night'},
+    {icon:'🛤️',text:'Constellation group (3+ same orbit)'},
+    {icon:'🌊',text:'Sun-sync satellite identified by timing'},
+    {icon:'🔍',text:'Split Mizar/Alcor with naked eye'},
+    {icon:'☽',text:'Explain astrolabe function'},
+    {icon:'🧲',text:'Observe aurora (Kp 5+)'},
+    {icon:'🪐',text:'Jupiter\'s moons in binoculars'},
+    {icon:'📸',text:'Long-exposure satellite trail photo'},
+    {icon:'🌌',text:'Andromeda Galaxy (al-Sufi\'s "little cloud")'},
+  ]
+};
+
+let currentDifficulty='easy';
+let grid=[];
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function newCard(diff){
+  if(diff)currentDifficulty=diff;
+  document.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.ctrl-btn[onclick="newCard('${currentDifficulty}')"]`)?.classList.add('active');
+  
+  const themes={easy:'Easy Mode — Great for beginners!',medium:'Medium Mode — Experienced observers',hard:'Expert Mode — Serious challenge!'};
+  document.getElementById('cardTheme').textContent=themes[currentDifficulty];
+  document.getElementById('bingoAlert').classList.remove('show');
+  
+  const items=shuffle(ITEMS[currentDifficulty]).slice(0,24);
+  grid=[];
+  const cont=document.getElementById('bingoGrid');
+  cont.innerHTML='';
+  
+  // Headers
+  'BINGO'.split('').forEach(l=>{
+    cont.innerHTML+=`<div class="bingo-header">${l}</div>`;
+  });
+  
+  let idx=0;
+  for(let r=0;r<5;r++){
+    for(let c=0;c<5;c++){
+      if(r===2&&c===2){
+        // Free space
+        grid.push({marked:true,free:true});
+        cont.innerHTML+=`<div class="bingo-cell free marked" data-idx="${grid.length-1}"><div class="bc-icon">🆓</div><div class="bc-text">FREE SPACE</div></div>`;
+      } else {
+        const item=items[idx++];
+        grid.push({marked:false,free:false,...item});
+        cont.innerHTML+=`<div class="bingo-cell" data-idx="${grid.length-1}"><div class="bc-icon">${item.icon}</div><div class="bc-text">${tl(item,"text")}</div></div>`;
+      }
+    }
+  }
+  
+  // Add click handlers
+  cont.querySelectorAll('.bingo-cell:not(.free)').forEach(cell=>{
+    cell.addEventListener('click',()=>{
+      const i=+cell.dataset.idx;
+      grid[i].marked=!grid[i].marked;
+      cell.classList.toggle('marked');
+      checkBingo();
+    });
+  });
+  checkBingo();
+}
+
+function checkBingo(){
+  let lines=0;
+  // Rows
+  for(let r=0;r<5;r++){
+    if([0,1,2,3,4].every(c=>grid[r*5+c].marked))lines++;
+  }
+  // Cols
+  for(let c=0;c<5;c++){
+    if([0,1,2,3,4].every(r=>grid[r*5+c].marked))lines++;
+  }
+  // Diagonals
+  if([0,6,12,18,24].every(i=>grid[i].marked))lines++;
+  if([4,8,12,16,20].every(i=>grid[i].marked))lines++;
+  
+  const marked=grid.filter(g=>g.marked&&!g.free).length;
+  document.getElementById('markedCount').textContent=marked;
+  document.getElementById('linesCount').textContent=lines;
+  document.getElementById('bingoAlert').classList.toggle('show',lines>0);
+}
+
+newCard('easy');
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Satellite Bingo',project:'Satellites in the Sky'},fr:{title:'Bingo Satellite',project:'Satellites dans le Ciel'},ar:{title:'بينغو الأقمار',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

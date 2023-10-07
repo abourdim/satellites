@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kessler Syndrome — The Cascade</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:#030510;color:#c8d0e0;overflow:hidden;width:100vw;height:100vh}
+canvas{position:fixed;inset:0}
+.hud{position:fixed;top:14px;left:14px;z-index:10;pointer-events:none}
+.hr{display:flex;gap:8px;margin-bottom:4px}
+.hi{background:rgba(10,16,32,.85);border:1px solid rgba(110,140,255,.08);border-radius:7px;padding:5px 9px;pointer-events:auto}
+.hl{font-family:'JetBrains Mono',monospace;font-size:.34rem;color:#3a4a5e;text-transform:uppercase;letter-spacing:.06em}
+.hv{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:500}
+.ctrls{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.cb{font-family:'JetBrains Mono',monospace;font-size:.48rem;padding:6px 12px;border-radius:7px;border:1px solid rgba(252,129,129,.15);background:rgba(252,129,129,.04);color:#fc8181;cursor:pointer}
+.cb:hover{background:rgba(252,129,129,.1)}
+.cb.g{border-color:rgba(92,224,214,.2);background:rgba(92,224,214,.06);color:#5ce0d6}
+.info{position:fixed;top:14px;right:14px;z-index:10;max-width:210px;background:rgba(10,16,32,.9);border:1px solid rgba(252,129,129,.08);border-radius:10px;padding:11px;font-size:.64rem;color:#6a7a8e;line-height:1.5}
+.info h4{font-family:'Playfair Display',serif;font-size:.78rem;color:#fff;margin-bottom:3px}
+.info strong{font-weight:600;color:#c8d0e0}
+@media(max-width:600px){.info{display:none}}
+.warn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;font-family:'JetBrains Mono',monospace;font-size:1.4rem;color:#fc8181;pointer-events:none;opacity:0;transition:opacity .5s;text-shadow:0 0 30px rgba(252,129,129,.3)}
+.warn.on{opacity:1}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="cv"></canvas>
+<div class="hud">
+ <div class="hr">
+  <div class="hi"><div class="hl"><span data-en="Satellites" data-fr="Satellites" data-ar="أقمار صناعية">Satellites</span></div><div class="hv" id="hS" style="color:#5ce0d6">0</div></div>
+  <div class="hi"><div class="hl"><span data-en="Debris" data-fr="Débris" data-ar="حطام">Debris</span></div><div class="hv" id="hD" style="color:#fc8181">0</div></div>
+  <div class="hi"><div class="hl"><span data-en="Collisions" data-fr="Collisions" data-ar="تصادمات">Collisions</span></div><div class="hv" id="hC" style="color:#f6ad55">0</div></div>
+ </div>
+ <div class="hr">
+  <div class="hi"><div class="hl"><span data-en="Risk" data-fr="Risque" data-ar="المخاطر">Risk</span></div><div class="hv" id="hR" style="color:#6fcf97">LOW</div></div>
+ </div>
+</div>
+<div class="info"><h4><span data-en="⚠️ Kessler Syndrome" data-fr="⚠️ Syndrome de Kessler" data-ar="⚠️ متلازمة كيسلر">⚠️ Kessler Syndrome</span></h4><p>In 1978, NASA's <strong>Donald Kessler</strong> predicted that above a critical density, collisions create fragments causing more collisions — an unstoppable <strong>chain reaction</strong>.</p><p style="margin-top:5px">Click <strong>"💥 Collision"</strong> to start the cascade.</p></div>
+<div class="warn" id="warn">⚠️ CASCADE</div>
+<div class="ctrls">
+ <button class="cb g" onclick="init(50)">50 Sats</button>
+ <button class="cb g" onclick="init(200)">200 Sats</button>
+ <button class="cb g" onclick="init(500)">500 Sats</button>
+ <button class="cb" onclick="boom()">💥 Collision</button>
+ <button class="cb" onclick="ts=Math.min(ts*3,50)">⏩</button>
+ <button class="cb" onclick="ts=Math.max(ts/3,.5)">⏪</button>
+</div>
+<script>
+const cv=document.getElementById('cv'),x=cv.getContext('2d'),T=Math.PI*2;
+let W,H;function rs(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;x.setTransform(d,0,0,d,0,0)}
+rs();addEventListener('resize',rs);
+const eR=80;let sats=[],deb=[],cols=0,ts=2;
+function ms(sh){const r=eR*(.7+Math.random()*.8);return{a:Math.random()*T,r,sp:(.003+Math.random()*.002)*(Math.random()>.5?1:-1),ok:true,sz:1.5+Math.random(),cl:`hsl(${180+Math.random()*60},70%,65%)`}}
+function md(a,r,v){return{a:a+(Math.random()-.5)*.3,r:r+(Math.random()-.5)*20,sp:v+(Math.random()-.5)*.06,lf:1,dk:.0003+Math.random()*.0005,sz:.5+Math.random()*1.2}}
+function init(n){sats=[];deb=[];cols=0;document.getElementById('warn').classList.remove('on');for(let i=0;i<n;i++)sats.push(ms())}
+function boom(){if(sats.filter(s=>s.ok).length<1)return;const live=sats.filter(s=>s.ok);const s=live[Math.floor(Math.random()*live.length)];hit(sats.indexOf(s))}
+function hit(i){const s=sats[i];if(!s||!s.ok)return;s.ok=false;cols++;for(let j=0;j<8+Math.floor(Math.random()*12);j++)deb.push(md(s.a,s.r,s.sp));if(cols>3)document.getElementById('warn').classList.add('on')}
+const st=[];for(let i=0;i<120;i++)st.push({x:Math.random(),y:Math.random(),b:.02+Math.random()*.05,s:.2+Math.random()*.3});
+
+function draw(){
+  x.clearRect(0,0,W,H);x.fillStyle='#030510';x.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2;
+  for(const s of st){x.beginPath();x.arc(s.x*W,s.y*H,s.s,0,T);x.fillStyle=`rgba(200,210,230,${s.b})`;x.fill()}
+  x.beginPath();x.arc(cx,cy,eR*.45,0,T);const eg=x.createRadialGradient(cx-4,cy-4,0,cx,cy,eR*.45);eg.addColorStop(0,'#1a4a7c');eg.addColorStop(1,'#061428');x.fillStyle=eg;x.fill();
+  for(let r=.7;r<=1.5;r+=.15){x.beginPath();x.arc(cx,cy,eR*r,0,T);x.strokeStyle='rgba(110,140,255,.025)';x.lineWidth=.5;x.stroke()}
+
+  for(const s of sats){if(!s.ok)continue;s.a+=s.sp*ts;const sx=cx+s.r*Math.cos(s.a),sy=cy+s.r*Math.sin(s.a)*.6;x.beginPath();x.arc(sx,sy,s.sz,0,T);x.fillStyle=s.cl;x.fill()}
+
+  for(let i=deb.length-1;i>=0;i--){
+    const d=deb[i];d.a+=d.sp*ts;d.lf-=d.dk*ts;
+    if(d.lf<=0){deb.splice(i,1);continue}
+    const dx=cx+d.r*Math.cos(d.a),dy=cy+d.r*Math.sin(d.a)*.6;
+    x.beginPath();x.arc(dx,dy,d.sz*d.lf,0,T);x.fillStyle=`rgba(252,129,129,${d.lf*.5})`;x.fill();
+    for(const s of sats){if(!s.ok)continue;const sx=cx+s.r*Math.cos(s.a),sy=cy+s.r*Math.sin(s.a)*.6;if(Math.hypot(dx-sx,dy-sy)<7){hit(sats.indexOf(s));break}}
+  }
+
+  const alive=sats.filter(s=>s.ok).length;
+  const risk=deb.length<20?'LOW':deb.length<100?'MODERATE':deb.length<300?'HIGH':'CRITICAL';
+  const rc=deb.length<20?'#6fcf97':deb.length<100?'#f6ad55':deb.length<300?'#fc8181':'#ff4444';
+  document.getElementById('hS').textContent=alive;
+  document.getElementById('hD').textContent=deb.length;
+  document.getElementById('hC').textContent=cols;
+  const r=document.getElementById('hR');r.textContent=risk;r.style.color=rc;
+  requestAnimationFrame(draw);
+}
+init(200);draw();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Kessler Syndrome',project:'Satellites in the Sky'},fr:{title:'Syndrome de Kessler',project:'Satellites dans le Ciel'},ar:{title:'متلازمة كيسلر',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

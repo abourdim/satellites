@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Night Sky Photo Guide — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(232,193,112,0.06);border:1px solid rgba(232,193,112,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--gold)}
+header p{font-size:.82rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.6}
+
+.content{max-width:700px;margin:0 auto}
+
+.tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.tab{font-family:var(--mono);font-size:.52rem;padding:6px 14px;border-radius:20px;border:1px solid rgba(232,193,112,0.1);background:transparent;color:var(--dim);cursor:pointer;transition:all .2s}
+.tab.active{background:rgba(232,193,112,0.08);border-color:rgba(232,193,112,0.2);color:var(--gold)}
+
+.section{display:none}.section.active{display:block}
+.card{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.card h3{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.card p{font-size:.76rem;color:var(--dim);line-height:1.6;margin-bottom:6px}
+.card strong{font-weight:600}
+.card code{font-family:var(--mono);background:rgba(110,140,255,0.06);padding:1px 5px;border-radius:3px;font-size:.7rem;color:var(--cyan)}
+
+.settings{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.setting{background:rgba(255,255,255,0.02);border-radius:6px;padding:8px;text-align:center}
+.setting .sl{font-family:var(--mono);font-size:.36rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.setting .sv{font-family:var(--mono);font-size:.85rem;font-weight:500;color:var(--cyan)}
+
+.tip{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:rgba(232,193,112,0.02);border:1px solid rgba(232,193,112,0.06);border-radius:8px;margin-top:6px}
+.tip .ti{font-size:.8rem;flex-shrink:0}.tip .tt{font-size:.7rem;color:var(--dim);line-height:1.45}
+
+/* Calculator */
+.calc{background:var(--card);border:1px solid rgba(92,224,214,0.08);border-radius:14px;padding:18px;margin-bottom:10px}
+.calc h3{font-family:var(--serif);font-size:.95rem;font-weight:700;color:var(--cyan);margin-bottom:10px;text-align:center}
+.calc-row{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.calc-row label{font-size:.7rem;color:var(--dim);min-width:80px}
+.calc-row select,.calc-row input{font-family:var(--mono);font-size:.65rem;padding:5px 8px;border-radius:5px;border:1px solid rgba(92,224,214,0.12);background:rgba(6,10,22,0.8);color:var(--cyan);outline:none}
+.calc-result{text-align:center;padding:12px;background:rgba(92,224,214,0.03);border-radius:8px;margin-top:8px}
+.calc-result .rv{font-family:var(--mono);font-size:1.2rem;font-weight:500;color:var(--cyan)}
+.calc-result .rl{font-size:.5rem;color:var(--muted)}
+
+.checklist{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.cl-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:.74rem;color:var(--dim);cursor:pointer}
+.cl-item input{accent-color:var(--green)}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge"><span data-en="📸 Photography" data-fr="📸 Photographie" data-ar="📸 التصوير">📸 Photography</span></div>
+  <h1>Night Sky <span>Photo Guide</span></h1>
+  <p>Capture satellites streaking across the sky, ISS passes, Starlink trains, and star trails. From phone cameras to DSLRs — here's everything you need.</p>
+</header>
+<div class="content">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab(0)">📱 Phone</button>
+    <button class="tab" onclick="showTab(1)">📷 DSLR</button>
+    <button class="tab" onclick="showTab(2)">🛰️ Satellites</button>
+    <button class="tab" onclick="showTab(3)"><span data-en="🔧 Calculator" data-fr="🔧 Calculateur" data-ar="🔧 الحاسبة">🔧 Calculator</span></button>
+    <button class="tab" onclick="showTab(4)">✅ Checklist</button>
+  </div>
+
+  <div class="section active" id="s0">
+    <div class="card">
+      <h3><span data-en="📱 Phone Photography" data-fr="📱 Photo au téléphone" data-ar="📱 التصوير بالهاتف">📱 Phone Photography</span></h3>
+      <p>Modern phones can capture surprisingly good night sky photos. The key is a <strong><span data-en="Night Mode" data-fr="Mode nuit" data-ar="الوضع الليلي">Night Mode</span></strong> or <strong>Pro/Manual mode</strong> that allows long exposures.</p>
+      <div class="settings">
+        <div class="setting"><div class="sl"><span data-en="Mode" data-fr="Mode" data-ar="الوضع">Mode</span></div><div class="sv">Night/Pro</div></div>
+        <div class="setting"><div class="sl"><span data-en="ISO" data-fr="ISO" data-ar="ISO">ISO</span></div><div class="sv">800-3200</div></div>
+        <div class="setting"><div class="sl"><span data-en="Exposure" data-fr="Exposition" data-ar="التعريض">Exposure</span></div><div class="sv">10-30 sec</div></div>
+      </div>
+      <p><strong>Essential:</strong> Use a tripod or prop phone against a solid surface. Any movement during the exposure ruins the shot.</p>
+      <div class="tip"><span class="ti">💡</span><span class="tt">Set a 3-second timer to avoid shake when pressing the shutter button.</span></div>
+    </div>
+    <div class="card">
+      <h3><span data-en="📱 Best Phone Features" data-fr="📱 Meilleures fonctions" data-ar="📱 أفضل ميزات الهاتف">📱 Best Phone Features</span></h3>
+      <p><strong>iPhone:</strong> Night mode auto-activates in low light. Use a 10-30 sec exposure on a tripod. Stars will appear.</p>
+      <p><strong>Android:</strong> Use Pro mode. Set ISO 1600, shutter 15 sec, manual focus to infinity.</p>
+      <p><strong>Pixel:</strong> Astrophotography mode activates on tripod. Takes 4-minute composite. Excellent results.</p>
+    </div>
+  </div>
+
+  <div class="section" id="s1">
+    <div class="card">
+      <h3><span data-en="📷 DSLR / Mirrorless Setup" data-fr="📷 Réglages Reflex/Hybride" data-ar="📷 إعدادات الكاميرا">📷 DSLR / Mirrorless Setup</span></h3>
+      <p>A dedicated camera with manual controls produces dramatically better results. Here are optimal starting settings:</p>
+      <div class="settings">
+        <div class="setting"><div class="sl"><span data-en="Aperture" data-fr="Ouverture" data-ar="فتحة العدسة">Aperture</span></div><div class="sv">f/2.8</div></div>
+        <div class="setting"><div class="sl"><span data-en="ISO" data-fr="ISO" data-ar="ISO">ISO</span></div><div class="sv">1600-6400</div></div>
+        <div class="setting"><div class="sl"><span data-en="Shutter" data-fr="Obturation" data-ar="سرعة الغالق">Shutter</span></div><div class="sv">15-30 sec</div></div>
+      </div>
+      <p><strong><span data-en="Lens:" data-fr="Objectif :" data-ar="العدسة:">Lens:</span></strong> Wide angle (14-24mm) is ideal. Faster aperture (f/1.4-2.8) captures more light. Kit lens (f/3.5) works but needs higher ISO.</p>
+      <div class="tip"><span class="ti">📐</span><span class="tt"><strong>500 Rule:</strong> Max shutter (sec) = 500 ÷ focal length. At 24mm: 500÷24 = 20 sec max before stars trail.</span></div>
+    </div>
+    <div class="card">
+      <h3>⭐ Star Trails</h3>
+      <p>Want <strong>circular star trails</strong>? Point at Polaris and expose for 30+ minutes. Or stack many 30-second exposures.</p>
+      <p><strong>Satellite bonus:</strong> Satellites create <strong>straight lines</strong> through your circular star trails — a dramatic contrast showing human technology against the ancient sky.</p>
+    </div>
+  </div>
+
+  <div class="section" id="s2">
+    <div class="card">
+      <h3>🛰️ Photographing Satellites</h3>
+      <p>Satellites appear as <strong>bright dots moving steadily</strong> across the sky. To capture them:</p>
+      <div class="settings">
+        <div class="setting"><div class="sl"><span data-en="Exposure" data-fr="Exposition" data-ar="التعريض">Exposure</span></div><div class="sv">15-60 sec</div></div>
+        <div class="setting"><div class="sl"><span data-en="Result" data-fr="Résultat" data-ar="النتيجة">Result</span></div><div class="sv">Bright streak</div></div>
+        <div class="setting"><div class="sl">Best time</div><div class="sv">Dusk/dawn</div></div>
+      </div>
+      <p>A 30-second exposure turns a satellite pass into a <strong>bright line across the frame</strong>. The ISS creates the brightest trails — brighter than any star.</p>
+    </div>
+    <div class="card">
+      <h3>📶 Starlink Trains</h3>
+      <p>Freshly launched Starlink satellites travel in a <strong>"pearl string"</strong> formation. Multiple parallel lines in one frame. Use 10-15 sec exposure to catch several dots in a row. Most visible 1-3 weeks after launch before they spread out.</p>
+    </div>
+    <div class="card">
+      <h3>🏗️ ISS Pass Photography</h3>
+      <p>The ISS is magnitude <strong>-4 to -6</strong> — brighter than Venus. Creates the most spectacular trails.</p>
+      <p><strong>Technique:</strong> Set camera to continuous 30-sec exposures. Stack all images where ISS is visible. Result: one bright arc across the sky with star points.</p>
+      <div class="tip"><span class="ti">🌟</span><span class="tt">ISS moves ~1° per second. In a 30-sec exposure, it crosses ~30° of sky — a long, bright streak.</span></div>
+    </div>
+  </div>
+
+  <div class="section" id="s3">
+    <div class="calc">
+      <h3><span data-en="📐 Exposure Calculator" data-fr="📐 Calculateur d'exposition" data-ar="📐 حاسبة التعريض">📐 Exposure Calculator</span></h3>
+      <div class="calc-row"><label><span data-en="Focal Length" data-fr="Focale" data-ar="البعد البؤري">Focal Length</span></label><select id="cFocal"><option value="14">14mm</option><option value="18">18mm</option><option value="24" selected>24mm</option><option value="35">35mm</option><option value="50">50mm</option><option value="85">85mm</option></select></div>
+      <div class="calc-row"><label><span data-en="Aperture" data-fr="Ouverture" data-ar="فتحة العدسة">Aperture</span></label><select id="cAper"><option value="1.4">f/1.4</option><option value="1.8">f/1.8</option><option value="2.8" selected>f/2.8</option><option value="3.5">f/3.5</option><option value="4">f/4</option><option value="5.6">f/5.6</option></select></div>
+      <div class="calc-row"><label><span data-en="Target" data-fr="Cible" data-ar="الهدف">Target</span></label><select id="cTarget"><option value="stars">Sharp Stars (500 rule)</option><option value="trails">Star Trails (30 min)</option><option value="satellite">Satellite Streak</option></select></div>
+      <div class="calc-result">
+        <div class="rv" id="calcResult">20 sec</div>
+        <div class="rl" id="calcLabel">Max exposure for sharp stars</div>
+        <div style="margin-top:4px;font-size:.6rem;color:var(--dim)" id="calcTip"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s4">
+    <div class="card">
+      <h3><span data-en="✅ Pre-Shoot Checklist" data-fr="✅ Liste de contrôle" data-ar="✅ قائمة التحقق">✅ Pre-Shoot Checklist</span></h3>
+      <div class="checklist">
+        <label class="cl-item"><input type="checkbox"> Check satellite pass times (Heavens-Above / ISS Detector app)</label>
+        <label class="cl-item"><input type="checkbox"> Check weather — need clear skies</label>
+        <label class="cl-item"><input type="checkbox"> Check Moon phase — new moon = darkest sky</label>
+        <label class="cl-item"><input type="checkbox"> Charge camera batteries (cold drains fast)</label>
+        <label class="cl-item"><input type="checkbox"> Format memory card</label>
+        <label class="cl-item"><input type="checkbox"> Bring tripod</label>
+        <label class="cl-item"><input type="checkbox"> Set focus to manual → infinity</label>
+        <label class="cl-item"><input type="checkbox"> Disable image stabilization (tripod + IS = blur)</label>
+        <label class="cl-item"><input type="checkbox"> Shoot RAW (not JPEG) for better editing</label>
+        <label class="cl-item"><input type="checkbox"> Bring red flashlight (preserves night vision)</label>
+        <label class="cl-item"><input type="checkbox"> Arrive 20 min early to let eyes adapt</label>
+        <label class="cl-item"><input type="checkbox"> Warm clothes + hot drink</label>
+      </div>
+    </div>
+  </div>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+<script>
+function showTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
+}
+function calc(){
+  const f=+document.getElementById('cFocal').value;
+  const a=+document.getElementById('cAper').value;
+  const t=document.getElementById('cTarget').value;
+  let result,label,tip;
+  if(t==='stars'){
+    result=Math.round(500/f);
+    label='Max exposure for sharp stars (500 rule)';
+    tip=`At ${f}mm, stars start to trail after ${result} seconds. Use ISO ${a<=2.8?'1600-3200':'3200-6400'} at f/${a}.`;
+  } else if(t==='trails'){
+    result='30 min+';label='Use BULB mode or stack thirty 60-sec exposures';
+    tip=`Point toward Polaris for circular trails. Stars move 15°/hour. ${f}mm captures a ${Math.round(2*Math.atan(18/f)*180/Math.PI)}° field of view.`;
+  } else {
+    result=Math.round(Math.min(60,Math.max(15,500/f*2)));
+    label='Satellite streak exposure';
+    tip=`ISS crosses ~${result}° of sky in ${result} seconds. Use f/${a}, ISO ${a<=2.8?'800':'1600'}.`;
+  }
+  document.getElementById('calcResult').textContent=typeof result==='number'?result+' sec':result;
+  document.getElementById('calcLabel').textContent=label;
+  document.getElementById('calcTip').textContent=tip;
+}
+['cFocal','cAper','cTarget'].forEach(id=>document.getElementById(id).addEventListener('change',calc));
+calc();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Night Sky Photo Guide',project:'Satellites in the Sky'},fr:{title:'Guide Photo du Ciel',project:'Satellites dans le Ciel'},ar:{title:'دليل تصوير السماء',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

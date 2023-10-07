@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ground Stations — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--blue:#6e8cff;--cyan:#5ce0d6;--gold:#e8c170;--purple:#b794f4;--green:#6fcf97;--orange:#f6ad55;--red:#fc8181;--text:#c8d0e0;--text-dim:#6a7a8e;--text-muted:#3a4a5e;--font:'Outfit',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',Georgia,serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+header{text-align:center;padding:50px 20px 20px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(92,224,214,0.06);border:1px solid rgba(92,224,214,0.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+header h1{font-family:var(--serif);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--cyan)}
+header p{font-size:.82rem;color:var(--text-dim);max-width:520px;margin:0 auto;line-height:1.6}
+
+.filter-row{display:flex;gap:6px;justify-content:center;margin:20px 0;flex-wrap:wrap;padding:0 20px}
+.f-btn{font-family:var(--mono);font-size:.5rem;padding:5px 12px;border-radius:20px;border:1px solid rgba(110,140,255,0.1);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .3s}
+.f-btn.active{background:rgba(92,224,214,0.08);border-color:rgba(92,224,214,0.2);color:var(--cyan)}
+
+/* Map canvas */
+.map-wrap{position:relative;max-width:1000px;margin:0 auto;padding:0 20px}
+canvas#map{width:100%;height:auto;border-radius:12px;border:1px solid rgba(110,140,255,0.06);cursor:crosshair}
+
+/* Station detail */
+.station-detail{max-width:600px;margin:20px auto;padding:0 20px;display:none}
+.station-detail.show{display:block}
+.sd{background:var(--card);border:1px solid rgba(92,224,214,0.08);border-radius:14px;padding:18px 22px}
+.sd-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.sd-name{font-family:var(--serif);font-size:1rem;font-weight:700;color:var(--cyan)}
+.sd-network{font-family:var(--mono);font-size:.46rem;padding:2px 7px;border-radius:3px}
+.sd-location{font-size:.72rem;color:var(--text-dim);margin-bottom:8px}
+.sd-coords{font-family:var(--mono);font-size:.52rem;color:var(--text-muted);margin-bottom:10px}
+.sd-body{font-size:.76rem;color:var(--text-dim);line-height:1.6;margin-bottom:10px}
+.sd-body strong{font-weight:600}
+.sd-specs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.sds{background:rgba(255,255,255,0.02);border-radius:5px;padding:5px 8px;text-align:center}
+.sds .sdsl{font-family:var(--mono);font-size:.36rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.sds .sdsv{font-family:var(--mono);font-size:.6rem;color:var(--cyan);font-weight:500;margin-top:1px}
+
+/* Stations list */
+.stations-grid{max-width:900px;margin:20px auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.sg-card{background:var(--card);border:1px solid rgba(110,140,255,0.06);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .3s}
+.sg-card:hover{border-color:rgba(92,224,214,0.12)}
+.sg-card.hidden{display:none}
+.sgc-head{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.sgc-icon{font-size:.9rem}
+.sgc-name{font-size:.78rem;font-weight:600;color:#fff}
+.sgc-net{font-family:var(--mono);font-size:.38rem;padding:1px 5px;border-radius:3px;margin-left:auto}
+.sgc-loc{font-size:.62rem;color:var(--text-dim)}
+
+footer{text-align:center;padding:40px 20px;font-size:.6rem;color:var(--text-muted)}
+footer .ft{font-family:var(--serif);font-style:italic;color:var(--gold);opacity:.4;font-size:.72rem;margin-bottom:4px}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+
+<header>
+  <div class="badge"><span data-en="📡 Global Infrastructure" data-fr="📡 Infrastructure mondiale" data-ar="📡 البنية التحتية العالمية">📡 Global Infrastructure</span></div>
+  <h1>Ground Station <span><span data-en="Network" data-fr="Réseau" data-ar="الشبكة">Network</span></span></h1>
+  <p>Satellites can't work alone. Across every continent — from deserts to ice caps — ground stations listen, command, and track. Here's the invisible web that keeps space connected to Earth.</p>
+</header>
+
+<div class="filter-row" id="filterRow"></div>
+<div class="map-wrap"><canvas id="map" width="960" height="480"></canvas></div>
+<div class="station-detail" id="stationDetail"><div class="sd" id="sdContent"></div></div>
+<div class="stations-grid" id="stationsGrid"></div>
+
+<footer>
+  <div class="ft">"From Maragheh to Goldstone — the tradition of watching the sky from the ground continues."</div>
+  Part of the Satellites in the Sky project
+</footer>
+
+<script>
+const NETWORKS={
+  dsn:{name:'NASA DSN',col:'var(--cyan)',bg:'rgba(92,224,214,0.1)'},
+  estrack:{name:'ESA ESTRACK',col:'var(--blue)',bg:'rgba(110,140,255,0.1)'},
+  norad:{name:'NORAD/USSF',col:'var(--red)',bg:'rgba(252,129,129,0.1)'},
+  amateur:{name:'Amateur/SatNOGS',col:'var(--green)',bg:'rgba(111,207,151,0.1)'},
+  commercial:{name:'Commercial',col:'var(--orange)',bg:'rgba(246,173,85,0.1)'},
+  historic:{name:'Historic Observatory',col:'var(--gold)',bg:'rgba(232,193,112,0.1)'},
+};
+
+const STATIONS=[
+  {name:'Goldstone',name_fr:'Goldstone',name_ar:'غولدستون',icon:'📡',lat:35.4,lon:-116.9,loc:'Mojave Desert, California',net:'dsn',
+    desc:'<strong>70-meter antenna</strong> — largest steerable dish in the DSN. Talks to Voyager 1 (24 billion km away). Signal so weak it takes 20 kW to send, arrives at 10⁻²¹ watts.',
+    specs:[{l:'Dish',v:'70 m'},{l:'Power',v:'20 kW'},{l:'Range',v:'24B km'}]},
+  {name:'Madrid',name_fr:'Madrid',name_ar:'مدريد',icon:'📡',lat:40.4,lon:-3.7,loc:'Robledo de Chavela, Spain',net:'dsn',
+    desc:'DSN\'s European station. With Goldstone and Canberra, provides <strong>360° coverage</strong> — no matter which way Earth rotates, one station always faces every spacecraft.',
+    specs:[{l:'Dish',v:'70 m'},{l:'Network',v:'DSN Europe'},{l:'Coverage',v:'120°'}]},
+  {name:'Canberra',name_fr:'Canberra',name_ar:'كانبيرا',icon:'📡',lat:-35.4,lon:149.1,loc:'Tidbinbilla, Australia',net:'dsn',
+    desc:'DSN\'s Southern Hemisphere station. Was the <strong>first to receive Neil Armstrong\'s voice</strong> from the Moon in 1969.',
+    specs:[{l:'Dish',v:'70 m'},{l:'Famous',v:'Apollo 11'},{l:'Coverage',v:'120°'}]},
+  {name:'Svalbard',name_fr:'Svalbard',name_ar:'سفالبارد',icon:'🏔️',lat:78.2,lon:15.4,loc:'Svalbard, Norway (78°N)',net:'estrack',
+    desc:'<strong>Northernmost ground station</strong>. Arctic location means polar-orbiting satellites pass overhead on nearly every orbit. Ideal for Earth observation data downlink.',
+    specs:[{l:'Latitude',v:'78°N'},{l:'Passes',v:'~14/day'},{l:'Temp',v:'-20°C avg'}]},
+  {name:'New Norcia',icon:'📡',lat:-31.0,lon:116.2,loc:'Western Australia',net:'estrack',
+    desc:'ESA\'s deep space station. 35-meter dish. Communicates with Mars Express, Rosetta, and BepiColombo.',
+    specs:[{l:'Dish',v:'35 m'},{l:'Agency',v:'ESA'},{l:'Missions',v:'Deep space'}]},
+  {name:'Cheyenne Mountain',icon:'🏔️',lat:38.7,lon:-104.8,loc:'Colorado Springs, USA',net:'norad',
+    desc:'<strong>NORAD command center</strong> inside a mountain. Tracks all 36,500+ objects in orbit. Built to survive a nuclear strike. The Space Surveillance Network\'s nerve center.',
+    specs:[{l:'Objects',v:'36,500+'},{l:'Built',v:'1966'},{l:'Depth',v:'600 m rock'}]},
+  {name:'Fylingdales',icon:'📡',lat:54.4,lon:-0.7,loc:'North Yorkshire, England',net:'norad',
+    desc:'RAF Fylingdales — BMEWS phased array radar. Tracks satellites and missiles over the North Atlantic and Arctic. Part of the Space Surveillance Network.',
+    specs:[{l:'Type',v:'Phased array'},{l:'Range',v:'4,800 km'},{l:'Coverage',v:'360°'}]},
+  {name:'Kiruna',name_fr:'Kiruna',name_ar:'كيرونا',icon:'🏔️',lat:67.9,lon:20.2,loc:'Kiruna, Sweden',net:'estrack',
+    desc:'Inside the Arctic Circle. <strong>Critical for polar orbit data downlink</strong>. Also hosts SatNOGS amateur station receiving CubeSat signals.',
+    specs:[{l:'Latitude',v:'68°N'},{l:'Network',v:'ESTRACK'},{l:'Also',v:'SatNOGS'}]},
+  {name:'SatNOGS Global',icon:'🌐',lat:38.0,lon:23.7,loc:'Open-source network (400+ stations)',net:'amateur',
+    desc:'<strong>World\'s largest open-source ground station network</strong>. 400+ amateur stations in 50+ countries. Anyone can build a $200 antenna and join. Tracks CubeSats, receives data, shares freely.',
+    specs:[{l:'Stations',v:'400+'},{l:'Countries',v:'50+'},{l:'Cost',v:'~$200'}]},
+  {name:'Amazon AWS Ground Station',icon:'☁️',lat:45.6,lon:-122.7,loc:'12 locations worldwide',net:'commercial',
+    desc:'Amazon rents ground station time to satellite operators. <strong>Pay-per-minute satellite communication</strong>. Democratizing access — a startup can downlink data for dollars instead of building million-dollar dishes.',
+    specs:[{l:'Locations',v:'12'},{l:'Model',v:'Pay/minute'},{l:'Customers',v:'100+'}]},
+  {name:'Maragheh Observatory',icon:'🏛️',lat:37.4,lon:46.2,loc:'Maragheh, Iran (1259 CE)',net:'historic',
+    desc:'<strong>Al-Tusi\'s observatory</strong> — the most advanced in the medieval world. 400+ staff. Produced the Ilkhanid Tables. The mathematical models of planetary motion developed here influenced Copernicus.',
+    specs:[{l:'Built',v:'1259 CE'},{l:'Director',v:'Al-Tusi'},{l:'Staff',v:'400+'}]},
+  {name:'Samarkand Observatory',icon:'🏛️',lat:39.7,lon:66.9,loc:'Samarkand, Uzbekistan (1420)',net:'historic',
+    desc:'<strong>Ulugh Beg\'s observatory</strong>. 40-meter sextant built into a hillside. Produced the most accurate star catalog before telescopes — positions accurate to arcminutes.',
+    specs:[{l:'Built',v:'1420'},{l:'Sextant',v:'40 m'},{l:'Stars',v:'1,018'}]},
+];
+
+// Build filters
+const filterRow=document.getElementById('filterRow');
+filterRow.innerHTML='<button class="f-btn active" data-n="all"><span data-en="All" data-fr="Tous" data-ar="الكل">All</span></button>'+
+  Object.entries(NETWORKS).map(([k,v])=>`<button class="f-btn" data-n="${k}" style="border-color:${v.col}30">${v.name}</button>`).join('');
+
+document.querySelectorAll('.f-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.f-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    const n=b.dataset.n;
+    document.querySelectorAll('.sg-card').forEach(c=>c.classList.toggle('hidden',n!=='all'&&c.dataset.n!==n));
+    drawMap(n==='all'?null:n);
+  });
+});
+
+// Draw map
+const cv=document.getElementById('map'),cx=cv.getContext('2d');
+function lonToX(lon){return((lon+180)/360)*cv.width}
+function latToY(lat){return((90-lat)/180)*cv.height}
+
+function drawMap(filter){
+  const d=devicePixelRatio||1;
+  const w=cv.clientWidth,h=cv.clientHeight;
+  cv.width=w*d;cv.height=h*d;
+  cx.setTransform(d,0,0,d,0,0);
+  
+  cx.fillStyle='#060a18';cx.fillRect(0,0,w,h);
+  
+  // Grid
+  for(let lat=-60;lat<=60;lat+=30){
+    const y=((90-lat)/180)*h;
+    cx.beginPath();cx.moveTo(0,y);cx.lineTo(w,y);cx.strokeStyle='rgba(110,140,255,0.03)';cx.lineWidth=.5;cx.stroke();
+  }
+  for(let lon=-120;lon<=120;lon+=60){
+    const x=((lon+180)/360)*w;
+    cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,h);cx.strokeStyle='rgba(110,140,255,0.03)';cx.lineWidth=.5;cx.stroke();
+  }
+  
+  // Simple continent outlines (very simplified)
+  cx.fillStyle='rgba(110,140,255,0.03)';
+  // Draw approximate land masses
+  [[.15,.2,.2,.18],[.42,.18,.18,.25],[.55,.1,.12,.22],[.62,.28,.08,.15],[.72,.42,.12,.14],[.82,.08,.08,.12]].forEach(([x,y,w2,h2])=>{
+    cx.fillRect(x*w,y*h,w2*w,h2*h);
+  });
+  
+  // Stations
+  const stations=filter?STATIONS.filter(s=>s.net===filter):STATIONS;
+  
+  stations.forEach(s=>{
+    const net=NETWORKS[s.net];
+    const x=((s.lon+180)/360)*w;
+    const y=((90-s.lat)/180)*h;
+    
+    // Glow
+    cx.beginPath();cx.arc(x,y,8,0,Math.PI*2);
+    const gl=cx.createRadialGradient(x,y,0,x,y,8);
+    const rgb=net.col==='var(--cyan)'?'92,224,214':net.col==='var(--blue)'?'110,140,255':net.col==='var(--red)'?'252,129,129':net.col==='var(--green)'?'111,207,151':net.col==='var(--gold)'?'232,193,112':'246,173,85';
+    gl.addColorStop(0,`rgba(${rgb},0.3)`);gl.addColorStop(1,'transparent');cx.fillStyle=gl;cx.fill();
+    
+    // Dot
+    cx.beginPath();cx.arc(x,y,3,0,Math.PI*2);cx.fillStyle=`rgba(${rgb},0.8)`;cx.fill();
+    
+    // Label
+    cx.font='400 6px "JetBrains Mono"';cx.fillStyle=`rgba(${rgb},0.5)`;cx.textAlign='center';
+    cx.fillText(s.name,x,y-8);
+  });
+}
+
+// Station cards
+const grid=document.getElementById('stationsGrid');
+STATIONS.forEach(s=>{
+  const net=NETWORKS[s.net];
+  const card=document.createElement('div');card.className='sg-card';card.dataset.n=s.net;
+  card.innerHTML=`
+    <div class="sgc-head">
+      <span class="sgc-icon">${s.icon}</span>
+      <span class="sgc-name">${s.name}</span>
+      <span class="sgc-net" style="background:${net.bg};color:${net.col}">${net.name}</span>
+    </div>
+    <div class="sgc-loc">${s.loc}</div>`;
+  card.addEventListener('click',()=>{
+    const det=document.getElementById('stationDetail');det.classList.add('show');
+    document.getElementById('sdContent').innerHTML=`
+      <div class="sd-head"><div class="sd-name">${s.name}</div><span class="sgc-net" style="background:${net.bg};color:${net.col}">${net.name}</span></div>
+      <div class="sd-location">${s.loc}</div>
+      <div class="sd-coords">${s.lat.toFixed(1)}°${s.lat>0?'N':'S'} · ${Math.abs(s.lon).toFixed(1)}°${s.lon>0?'E':'W'}</div>
+      <div class="sd-body">${s.desc}</div>
+      <div class="sd-specs">${s.specs.map(sp=>`<div class="sds"><div class="sdsl">${sp.l}</div><div class="sdsv">${sp.v}</div></div>`).join('')}</div>`;
+    det.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
+  grid.appendChild(card);
+});
+
+drawMap();
+addEventListener('resize',()=>drawMap());
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Ground Stations',project:'Satellites in the Sky'},fr:{title:'Stations Terrestres',project:'Satellites dans le Ciel'},ar:{title:'المحطات الأرضية',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

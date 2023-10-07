@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>micro:bit Space Lab — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(111,207,151,.06);border:1px solid rgba(111,207,151,.12);border-radius:50px;padding:6px 16px;font-size:.65rem;color:var(--green);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:6px}
+header h1 span{color:var(--green)}
+header p{font-size:.82rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.6}
+
+.content{max-width:700px;margin:0 auto}
+
+.what-you-need{background:var(--card);border:1px solid rgba(111,207,151,.08);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.what-you-need h3{font-size:.82rem;font-weight:700;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.supply-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
+.supply{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--dim);padding:6px 8px;background:rgba(255,255,255,.01);border-radius:6px}
+.supply .si{font-size:1rem}
+.supply .sp{font-family:'JetBrains Mono',monospace;font-size:.4rem;color:var(--green);margin-left:auto}
+
+.exp{background:var(--card);border:1px solid rgba(110,140,255,.06);border-radius:14px;padding:18px;margin-bottom:12px;cursor:pointer;transition:all .3s}
+.exp:hover{border-color:rgba(110,140,255,.1)}
+.exp.open{border-color:rgba(111,207,151,.12)}
+.exp-head{display:flex;align-items:center;gap:10px}
+.exp-num{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(111,207,151,.06);color:var(--green);flex-shrink:0}
+.exp-info h3{font-size:.88rem;font-weight:700;color:#fff;line-height:1.2}
+.exp-info .exp-sub{font-size:.6rem;color:var(--dim)}
+.exp-diff{font-family:'JetBrains Mono',monospace;font-size:.36rem;padding:2px 6px;border-radius:3px;margin-left:auto}
+.exp-body{display:none;margin-top:14px;border-top:1px solid rgba(255,255,255,.03);padding-top:14px}
+.exp.open .exp-body{display:block}
+
+.step{margin-bottom:12px}
+.step-num{font-family:'JetBrains Mono',monospace;font-size:.42rem;color:var(--cyan);margin-bottom:3px}
+.step-title{font-size:.78rem;font-weight:600;color:#fff;margin-bottom:4px}
+.step-desc{font-size:.72rem;color:var(--dim);line-height:1.55}
+.step-desc strong{font-weight:600;color:var(--text)}
+
+.code-block{background:#060a18;border:1px solid rgba(110,140,255,.06);border-radius:8px;padding:10px 12px;margin:8px 0;font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--cyan);line-height:1.6;overflow-x:auto;white-space:pre}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:.36rem;color:var(--muted);margin-bottom:2px}
+
+.microbit-led{display:inline-grid;grid-template-columns:repeat(5,12px);gap:2px;background:#1a1a2e;padding:6px;border-radius:4px;margin:6px 0}
+.microbit-led .led{width:12px;height:12px;border-radius:2px;background:#1a1a2e}
+.microbit-led .led.on{background:var(--red)}
+
+.tip{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:rgba(232,193,112,.02);border:1px solid rgba(232,193,112,.06);border-radius:8px;margin-top:8px}
+.tip .ti{font-size:.8rem;flex-shrink:0}.tip .tt{font-size:.68rem;color:var(--dim);line-height:1.45}
+
+.link-real{font-size:.68rem;color:var(--green);margin-top:4px;display:flex;align-items:center;gap:4px}
+
+footer{text-align:center;padding:30px 20px;font-size:.6rem;color:var(--muted)}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<header>
+  <div class="badge" data-en="🔧 Maker Lab" data-fr="🔧 Labo Maker" data-ar="🔧 مختبر الصانع">🔧 Maker Lab</div>
+  <h1>micro:bit <span><span data-en="Space Lab" data-fr="Labo Spatial" data-ar="مختبر الفضاء">Space Lab</span></span></h1>
+  <p>6 hands-on experiments using BBC micro:bit to explore satellite science. Real code, real physics, real fun. No soldering required.</p>
+</header>
+<div class="content">
+
+<div class="what-you-need">
+  <h3><span data-en="🧰 What You Need" data-fr="🧰 Ce qu'il vous faut" data-ar="🧰 ما تحتاجه">🧰 What You Need</span></h3>
+  <div class="supply-grid">
+    <div class="supply"><span class="si">💻</span data-en="BBC micro:bit (V2)" data-fr="BBC micro:bit (V2)" data-ar="BBC micro:bit (V2)">BBC micro:bit (V2)<span class="sp">~£15</span></div>
+    <div class="supply"><span class="si">🔌</span data-en="USB cable" data-fr="Câble USB" data-ar="كابل USB">USB cable<span class="sp">included</span></div>
+    <div class="supply"><span class="si">🔋</span data-en="Battery pack" data-fr="Pack batterie" data-ar="حزمة بطارية">Battery pack<span class="sp">included</span></div>
+    <div class="supply"><span class="si">📱</span data-en="Computer or tablet" data-fr="Ordinateur ou tablette" data-ar="حاسوب أو جهاز لوحي">Computer or tablet<span class="sp">for coding</span></div>
+  </div>
+  <div style="font-size:.65rem;color:var(--muted);margin-top:6px">Program at <strong>makecode.microbit.org</strong> — free, no install needed. All experiments use built-in sensors.</div>
+</div>
+
+<div id="experiments"></div>
+</div>
+<footer><span data-en="Part of the Satellites in the Sky project" data-fr="Partie du projet Satellites dans le Ciel" data-ar="جزء من مشروع أقمار في السماء">Part of the Satellites in the Sky project</span></footer>
+
+<script>
+const EXPS=[
+  {num:'01',title:'Satellite Tracker Display',sub:'LED matrix · compass · built-in sensors',diff:'Beginner',dc:'var(--green)',db:'rgba(111,207,151,.08)',
+    steps:[
+      {t:'The Concept',d:'Use the 5×5 LED matrix to show a "satellite" moving across the sky. The micro:bit\'s <strong>compass (magnetometer)</strong> detects which direction you\'re facing. Point north and the satellite moves left-to-right — simulating an ISS pass.'},
+      {t:'The Code (MakeCode / Python)',d:'This reads the compass heading and maps it to a dot position on the LED grid.',
+        code:`from microbit import *
+
+compass.calibrate()
+
+while True:
+    heading = compass.heading()
+    # Map 0-360° to LED column 0-4
+    col = int(heading / 72) % 5
+    # Satellite moves across row 2
+    display.clear()
+    display.set_pixel(col, 2, 9)
+    sleep(100)`,label:'Python',label_fr:'Python',label_ar:'بايثون'},
+      {t:'Try It',d:'Hold the micro:bit flat and rotate slowly. The bright dot moves across the screen as you turn — just like tracking a satellite across the sky. <strong>Point north</strong> to see the "satellite" start from the left.'},
+      {t:'Level Up',d:'Add the <strong>accelerometer</strong> to detect tilt. Tilt up = satellite rises (moves to top row). Tilt down = satellite sets. Now you have a 2D satellite tracker!',
+        code:`from microbit import *
+
+compass.calibrate()
+
+while True:
+    col = int(compass.heading() / 72) % 5
+    # Tilt maps to row (accelerometer Y)
+    tilt = accelerometer.get_y()
+    row = max(0, min(4, 2 - tilt // 300))
+    display.clear()
+    display.set_pixel(col, row, 9)
+    sleep(100)`,label:'Python — with tilt',label_fr:'Python — avec inclinaison',label_ar:'بايثون — مع الميل'},
+    ]},
+  {num:'02',title:'Ground-to-Satellite Radio Link',sub:'Radio module · 2 micro:bits · wireless',diff:'Beginner',dc:'var(--cyan)',db:'rgba(92,224,214,.08)',
+    steps:[
+      {t:'The Concept',d:'Use <strong>two micro:bits</strong> to simulate ground station ↔ satellite communication. One is the "ground station" (sends commands), the other is the "satellite" (receives and responds). Uses the built-in 2.4 GHz radio — no extra hardware!'},
+      {t:'Ground Station Code',d:'Press Button A to send "ping". Press Button B to send "photo" command.',
+        code:`from microbit import *
+import radio
+
+radio.config(group=42, power=7)
+radio.on()
+
+while True:
+    if button_a.was_pressed():
+        radio.send("PING")
+        display.show(Image.ARROW_N)
+        sleep(500)
+    if button_b.was_pressed():
+        radio.send("PHOTO")
+        display.show(Image.ARROW_N)
+        sleep(500)
+    
+    msg = radio.receive()
+    if msg == "PONG":
+        display.show(Image.HAPPY)
+        sleep(1000)
+    if msg == "IMG_OK":
+        display.show(Image.YES)
+        sleep(1000)
+    display.clear()`,label:'Ground Station (micro:bit #1)',label_fr:'Station terrestre (micro:bit #1)',label_ar:'محطة أرضية (micro:bit #1)'},
+      {t:'Satellite Code',d:'Listens for commands, shows status, responds.',
+        code:`from microbit import *
+import radio
+
+radio.config(group=42, power=7)
+radio.on()
+display.show(Image.DIAMOND_SMALL)
+
+while True:
+    msg = radio.receive()
+    if msg == "PING":
+        display.show(Image.HEART)
+        radio.send("PONG")
+        sleep(500)
+    if msg == "PHOTO":
+        # Simulate taking a photo
+        display.show(Image.SQUARE)
+        sleep(2000)  # "capturing"
+        radio.send("IMG_OK")
+        display.show(Image.DIAMOND_SMALL)`,label:'Satellite (micro:bit #2)',label_fr:'Satellite (micro:bit #2)',label_ar:'قمر صناعي (micro:bit #2)'},
+      {t:'Test It',d:'Flash each micro:bit with its code. Walk them apart — the radio works up to <strong>~70 meters</strong> line-of-sight. Press A on the ground station: satellite shows a heart and sends PONG back. Press B: satellite "takes a photo" (shows square for 2 sec) then confirms. <strong>This is exactly how real command-and-control works</strong> — just at 2.4 GHz instead of S-band.'},
+    ]},
+  {num:'03',title:'Solar Power Simulator',sub:'Light sensor · power budget · math',diff:'Intermediate',dc:'var(--gold)',db:'rgba(232,193,112,.08)',
+    steps:[
+      {t:'The Concept',d:'Satellites depend on solar panels. The micro:bit has a <strong>built-in light sensor</strong> (using the LED matrix). Use it to simulate a satellite\'s power budget — light = power generation, dark = eclipse (Earth\'s shadow).'},
+      {t:'The Code',d:'Reads light level, calculates simulated power, shows battery state on LEDs.',
+        code:`from microbit import *
+
+battery = 50  # percent
+DRAIN = 0.3   # power used per cycle
+MAX = 100
+
+while True:
+    light = display.read_light_level()
+    # Map 0-255 to solar power generation
+    solar = light / 255 * 1.0  # max 1W simulated
+    
+    battery = min(MAX, battery + solar - DRAIN)
+    battery = max(0, battery)
+    
+    # Show battery level as bar
+    bars = int(battery / 20)
+    display.clear()
+    for i in range(bars):
+        for x in range(5):
+            display.set_pixel(x, 4 - i, 5)
+    
+    if battery < 10:
+        display.show("!")  # LOW POWER WARNING
+        sleep(200)
+    
+    sleep(200)`,label:'Python'},
+      {t:'Test It',d:'Cover the micro:bit with your hand = <strong>eclipse</strong> (battery drains). Shine a light on it = <strong>sunlight</strong> (battery charges). Real satellites face this exact cycle: ~35 minutes of shadow per 90-minute orbit in LEO.'},
+      {t:'Satellite Connection',d:'A real satellite\'s power budget: solar panels generate ~30-100W, instruments consume ~20-80W. The power controller constantly balances generation vs consumption — exactly like your micro:bit simulation. <strong>If battery hits 0, the satellite dies.</strong>'},
+    ]},
+  {num:'04',title:'Orbit Accelerometer',sub:'Accelerometer · g-force · freefall',diff:'Intermediate',dc:'var(--blue)',db:'rgba(110,140,255,.08)',
+    steps:[
+      {t:'The Concept',d:'Satellites in orbit are in <strong>continuous freefall</strong> — they experience ~0g (microgravity). The micro:bit has a 3-axis accelerometer. Toss it gently (in a padded box!) to experience "orbit" for a fraction of a second.'},
+      {t:'The Code',d:'Measures total g-force and shows if you\'re in "orbit" (freefall) or on the "ground".',
+        code:`from microbit import *
+import math
+
+while True:
+    x = accelerometer.get_x()
+    y = accelerometer.get_y()
+    z = accelerometer.get_z()
+    
+    # Total g-force (1000 = 1g)
+    g = math.sqrt(x*x + y*y + z*z) / 1000
+    
+    if g < 0.3:
+        display.show(Image.DIAMOND)  # "ORBIT" - freefall!
+    elif g < 1.5:
+        display.show("G")  # Normal gravity
+    else:
+        display.show("!")  # High-g (launch!)
+    
+    sleep(50)`,label:'Python'},
+      {t:'Test It',d:'<strong>On a table:</strong> shows "G" (1g, normal gravity). <strong>Toss gently upward</strong> (catch it!): briefly shows diamond = freefall = orbit! <strong>Shake hard:</strong> shows "!" = launch g-forces. Put it in a sock for safe tossing.'},
+      {t:'Real Physics',d:'During an ISS orbit, astronauts experience ~0.001g. During launch: 3-4g. During re-entry: 4-8g. Your micro:bit just measured all three regimes!'},
+    ]},
+  {num:'05',title:'Satellite Antenna Pointer',sub:'Compass · tilt · dish alignment',diff:'Intermediate',dc:'var(--orange)',db:'rgba(246,173,85,.08)',
+    steps:[
+      {t:'The Concept',d:'To receive satellite signals, you need to point your antenna at the right <strong>azimuth</strong> (compass direction) and <strong>elevation</strong> (angle above horizon). Build a micro:bit antenna pointing aid!'},
+      {t:'The Code',d:'Shows compass bearing + tilt angle. Beeps when you\'re aimed at the target.',
+        code:`from microbit import *
+import math
+
+compass.calibrate()
+
+# Target: ISS pass example
+TARGET_AZ = 225   # degrees (SW)
+TARGET_EL = 45    # degrees elevation
+
+while True:
+    az = compass.heading()
+    # Elevation from accelerometer
+    y = accelerometer.get_y()
+    el = max(0, min(90, 90 + y // 11))
+    
+    az_err = abs(az - TARGET_AZ)
+    if az_err > 180:
+        az_err = 360 - az_err
+    el_err = abs(el - TARGET_EL)
+    
+    if az_err < 15 and el_err < 15:
+        display.show(Image.TARGET)
+        music.pitch(880, 100)
+    elif az_err < 30 and el_err < 30:
+        display.show(Image.DIAMOND_SMALL)
+    else:
+        # Arrow pointing toward target
+        if az < TARGET_AZ:
+            display.show(Image.ARROW_E)
+        else:
+            display.show(Image.ARROW_W)
+    
+    sleep(200)`,label:'Python'},
+      {t:'Test It',d:'Set TARGET_AZ and TARGET_EL to match a real satellite pass from <strong>heavens-above.com</strong>. Tilt the micro:bit toward the sky. When you\'re aimed right, it beeps and shows a target! This is how amateur radio operators point antennas for ISS contacts.'},
+    ]},
+  {num:'06',title:'Data Downlink Speed Test',sub:'Radio · data transfer · bandwidth',diff:'Advanced',dc:'var(--purple)',db:'rgba(183,148,244,.08)',
+    steps:[
+      {t:'The Concept',d:'Satellites have limited <strong>downlink time</strong> — they pass overhead for only minutes. How much data can you send? Use two micro:bits to measure real wireless data throughput.'},
+      {t:'Transmitter Code',d:'Sends numbered packets as fast as possible.',
+        code:`from microbit import *
+import radio
+
+radio.config(group=42, power=7)
+radio.on()
+
+# Wait for button press to start "pass"
+display.show("T")
+while not button_a.was_pressed():
+    sleep(100)
+
+count = 0
+start = running_time()
+
+# Simulate 30-second satellite pass
+while running_time() - start < 30000:
+    radio.send(str(count))
+    count += 1
+    display.show(Image.ARROW_N)
+    sleep(10)
+
+display.scroll(str(count) + " sent")`,label:'Transmitter',label_fr:'Émetteur',label_ar:'مرسل'},
+      {t:'Receiver Code',d:'Counts received packets, calculates throughput.',
+        code:`from microbit import *
+import radio
+
+radio.config(group=42, power=7)
+radio.on()
+
+received = 0
+display.show("R")
+
+while True:
+    msg = radio.receive()
+    if msg is not None:
+        received += 1
+        if received % 50 == 0:
+            display.show(Image.YES)
+        if received > 0 and msg == "":
+            break
+    
+    if button_a.was_pressed():
+        # Show results
+        display.scroll(str(received))`,label:'Receiver',label_fr:'Récepteur',label_ar:'مستقبل'},
+      {t:'Results',d:'The micro:bit radio sends ~200 bytes/packet at ~50 packets/sec = ~10 Kbps. In 30 seconds (a typical LEO satellite pass), that\'s about <strong>37 KB of data</strong>. A real satellite downlinks at 1-100+ Mbps — but early satellites (1960s) were this slow! You just simulated a Sputnik-era data link.'},
+    ]},
+];
+
+const container=document.getElementById('experiments');
+EXPS.forEach(e=>{
+  let stepsHtml=e.steps.map(s=>{
+    let h=`<div class="step"><div class="step-num">${s.t}</div><div class="step-desc">${s.d}</div>`;
+    if(s.code)h+=`<div class="code-label">${s.label||'Code'}</div><div class="code-block">${s.code}</div>`;
+    h+='</div>';return h;
+  }).join('');
+
+  container.innerHTML+=`<div class="exp" onclick="this.classList.toggle('open')">
+    <div class="exp-head">
+      <div class="exp-num">${e.num}</div>
+      <div class="exp-info"><h3>${e.title}</h3><div class="exp-sub">${e.sub}</div></div>
+      <span class="exp-diff" style="background:${e.db};color:${e.dc}">${e.diff}</span>
+    </div>
+    <div class="exp-body">${stepsHtml}
+      <div class="tip"><span class="ti">🛰️</span><span class="tt">Every experiment uses concepts from real satellite engineering: attitude sensing, power budgets, RF communication, data links, antenna pointing, orbital mechanics.</span></div>
+    </div>
+  </div>`;
+});
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'micro:bit Space Lab',project:'Satellites in the Sky'},fr:{title:'Labo Spatial micro:bit',project:'Satellites dans le Ciel'},ar:{title:'مختبر الفضاء micro:bit',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>

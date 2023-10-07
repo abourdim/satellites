@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debris Field — Satellites in the Sky</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030510;--card:#0a1020;--cyan:#5ce0d6;--blue:#6e8cff;--gold:#e8c170;--orange:#f6ad55;--red:#fc8181;--green:#6fcf97;--purple:#b794f4;--text:#c8d0e0;--dim:#6a7a8e;--muted:#3a4a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;width:100vw;height:100vh}
+canvas{position:fixed;inset:0}
+.info{position:fixed;top:10px;left:10px;z-index:10;max-width:280px}
+.info h1{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:800;margin-bottom:4px}
+.info h1 span{color:var(--red)}
+.info p{font-size:.65rem;color:var(--dim);line-height:1.4}
+.legend{position:fixed;top:10px;right:10px;z-index:10;background:rgba(6,10,22,.85);border:1px solid rgba(110,140,255,.06);border-radius:10px;padding:10px 14px;backdrop-filter:blur(8px)}
+.leg-item{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:.56rem;color:var(--dim);cursor:pointer}
+.leg-item:hover{color:var(--text)}
+.leg-dot{width:6px;height:6px;border-radius:50%}
+.event-panel{position:fixed;bottom:10px;left:10px;right:10px;z-index:10;display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.ev{background:rgba(6,10,22,.88);border:1px solid rgba(252,129,129,.08);border-radius:8px;padding:8px 12px;min-width:180px;flex-shrink:0;cursor:pointer;transition:all .2s;backdrop-filter:blur(8px)}
+.ev:hover{border-color:rgba(252,129,129,.2)}
+.ev .evn{font-size:.7rem;font-weight:600;color:#fff}.ev .evd{font-size:.48rem;color:var(--dim)}.ev .evc{font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--red);margin-top:2px}
+.stats{position:fixed;bottom:10px;right:10px;z-index:10;display:flex;gap:6px}
+.stat{background:rgba(6,10,22,.85);border:1px solid rgba(110,140,255,.06);border-radius:8px;padding:6px 10px;text-align:center;backdrop-filter:blur(8px)}
+.stat .sv{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:500;color:var(--red)}
+.stat .sl{font-size:.34rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+/* === BRANDING + i18n === */
+@import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+.bismillah-bar{text-align:center;padding:6px 0 2px;font-family:'Amiri',serif;font-size:.72rem;color:rgba(232,193,112,.2);letter-spacing:.02em;position:relative;z-index:100;pointer-events:none;line-height:1}
+.brand-header{position:fixed;top:8px;left:8px;z-index:999;display:flex;align-items:center;gap:6px}
+.brand-header img{width:22px;height:22px;filter:invert(1);opacity:.2;transition:opacity .2s}
+.brand-header img:hover{opacity:.5}
+.brand-footer{text-align:center;padding:16px 10px 12px;position:relative;z-index:10}
+.brand-footer img{height:32px;filter:invert(1);opacity:.15;margin-bottom:4px}
+.brand-footer a{font-family:'JetBrains Mono',monospace;font-size:.45rem;color:rgba(106,122,142,.4);text-decoration:none;letter-spacing:.04em;display:block}
+.brand-footer a:hover{color:rgba(106,122,142,.6)}
+.lang-sw{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:2px}
+.lang-sw button{font-family:'JetBrains Mono',monospace;font-size:.4rem;padding:3px 7px;border-radius:4px;border:1px solid rgba(110,140,255,.08);background:rgba(10,16,32,.7);color:rgba(200,208,224,.35);cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.lang-sw button:hover{color:rgba(200,208,224,.6)}
+.lang-sw button.active{background:rgba(110,140,255,.08);color:rgba(200,208,224,.7);border-color:rgba(110,140,255,.15)}
+[data-lang="ar"] .lang-sw{left:8px;right:auto}
+[data-lang="ar"] .brand-header{left:auto;right:8px}
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#030510">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+<div class="bismillah-bar" aria-label="Bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+<div class="brand-header"><a href="aa-portal.html"><img src="logo_icon_sm.png" alt="Workshop DIY"></a></div>
+<div class="lang-sw"><button onclick="setLang('en')" id="btn-en" class="active">EN</button><button onclick="setLang('fr')" id="btn-fr">FR</button><button onclick="setLang('ar')" id="btn-ar">عر</button></div>
+
+<canvas id="cv"></canvas>
+<div class="info"><h1>Debris <span><span data-en="Field" data-fr="Champ" data-ar="حقل">Field</span></span></h1><p>Every dot is a tracked object ≥10cm. 36,500+ pieces. Millions more too small to track. Each one travels at 7+ km/s — fast enough to destroy a satellite.</p></div>
+<div class="legend" id="legend"></div>
+<div class="event-panel" id="events"></div>
+<div class="stats">
+  <div class="stat"><div class="sv">36,500+</div><div class="sl"><span data-en="Tracked Objects" data-fr="Objets suivis" data-ar="أجسام متتبعة">Tracked Objects</span></div></div>
+  <div class="stat"><div class="sv">130M+</div><div class="sl" data-en="Pieces >1mm" data-fr="Morceaux >1mm" data-ar="قطع >1مم">Pieces &gt;1mm</div></div>
+  <div class="stat"><div class="sv">7.5 km/s</div><div class="sl" data-en="Average Speed" data-fr="Vitesse moyenne" data-ar="متوسط السرعة">Average Speed</div></div>
+</div>
+<script>
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),P=Math.PI*2;
+let W,H;
+function rs(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';cx.setTransform(d,0,0,d,0,0)}
+rs();addEventListener('resize',rs);
+
+const EVENTS=[
+  {name:'Chinese ASAT Test',name_fr:'Test ASAT chinois',name_ar:'اختبار صيني مضاد للأقمار',year:2007,debris:3500,alt:865,col:'#fc8181',desc:'China destroyed its own weather satellite. Single worst debris event in history.',desc_fr:'La Chine a détruit son propre satellite météo. Le pire événement de débris de l\'histoire.',desc_ar:'الصين دمرت قمرها الأرصادي. أسوأ حدث حطام في التاريخ.'},
+  {name:'Iridium-Cosmos',name_fr:'Iridium-Cosmos',name_ar:'إيريديوم-كوسموس',year:2009,debris:2300,alt:790,col:'#f6ad55',desc:'First accidental satellite collision. Iridium 33 + Cosmos 2251 at 11.7 km/s.',desc_fr:'Première collision accidentelle. Iridium 33 + Cosmos 2251 à 11,7 km/s.',desc_ar:'أول تصادم عرضي بين قمرين. إيريديوم ٣٣ + كوسموس ٢٢٥١ بسرعة ١١٫٧ كم/ث.'},
+  {name:'Russian ASAT Test',name_fr:'Test ASAT russe',name_ar:'اختبار روسي مضاد للأقمار',year:2021,debris:1500,alt:480,col:'#b794f4',desc:'Russia destroyed Cosmos 1408. Debris threatened ISS crew, who sheltered in capsules.'},
+  {name:'Rocket Bodies',name_fr:'Corps de fusées',name_ar:'هياكل صواريخ',year:0,debris:2000,alt:800,col:'#6e8cff',desc:'~2,000 spent upper stages still in orbit. Each a potential collision & fragmentation source.'},
+  {name:'Fengyun Debris',name_fr:'Débris Fengyun',name_ar:'حطام فنغيون',year:2007,debris:900,alt:850,col:'#e8c170',desc:'Additional fragments from the Chinese ASAT target continuing to spread.',desc_fr:'Fragments supplémentaires de la cible ASAT chinoise continuant à se disperser.',desc_ar:'شظايا إضافية من هدف الاختبار الصيني تستمر بالانتشار.'},
+];
+
+const CATEGORIES=[
+  {name:'Active Satellites',name_fr:'Satellites actifs',name_ar:'أقمار نشطة',count:7500,col:'#6fcf97',altMin:200,altMax:36000},
+  {name:'Dead Satellites',name_fr:'Satellites morts',name_ar:'أقمار ميتة',count:4000,col:'#6a7a8e',altMin:300,altMax:36000},
+  {name:'Rocket Bodies',count:2000,col:'#6e8cff',altMin:300,altMax:1500},
+  {name:'Fragmentation Debris',name_fr:'Débris de fragmentation',name_ar:'حطام تفتت',count:16000,col:'#fc8181',altMin:600,altMax:1200},
+  {name:'Other Debris',name_fr:'Autres débris',name_ar:'حطام أخرى',count:7000,col:'#f6ad55',altMin:200,altMax:2000},
+];
+
+// Legend
+const leg=document.getElementById('legend');
+CATEGORIES.forEach(c=>{
+  leg.innerHTML+=`<div class="leg-item"><div class="leg-dot" style="background:${c.col}"></div>${c.name} (${c.count.toLocaleString()})</div>`;
+});
+
+// Events
+const evp=document.getElementById('events');
+EVENTS.forEach(e=>{
+  evp.innerHTML+=`<div class="ev"><div class="evn">${e.name}</div><div class="evd">${e.year||'Ongoing'} · ${e.alt} km</div><div class="evc">${e.debris.toLocaleString()} fragments</div></div>`;
+});
+
+// Generate debris particles
+const debris=[];
+CATEGORIES.forEach(cat=>{
+  const n=Math.min(cat.count,Math.round(cat.count*.15));// Scale down for performance
+  for(let i=0;i<n;i++){
+    const alt=cat.altMin+Math.random()*(cat.altMax-cat.altMin);
+    const inc=(10+Math.random()*88)*Math.PI/180;
+    const raan=Math.random()*P;
+    const phase=Math.random()*P;
+    debris.push({alt,inc,raan,phase,col:cat.col,speed:.0001+Math.random()*.0003});
+  }
+});
+
+let rotX=-.3,rotY=0;
+let dragging=false,dx=0,dy=0;
+cv.addEventListener('pointerdown',e=>{dragging=true;dx=e.clientX;dy=e.clientY});
+cv.addEventListener('pointermove',e=>{if(!dragging)return;rotY+=(e.clientX-dx)*.003;rotX+=(e.clientY-dy)*.003;rotX=Math.max(-.8,Math.min(.8,rotX));dx=e.clientX;dy=e.clientY});
+cv.addEventListener('pointerup',()=>dragging=false);
+
+function proj(x,y,z){
+  const cosX=Math.cos(rotX),sinX=Math.sin(rotX),cosY=Math.cos(rotY),sinY=Math.sin(rotY);
+  let nx=x*cosY-z*sinY;let nz=x*sinY+z*cosY;let ny=y*cosX-nz*sinX;nz=y*sinX+nz*cosX;
+  const s=280/(nz+500);
+  return{x:W/2+nx*s,y:H/2+ny*s,z:nz,s};
+}
+
+const stars=[];for(let i=0;i<80;i++)stars.push({x:Math.random()*W,y:Math.random()*H,b:.03+Math.random()*.06});
+
+function render(){
+  cx.clearRect(0,0,W,H);cx.fillStyle='#030510';cx.fillRect(0,0,W,H);
+  for(const s of stars){cx.beginPath();cx.arc(s.x,s.y,.4,0,P);cx.fillStyle=`rgba(200,210,230,${s.b})`;cx.fill()}
+  
+  rotY+=.001;// Slow auto-rotate
+  
+  // Earth
+  const ep=proj(0,0,0);
+  const eR=80*ep.s;
+  const eg=cx.createRadialGradient(ep.x-eR*.15,ep.y-eR*.15,0,ep.x,ep.y,eR);
+  eg.addColorStop(0,'#1a4a6c');eg.addColorStop(.6,'#0d2a48');eg.addColorStop(1,'#061428');
+  cx.beginPath();cx.arc(ep.x,ep.y,eR,0,P);cx.fillStyle=eg;cx.fill();
+  
+  // Atmosphere
+  cx.beginPath();cx.arc(ep.x,ep.y,eR+3,0,P);
+  const ag=cx.createRadialGradient(ep.x,ep.y,eR-2,ep.x,ep.y,eR+6);
+  ag.addColorStop(0,'rgba(92,224,214,0.04)');ag.addColorStop(1,'transparent');cx.fillStyle=ag;cx.fill();
+  
+  // Debris
+  const t=Date.now()*.001;
+  const sorted=[];
+  for(const d of debris){
+    d.phase+=d.speed;
+    const r=80+d.alt*.02;
+    const x=r*Math.cos(d.phase);
+    const y=r*Math.sin(d.phase)*Math.cos(d.inc);
+    const z=r*Math.sin(d.phase)*Math.sin(d.inc);
+    const rx=x*Math.cos(d.raan)-z*Math.sin(d.raan);
+    const rz=x*Math.sin(d.raan)+z*Math.cos(d.raan);
+    const pt=proj(rx,y,rz);
+    sorted.push({...pt,col:d.col});
+  }
+  sorted.sort((a,b)=>a.z-b.z);
+  
+  for(const d of sorted){
+    const behind=d.z<-20;
+    const sz=Math.max(.3,1.2*d.s);
+    cx.beginPath();cx.arc(d.x,d.y,sz,0,P);
+    cx.fillStyle=d.col+(behind?'15':'40');cx.fill();
+  }
+  
+  requestAnimationFrame(render);
+}
+render();
+</script>
+<div class="brand-footer"><img src="logo_wdiy.svg" alt="Workshop DIY"><a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></div>
+<script>
+/* i18n engine */
+const T={en:{title:'Debris Field',project:'Satellites in the Sky'},fr:{title:'Champ de Débris',project:'Satellites dans le Ciel'},ar:{title:'حقل الحطام',project:'أقمار في السماء'}};
+let curLang='en';function t(k){return(T[curLang]&&T[curLang][k])||T.en[k]||k}
+function tl(o,f){return(curLang!=='en'&&o[f+'_'+curLang])||o[f]||''}
+function setLang(l){curLang=l;const h=document.documentElement;h.setAttribute('data-lang',l);h.dir=l==='ar'?'rtl':'ltr';h.lang=l;document.querySelectorAll('.lang-sw button').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('btn-'+l);if(ab)ab.classList.add('active');document.title=t('title')+' — '+t('project');document.querySelectorAll('[data-en]').forEach(el=>{const v=el.getAttribute('data-'+l);if(v)el.textContent=v;else{const fb=el.getAttribute('data-en');if(fb)el.textContent=fb}});try{localStorage.setItem('aa-lang',l)}catch(e){}}
+try{const s=localStorage.getItem('aa-lang');if(s)setLang(s)}catch(e){}
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>
